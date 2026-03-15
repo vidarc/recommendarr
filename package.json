@@ -1,16 +1,16 @@
 {
-  "name": "recommendarr",
-  "type": "module",
-  "dependencies": {
-    "close-with-grace": "2.5.0",
-    "fastify": "5.8.2"
-  },
-  "devDependencies": {
-    "@tsconfig/node-ts": "23.6.4",
-    "@tsconfig/node24": "24.0.4",
-    "@tsconfig/strictest": "2.0.8",
-    "typescript": "5.9.3",
-    "vite-plus": "0.1.11"
-  },
-  "packageManager": "yarn@4.13.0"
+	"name": "recommendarr",
+	"type": "module",
+	"dependencies": {
+		"close-with-grace": "2.5.0",
+		"fastify": "5.8.2"
+	},
+	"devDependencies": {
+		"@tsconfig/node-ts": "23.6.4",
+		"@tsconfig/node24": "24.0.4",
+		"@tsconfig/strictest": "2.0.8",
+		"typescript": "5.9.3",
+		"vite-plus": "0.1.11"
+	},
+	"packageManager": "yarn@4.13.0"
 }

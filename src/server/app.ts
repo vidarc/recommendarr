@@ -1,11 +1,11 @@
 import { fastify } from "fastify";
 
 const buildServer = async () => {
-  const app = fastify({ logger: true });
+	const app = fastify({ logger: true });
 
-  await app.ready();
+	await app.ready();
 
-  return app;
+	return app;
 };
 
 export { buildServer };
