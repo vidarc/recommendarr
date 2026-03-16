@@ -3,13 +3,13 @@ import { fastify } from "fastify";
 import { healthRoutes } from "./health.ts";
 
 const buildServer = async () => {
-  const app = fastify({ logger: process.env["NODE_ENV"] !== "test" });
+	const app = fastify({ logger: process.env["NODE_ENV"] !== "test" });
 
-  healthRoutes(app);
+	healthRoutes(app);
 
-  await app.ready();
+	await app.ready();
 
-  return app;
+	return app;
 };
 
 export { buildServer };

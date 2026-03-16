@@ -39,7 +39,7 @@ yarn vp fmt          # Format only
 ## Project Structure
 
 - `src/server` — Fastify backend (exists)
-- `src/client` — React frontend (planned, not yet created)
+- `src/client` — React frontend (exists: `App.tsx`, `index.html`, `main.tsx`)
 - `src/shared` — Shared types and utilities (planned, not yet created)
 - `docs/` — Architecture decisions, API docs, environment variable reference
 - Tests are colocated as `*.test.ts` files alongside source (pattern: `src/**/*.test.ts`)
@@ -88,16 +88,20 @@ Documentation is stored in the `docs` folder. This should be kept up to date wit
 
 ## Auto-Update Memory (MANDATORY)
 
+Memory files live in `.claude/memory/` so they are version-controlled and shared across devices/contributors. `.claude/memory/MEMORY.md` is the index — read it first, then follow links.
+
 **Update memory files AS YOU GO, not at the end.** When you learn something new, update immediately.
 
-| Trigger                             | Action                                   |
-| ----------------------------------- | ---------------------------------------- |
-| User shares a fact about themselves | → Update `memory-profile.md`             |
-| User states a preference            | → Update `memory-preferences.md`         |
-| A decision is made                  | → Update `memory-decisions.md` with date |
-| Completing substantive work         | → Add to `memory-sessions.md`            |
+Each memory file uses frontmatter (`name`, `description`, `type`) so Claude Code can find and use them. Types: `user`, `feedback`, `project`, `decision`, `reference`.
 
-Create any other types of memory files that make sense.
+| Trigger                             | Action                                                      |
+| ----------------------------------- | ----------------------------------------------------------- |
+| User shares a fact about themselves | → Create/update a `user` type file in `.claude/memory/`     |
+| User states a preference            | → Create/update a `feedback` type file in `.claude/memory/` |
+| A decision is made                  | → Create/update a `project` or `decision` file              |
+| Completing substantive work         | → Update `.claude/memory/project_status.md`                 |
+
+Create any other memory files that make sense.
 
 **Skip:** Quick factual questions, trivial tasks with no new info.
 

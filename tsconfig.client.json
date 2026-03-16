@@ -1,0 +1,13 @@
+{
+	"extends": "./tsconfig.json",
+	"include": ["src/client/**/*"],
+	"compilerOptions": {
+		"composite": true,
+		"target": "es2024",
+		"lib": ["es2024", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"jsx": "react-jsx",
+		"outDir": "dist/client"
+	}
+}

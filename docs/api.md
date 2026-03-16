@@ -30,12 +30,12 @@ No parameters or body required.
 
 ```json
 {
-  "status": "ok",
-  "uptimeSeconds": 42.3
+	"status": "ok",
+	"uptimeSeconds": 42.3
 }
 ```
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `status` | `string` | Always `"ok"` |
+| Field           | Type     | Description                              |
+| --------------- | -------- | ---------------------------------------- |
+| `status`        | `string` | Always `"ok"`                            |
 | `uptimeSeconds` | `number` | Seconds elapsed since the server started |
