@@ -12,7 +12,7 @@ RUN yarn install --immutable
 
 COPY . .
 
-RUN yarn vp build
+RUN yarn vp build && yarn vp build --ssr src/client/entry-server.tsx --outDir dist/ssr && yarn vp exec tsc -p tsconfig.server.json
 
 
 # Stage 2: Production

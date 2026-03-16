@@ -4,7 +4,7 @@ import { buildServer } from "../app.ts";
 
 describe("GET /health", () => {
 	test("returns status ok and uptimeSeconds", async () => {
-		const app = await buildServer();
+		const app = await buildServer({ skipSSR: true });
 		const response = await app.inject({ method: "GET", url: "/health" });
 
 		expect(response.statusCode).toBe(200);
@@ -16,7 +16,7 @@ describe("GET /health", () => {
 	});
 
 	test("ping route", async () => {
-		const app = await buildServer();
+		const app = await buildServer({ skipSSR: true });
 
 		const response = await app.inject().get("/ping");
 

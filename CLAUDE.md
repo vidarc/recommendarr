@@ -27,8 +27,8 @@ This project is an AI based recommendation engine for use of the \*arr stack (ra
 ## Common Commands
 
 ```bash
-yarn vp dev          # Start development server
-yarn vp build        # Build for production
+yarn dev             # Start dev server (Fastify + Vite SSR middleware)
+yarn build           # Build client, SSR bundle, and server
 yarn vp test         # Run all tests
 yarn vp test <file>  # Run a single test file
 yarn vp check        # Run format + lint + typecheck
@@ -39,7 +39,7 @@ yarn vp fmt          # Format only
 ## Project Structure
 
 - `src/server` — Fastify backend (exists)
-- `src/client` — React frontend (exists: `App.tsx`, `index.html`, `main.tsx`)
+- `src/client` — React frontend (exists: `App.tsx`, `index.html`, `entry-client.tsx`, `entry-server.tsx`)
 - `src/shared` — Shared types and utilities (planned, not yet created)
 - `docs/` — Architecture decisions, API docs, environment variable reference
 - Tests are colocated as `*.test.ts` files alongside source (pattern: `src/**/*.test.ts`)
@@ -56,10 +56,28 @@ The server uses a factory pattern: `buildServer()` in `src/server/app.ts` create
 
 Add new routes and plugins by registering them inside `buildServer()` before `await app.ready()`.
 
+`buildServer()` accepts an optional `{ skipSSR?: boolean }` options object. Tests pass `{ skipSSR: true }` to avoid loading Vite/SSR dependencies.
+
 **Current routes:**
 
 - `GET /ping` — health check, returns `{ "status": "ok" }` (also used by Docker health check)
 - `GET /health` — returns `{ "status": "ok", "uptimeSeconds": number }` — uptime is measured from when `buildServer()` is called
+- `GET /*` — SSR catch-all (registered last so API routes take priority)
+
+### SSR
+
+The app uses Vite's built-in SSR with Fastify:
+
+- **Dev**: Vite runs in middleware mode via `@fastify/middie`. `ssrLoadModule` renders `entry-server.tsx` on each request with HMR support.
+- **Prod**: Pre-built SSR bundle (`dist/ssr/entry-server.js`) renders HTML. `@fastify/static` serves client assets from `dist/client/assets/`.
+- **Entry points**: `entry-client.tsx` (hydration via `hydrateRoot`) and `entry-server.tsx` (server render via `renderToString`).
+- **HTML template**: `index.html` contains `<!--ssr-outlet-->` placeholder replaced with rendered HTML.
+
+**Build pipeline** (3 steps, run via `yarn build`):
+
+1. `vp build` — client bundle → `dist/client/`
+2. `vp build --ssr` — SSR bundle → `dist/ssr/`
+3. `tsc -p tsconfig.server.json` — server TypeScript → `dist/server/`
 
 **Environment variables** (see `docs/README.md` for full list):
 
