@@ -1,11 +1,11 @@
 {
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
-  "mcpServers": {
-    "vite-plus": {
-      "command": "npx",
-      "args": ["vp", "mcp"]
-    }
-  }
+	"env": {
+		"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+	},
+	"mcpServers": {
+		"vite-plus": {
+			"command": "npx",
+			"args": ["vp", "mcp"]
+		}
+	}
 }

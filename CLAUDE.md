@@ -19,6 +19,11 @@ This project is an AI based recommendation engine for use of the \*arr stack (ra
 - Formatting: tabs (enforced by Oxfmt in `vite.config.ts`)
 - Dependencies use exact version pinning (no semver prefix)
 
+## Docker
+
+- Dockerfile targets Node 24 with pinned versions
+- When modifying dependencies or build steps, verify Dockerfile stays consistent
+
 ## Common Commands
 
 ```bash
@@ -33,9 +38,10 @@ yarn vp fmt          # Format only
 
 ## Project Structure
 
-- `src/server` — Fastify backend
-- `src/client` — React frontend
-- `src/shared` — Shared types and utilities
+- `src/server` — Fastify backend (exists)
+- `src/client` — React frontend (planned, not yet created)
+- `src/shared` — Shared types and utilities (planned, not yet created)
+- `docs/` — Architecture decisions, API docs, environment variable reference
 - Tests are colocated as `*.test.ts` files alongside source (pattern: `src/**/*.test.ts`)
 
 ## Workflows
@@ -49,6 +55,16 @@ yarn vp fmt          # Format only
 The server uses a factory pattern: `buildServer()` in `src/server/app.ts` creates and returns the Fastify instance, while `src/server/server.ts` is the entry point that calls it, starts listening, and handles graceful shutdown via `close-with-grace`.
 
 Add new routes and plugins by registering them inside `buildServer()` before `await app.ready()`.
+
+**Current routes:**
+
+- `GET /ping` — health check, returns `{ "status": "ok" }` (also used by Docker health check)
+- `GET /health` — returns `{ "status": "ok", "uptimeSeconds": number }` — uptime is measured from when `buildServer()` is called
+
+**Environment variables** (see `docs/README.md` for full list):
+
+- `PORT` — server port (default: `3000`)
+- `HOST` — bind address (default: `0.0.0.0`)
 
 ### Modules
 
@@ -66,6 +82,9 @@ The project uses ESM (`"type": "module"` in package.json). Use `.ts` extensions 
 ## Documentation
 
 Documentation is stored in the `docs` folder. This should be kept up to date with information about all major architechural decisions. It should also list APIs and their requirements and responses. The main file in the documentation should have a list of all the environment variables one can use to customize this service (for example being able to overwrite the PORT).
+
+- When adding new routes or endpoints, update route documentation (e.g., README or docs file) to include the new route, method, and description.
+- Keep CLAUDE.md architecture overview in sync with structural changes.
 
 ## Auto-Update Memory (MANDATORY)
 
