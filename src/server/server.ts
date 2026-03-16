@@ -13,4 +13,7 @@ closeWithGrace(async function ({ signal, err }) {
 	await server.close();
 });
 
-await server.listen();
+const port = process.env["PORT"] ? Number(process.env["PORT"]) : 3000;
+const host = process.env["HOST"] ?? "0.0.0.0";
+
+await server.listen({ port, host });
