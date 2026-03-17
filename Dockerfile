@@ -5,15 +5,14 @@ WORKDIR /app
 
 RUN corepack enable
 
-COPY package.json .yarnrc.yml yarn.lock ./
-COPY .yarn ./.yarn
+COPY .yarn/ .yarn/
+COPY ["package.json", "yarn.lock", ".yarnrc.yml", "./"]
 
 RUN yarn install --immutable
 
-COPY . .
-
-RUN yarn vp build && yarn vp build --ssr src/client/entry-server.tsx --outDir dist/ssr && yarn vp exec tsc -p tsconfig.server.json
-
+RUN yarn vp build && \
+  yarn vp build --ssr src/client/entry-server.tsx --outDir dist/ssr && \
+  yarn vp exec tsc -p tsconfig.server.json
 
 # Stage 2: Production
 FROM node:24.14.0-alpine3.22 AS runner
@@ -30,6 +29,7 @@ RUN yarn workspaces focus --production
 COPY --from=builder /app/dist ./dist
 
 ENV PORT=3000
+ENV NODE_ENV=production
 
 EXPOSE ${PORT}
 
