@@ -12,8 +12,30 @@ export default defineConfig({
 
 	// Vitest configuration.
 	test: {
-		include: ["src/**/__tests__/*.test.ts"],
 		root: ".",
+		coverage: {
+			enabled: true,
+			provider: "v8",
+			include: ["src"],
+			exclude: ["*.html"],
+		},
+		projects: [
+			{
+				test: {
+					name: "client",
+					include: ["src/client/**/__tests__/*.test.{ts,tsx}"],
+					setupFiles: ["test/setup-client.ts"],
+					environment: "happy-dom",
+				},
+			},
+			{
+				test: {
+					name: "server",
+					include: ["src/server/**/__tests__/*.test.{ts,tsx}"],
+					environment: "node",
+				},
+			},
+		],
 	},
 
 	// Oxlint configuration.

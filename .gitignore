@@ -16,6 +16,7 @@ node_modules
 #!.yarn/cache
 .pnp.*
 
+coverage
 dist
 
 *.tsbuildinfo

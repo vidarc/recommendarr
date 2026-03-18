@@ -8,6 +8,7 @@
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"jsx": "react-jsx",
-		"outDir": "dist/client"
+		"outDir": "dist/client",
+		"types": ["@testing-library/jest-dom"]
 	}
 }
