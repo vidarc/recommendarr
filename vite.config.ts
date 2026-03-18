@@ -5,30 +5,43 @@ export default defineConfig({
 	// Standard Vite configuration for dev/build/preview.
 	root: "src/client",
 	build: {
-		outDir: "../../dist/client",
 		emptyOutDir: true,
+		outDir: "../../dist/client",
 	},
 	plugins: [react()],
 
 	// Vitest configuration.
 	test: {
-		root: ".",
 		include: ["src/**/__tests__/*.test.ts"],
+		root: ".",
 	},
 
 	// Oxlint configuration.
 	lint: {
-		ignorePatterns: ["dist/**"],
+		categories: {
+			correctness: "error",
+			nursery: "error",
+			pedantic: "error",
+			perf: "error",
+			restriction: "error",
+			style: "error",
+			suspicious: "error",
+		},
+		ignorePatterns: ["dist/**", ".yarn"],
 		options: {
 			typeAware: true,
 			typeCheck: true,
+		},
+		plugins: ["import", "jsx-a11y", "node", "promise", "react-perf", "react", "vitest"],
+		rules: {
+			"sort-keys": "off",
 		},
 	},
 
 	// Oxfmt configuration.
 	fmt: {
-		useTabs: true,
 		sortImports: {},
+		useTabs: true,
 	},
 
 	// `vp staged` configuration.

@@ -1,35 +1,37 @@
 {
-  "name": "recommendarr",
-  "type": "module",
-  "scripts": {
-    "dev": "NODE_ENV=development node --experimental-strip-types --experimental-transform-types src/server/server.ts",
-    "build": "vp build && vp build --ssr src/client/entry-server.tsx --outDir dist/ssr && tsc -p tsconfig.server.json",
-    "test": "vp test",
-    "test:watch": "vp test watch"
-  },
-  "dependencies": {
-    "@fastify/middie": "9.3.1",
-    "@fastify/static": "9.0.0",
-    "@vitejs/plugin-react": "6.0.1",
-    "close-with-grace": "2.5.0",
-    "fastify": "5.8.2",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
-  },
-  "devDependencies": {
-    "@tsconfig/node-ts": "23.6.4",
-    "@tsconfig/node24": "24.0.4",
-    "@tsconfig/strictest": "2.0.8",
-    "@types/node": "24.12.0",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "typescript": "5.9.3",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.12",
-    "vite-plus": "0.1.12"
-  },
-  "resolutions": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.12",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.12"
-  },
-  "packageManager": "yarn@4.13.0"
+	"name": "recommendarr",
+	"type": "module",
+	"scripts": {
+		"dev": "NODE_ENV=development node --experimental-strip-types --experimental-transform-types src/server/server.ts",
+		"build": "vp build && vp build --ssr src/client/entry-server.tsx --outDir dist/ssr && tsc -p tsconfig.server.json",
+		"test": "vp test",
+		"test:watch": "vp test watch"
+	},
+	"dependencies": {
+		"@fastify/middie": "9.3.1",
+		"@fastify/static": "9.0.0",
+		"@vitejs/plugin-react": "6.0.1",
+		"close-with-grace": "2.5.0",
+		"fastify": "5.8.2",
+		"react": "19.2.4",
+		"react-dom": "19.2.4"
+	},
+	"devDependencies": {
+		"@tsconfig/node-ts": "23.6.4",
+		"@tsconfig/node24": "24.0.4",
+		"@tsconfig/strictest": "2.0.8",
+		"@types/node": "24.12.0",
+		"@types/react": "19.2.14",
+		"@types/react-dom": "19.2.3",
+		"color-convert": "3.1.3",
+		"oxlint-tsgolint": "0.17.0",
+		"typescript": "5.9.3",
+		"vite": "npm:@voidzero-dev/vite-plus-core@0.1.12",
+		"vite-plus": "0.1.12"
+	},
+	"resolutions": {
+		"vite": "npm:@voidzero-dev/vite-plus-core@0.1.12",
+		"vitest": "npm:@voidzero-dev/vite-plus-test@0.1.12"
+	},
+	"packageManager": "yarn@4.13.0"
 }
