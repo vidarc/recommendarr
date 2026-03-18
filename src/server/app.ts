@@ -1,5 +1,4 @@
 import { fastify } from "fastify";
-
 import { healthRoutes } from "./health.ts";
 import { ssrRoutes } from "./ssr.ts";
 

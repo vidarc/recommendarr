@@ -18,29 +18,47 @@ export default defineConfig({
 
 	// Oxlint configuration.
 	lint: {
-		categories: {
-			correctness: "error",
-			nursery: "error",
-			pedantic: "error",
-			perf: "error",
-			restriction: "error",
-			style: "error",
-			suspicious: "error",
-		},
 		ignorePatterns: ["dist/**", ".yarn"],
 		options: {
 			typeAware: true,
 			typeCheck: true,
 		},
 		plugins: ["import", "jsx-a11y", "node", "promise", "react-perf", "react", "vitest"],
+		categories: {
+			correctness: "error",
+			perf: "error",
+			style: "error",
+			suspicious: "error",
+		},
 		rules: {
+			"import/prefer-default-export": "off",
+			"import/no-named-export": "off",
+			"max-statements": "off",
+			"no-ternary": "off",
+			"react/react-in-jsx-scope": "off",
+			"sort-imports": "off",
 			"sort-keys": "off",
 		},
+		overrides: [
+			{
+				files: ["src/server/**"],
+				rules: { "import/no-nodejs-modules": "off" },
+			},
+		],
 	},
 
 	// Oxfmt configuration.
 	fmt: {
-		sortImports: {},
+		sortImports: {
+			newlinesBetween: false,
+			groups: [
+				["value-builtin", "value-external"],
+				["value-internal", "value-parent", "value-sibling", "value-index"],
+				{ newlinesBetween: true },
+				"type-import",
+				"unknown",
+			],
+		},
 		useTabs: true,
 	},
 

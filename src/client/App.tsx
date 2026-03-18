@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 
-export function App() {
-	const [time, setTime] = useState(0);
+const intialTime = 0;
+const incrementTime = 1;
+const timeInterval = 1000;
+
+export const App = () => {
+	const [time, setTime] = useState(intialTime);
 
 	useEffect(() => {
 		const interval = setInterval(() => {
-			setTime((current) => current + 1);
-		}, 1000);
+			setTime((current) => current + incrementTime);
+		}, timeInterval);
 
 		return () => {
 			clearInterval(interval);
@@ -14,4 +18,4 @@ export function App() {
 	});
 
 	return <h1>Hello World - ${time}</h1>;
-}
+};
