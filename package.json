@@ -3,7 +3,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "NODE_ENV=development node --experimental-strip-types --experimental-transform-types src/server/server.ts",
-		"build": "vp build && vp build --ssr src/client/entry-server.tsx --outDir dist/ssr && tsc -p tsconfig.server.json",
+		"build": "vp build && vp build --ssr entry-server.tsx --outDir ../../dist/ssr && tsc -p tsconfig.server.json",
 		"test": "vp test",
 		"test:watch": "vp test watch",
 		"prepare": "vp config --hooks-only"

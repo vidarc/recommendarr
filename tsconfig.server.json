@@ -3,6 +3,7 @@
 	"include": ["src/server/**/*"],
 	"compilerOptions": {
 		"composite": true,
+		"rootDir": "src/server",
 		"outDir": "dist/server"
 	}
 }
