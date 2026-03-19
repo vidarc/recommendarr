@@ -1,23 +1,31 @@
 import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, test } from "vite-plus/test";
+import { describe, expect, onTestFinished, test } from "vite-plus/test";
 import { buildServer } from "../app.ts";
 
 const testDbDir = join(tmpdir(), "recommendarr-test-api");
 const testDbPath = join(testDbDir, "test.db");
 
-afterEach(() => {
-	if (existsSync(testDbDir)) {
-		rmSync(testDbDir, { recursive: true });
-	}
-});
+const setupDb = async () => {
+	process.env["DATABASE_PATH"] = testDbPath;
+	const app = await buildServer({ skipSSR: true });
+
+	onTestFinished(async () => {
+		await app.close();
+		delete process.env["DATABASE_PATH"];
+		if (existsSync(testDbDir)) {
+			rmSync(testDbDir, { recursive: true });
+		}
+	});
+
+	return app;
+};
 
 describe("GET /api/settings", () => {
 	test("returns settings as key-value object", async () => {
-		process.env["DATABASE_PATH"] = testDbPath;
 		const expectedStatusCode = 200;
-		const app = await buildServer({ skipSSR: true });
+		const app = await setupDb();
 
 		const response = await app.inject({ method: "GET", url: "/api/settings" });
 
@@ -25,14 +33,10 @@ describe("GET /api/settings", () => {
 		expect(response.json()).toStrictEqual({
 			app_version: "1.0.0",
 		});
-
-		await app.close();
-		delete process.env["DATABASE_PATH"];
 	});
 
 	test("returns additional settings when inserted", async () => {
-		process.env["DATABASE_PATH"] = testDbPath;
-		const app = await buildServer({ skipSSR: true });
+		const app = await setupDb();
 
 		app.db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme", "dark");
 
@@ -42,8 +46,39 @@ describe("GET /api/settings", () => {
 			app_version: "1.0.0",
 			theme: "dark",
 		});
+	});
 
-		await app.close();
-		delete process.env["DATABASE_PATH"];
+	test("returns empty object when no settings exist", async () => {
+		const app = await setupDb();
+
+		app.db.prepare("DELETE FROM settings").run();
+
+		const response = await app.inject({ method: "GET", url: "/api/settings" });
+
+		expect(response.json()).toStrictEqual({});
+	});
+
+	test("returns 404 for unknown API routes", async () => {
+		const expectedStatusCode = 404;
+		const app = await setupDb();
+
+		const response = await app.inject({ method: "GET", url: "/api/unknown" });
+
+		expect(response.statusCode).toBe(expectedStatusCode);
+	});
+});
+
+describe("skipDB option", () => {
+	test("does not register /api/settings when skipDB is true", async () => {
+		const expectedStatusCode = 404;
+		const app = await buildServer({ skipSSR: true, skipDB: true });
+
+		onTestFinished(async () => {
+			await app.close();
+		});
+
+		const response = await app.inject({ method: "GET", url: "/api/settings" });
+
+		expect(response.statusCode).toBe(expectedStatusCode);
 	});
 });

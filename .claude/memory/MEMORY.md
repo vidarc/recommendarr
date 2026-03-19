@@ -8,6 +8,8 @@
 
 ## Feedback
 
+- [feedback_testing.md](feedback_testing.md) — Testing preferences: use onTestFinished for cleanup, msw for HTTP mocks, avoid mocking hooks
+
 ## Decisions
 
 ## References
