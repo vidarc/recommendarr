@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, onTestFinished, test } from "vite-plus/test";
 import { buildServer } from "../app.ts";
+import { settings } from "../schema.ts";
 
 const testDbDir = join(tmpdir(), "recommendarr-test-api");
 const testDbPath = join(testDbDir, "test.db");
@@ -38,7 +39,7 @@ describe("GET /api/settings", () => {
 	test("returns additional settings when inserted", async () => {
 		const app = await setupDb();
 
-		app.db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme", "dark");
+		app.db.insert(settings).values({ key: "theme", value: "dark" }).run();
 
 		const response = await app.inject({ method: "GET", url: "/api/settings" });
 
@@ -51,7 +52,7 @@ describe("GET /api/settings", () => {
 	test("returns empty object when no settings exist", async () => {
 		const app = await setupDb();
 
-		app.db.prepare("DELETE FROM settings").run();
+		app.db.delete(settings).run();
 
 		const response = await app.inject({ method: "GET", url: "/api/settings" });
 

@@ -1,6 +1,8 @@
 import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import { settings } from "./schema.ts";
 
 import type { FastifyInstance } from "fastify";
 
@@ -14,26 +16,25 @@ const dbPlugin = (app: FastifyInstance) => {
 		mkdirSync(dir, { recursive: true });
 	}
 
-	const db = new Database(dbPath);
+	const sqlite = new Database(dbPath);
+	sqlite.pragma("journal_mode = WAL");
 
-	db.pragma("journal_mode = WAL");
+	const db = drizzle({ client: sqlite, schema: { settings } });
 
-	db.exec(`
-		CREATE TABLE IF NOT EXISTS settings (
+	db.run(
+		`CREATE TABLE IF NOT EXISTS settings (
 			key TEXT PRIMARY KEY,
 			value TEXT
-		)
-	`);
-
-	db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)").run(
-		"app_version",
-		"1.0.0",
+		)`,
 	);
 
+	db.insert(settings).values({ key: "app_version", value: "1.0.0" }).onConflictDoNothing().run();
+
 	app.decorate("db", db);
+	app.decorate("sqlite", sqlite);
 
 	app.addHook("onClose", () => {
-		db.close();
+		sqlite.close();
 	});
 };
 

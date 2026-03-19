@@ -1,8 +1,10 @@
+import { eq } from "drizzle-orm";
 import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, onTestFinished, test } from "vite-plus/test";
 import { buildServer } from "../app.ts";
+import { settings } from "../schema.ts";
 
 const expectedTableCount = 1;
 const firstIndex = 0;
@@ -28,7 +30,7 @@ describe("database plugin", () => {
 	test("initializes database and creates settings table", async () => {
 		const app = await setupDb();
 
-		const rows = app.db
+		const rows = app.sqlite
 			.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='settings'")
 			.all();
 		expect(rows).toHaveLength(expectedTableCount);
@@ -37,24 +39,26 @@ describe("database plugin", () => {
 	test("enables WAL journal mode", async () => {
 		const app = await setupDb();
 
-		const result = app.db.pragma("journal_mode") as { journal_mode: string }[];
+		const result = app.sqlite.pragma("journal_mode") as { journal_mode: string }[];
 		expect(result[firstIndex]?.journal_mode).toBe("wal");
 	});
 
 	test("seeds default app_version setting", async () => {
 		const app = await setupDb();
 
-		const row = app.db.prepare("SELECT value FROM settings WHERE key = ?").get("app_version") as
-			| { value: string }
-			| undefined;
-		expect(row?.value).toBe("1.0.0");
+		const rows = app.db.select().from(settings).where(eq(settings.key, "app_version")).all();
+		expect(rows[firstIndex]?.value).toBe("1.0.0");
 	});
 
 	test("does not overwrite existing app_version on restart", async () => {
 		process.env["DATABASE_PATH"] = testDbPath;
 		const firstApp = await buildServer({ skipSSR: true });
 
-		firstApp.db.prepare("UPDATE settings SET value = ? WHERE key = ?").run("2.0.0", "app_version");
+		firstApp.db
+			.update(settings)
+			.set({ value: "2.0.0" })
+			.where(eq(settings.key, "app_version"))
+			.run();
 		await firstApp.close();
 
 		const secondApp = await buildServer({ skipSSR: true });
@@ -67,10 +71,8 @@ describe("database plugin", () => {
 			}
 		});
 
-		const row = secondApp.db
-			.prepare("SELECT value FROM settings WHERE key = ?")
-			.get("app_version") as { value: string } | undefined;
-		expect(row?.value).toBe("2.0.0");
+		const rows = secondApp.db.select().from(settings).where(eq(settings.key, "app_version")).all();
+		expect(rows[firstIndex]?.value).toBe("2.0.0");
 	});
 
 	test("creates data directory if it does not exist", async () => {
@@ -101,8 +103,8 @@ describe("database plugin", () => {
 			}
 		});
 
-		expect(app.db.open).toBe(true);
+		expect(app.sqlite.open).toBe(true);
 		await app.close();
-		expect(app.db.open).toBe(false);
+		expect(app.sqlite.open).toBe(false);
 	});
 });

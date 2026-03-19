@@ -13,7 +13,8 @@ This project is an AI based recommendation engine for use of the \*arr stack (ra
 - Language: TypeScript (strictest mode via `@tsconfig/strictest`)
 - Backend: Fastify v5
 - Frontend: React
-- Database: SQLite
+- Database: SQLite via better-sqlite3 + Drizzle ORM (v1 beta)
+- Validation: Zod (integrated with Drizzle via `drizzle-orm/zod` and Fastify via `fastify-type-provider-zod`)
 - Build/Test/Lint: Vite+ (`yarn vp`)
 - Docker: This project is built into a docker image
 - Formatting: tabs (enforced by Oxfmt in `vite.config.ts`)
@@ -60,13 +61,19 @@ Add new routes and plugins by registering them inside `buildServer()` before `aw
 
 **Database:**
 
-The app uses SQLite via `better-sqlite3`. The `dbPlugin` in `src/server/db.ts`:
+The app uses SQLite via `better-sqlite3` + Drizzle ORM. The `dbPlugin` in `src/server/db.ts`:
 
 - Opens/creates a database at `DATABASE_PATH` env var (default: `./data/recommendarr.db`)
 - Enables WAL mode for better concurrency
 - Runs migrations (currently: `settings` table)
-- Decorates Fastify with `app.db` for route access
+- Decorates Fastify with `app.db` (Drizzle instance) and `app.sqlite` (raw better-sqlite3 instance) for route access
 - Closes the database on server shutdown
+
+Schema is defined in `src/server/schema.ts` using Drizzle's `sqliteTable` builder functions. Zod schemas are auto-generated from the Drizzle schema via `createSelectSchema`/`createInsertSchema` from `drizzle-orm/zod`. Routes use `app.db` with Drizzle queries (e.g. `app.db.select().from(settings).all()`).
+
+**Validation:**
+
+Fastify uses `fastify-type-provider-zod` for request/response validation and type inference. The validator and serializer compilers are set in `buildServer()`. Routes define Zod schemas in their `schema` option for `body`, `querystring`, `params`, and `response` — Fastify auto-validates at runtime and infers TypeScript types in handlers. Use `app.withTypeProvider<ZodTypeProvider>()` when registering routes.
 
 **Current routes:**
 

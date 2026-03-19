@@ -1,21 +1,31 @@
-import type { FastifyInstance } from "fastify";
+import { StatusCodes } from "http-status-codes";
+import { z } from "zod";
+import { settings } from "./schema.ts";
 
-interface SettingRow {
-	key: string;
-	value: string;
-}
+import type { FastifyInstance } from "fastify";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
+
+const settingsResponseSchema = z.record(z.string(), z.string());
 
 const apiRoutes = (app: FastifyInstance) => {
-	app.get("/api/settings", async () => {
-		const rows = app.db.prepare("SELECT key, value FROM settings").all() as SettingRow[];
+	const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-		const settings: Record<string, string> = {};
-		for (const row of rows) {
-			settings[row.key] = row.value;
-		}
+	typedApp.get(
+		"/api/settings",
+		{ schema: { response: { [StatusCodes.OK]: settingsResponseSchema } } },
+		async (_request, reply) => {
+			const rows = app.db.select().from(settings).all();
 
-		return settings;
-	});
+			const result: Record<string, string> = {};
+			for (const row of rows) {
+				if (row.value !== null) {
+					result[row.key] = row.value;
+				}
+			}
+
+			return reply.code(StatusCodes.OK).send(result);
+		},
+	);
 };
 
-export { apiRoutes };
+export { apiRoutes, settingsResponseSchema };
