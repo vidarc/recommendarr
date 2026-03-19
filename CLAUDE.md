@@ -48,6 +48,7 @@ yarn vp fmt          # Format only
 ## Workflows
 
 - Always make a plan first, then work on the implementation
+- When modifying files, keep changes scoped to what was requested. Do not fix or refactor unrelated code unless explicitly asked. If you discover pre-existing issues, mention them but ask before fixing.
 
 ## Architecture
 

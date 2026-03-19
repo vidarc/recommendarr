@@ -7,5 +7,20 @@
 			"command": "npx",
 			"args": ["vp", "mcp"]
 		}
+	},
+	"hooks": {
+		"PostToolUse": [
+			{
+				"matcher": "Write|Edit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "yarn vp check 2>&1 || true",
+						"timeout": 120,
+						"statusMessage": "Running format, lint, and typecheck..."
+					}
+				]
+			}
+		]
 	}
 }
