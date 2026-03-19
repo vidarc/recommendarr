@@ -1,4 +1,5 @@
-import react from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
@@ -8,7 +9,7 @@ export default defineConfig({
 		emptyOutDir: true,
 		outDir: "../../dist/client",
 	},
-	plugins: [react()],
+	plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
 
 	// Vitest configuration.
 	test: {
@@ -57,6 +58,7 @@ export default defineConfig({
 			"import/no-named-export": "off",
 			"max-statements": "off",
 			"no-ternary": "off",
+			"react/only-export-components": "error",
 			"react/react-in-jsx-scope": "off",
 			"sort-imports": "off",
 			"sort-keys": "off",
