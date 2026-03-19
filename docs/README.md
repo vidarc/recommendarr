@@ -4,10 +4,11 @@ AI-based recommendation engine for the \*arr stack (Radarr, Sonarr, Lidarr) and 
 
 ## Environment Variables
 
-| Variable | Default   | Description                     |
-| -------- | --------- | ------------------------------- |
-| `PORT`   | `3000`    | Port the HTTP server listens on |
-| `HOST`   | `0.0.0.0` | Host the HTTP server binds to   |
+| Variable        | Default                  | Description                      |
+| --------------- | ------------------------ | -------------------------------- |
+| `PORT`          | `3000`                   | Port the HTTP server listens on  |
+| `HOST`          | `0.0.0.0`                | Host the HTTP server binds to    |
+| `DATABASE_PATH` | `./data/recommendarr.db` | Path to the SQLite database file |
 
 ## API Reference
 

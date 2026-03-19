@@ -4,13 +4,13 @@ description: Current state of recommendarr — what exists, what's in progress, 
 type: project
 ---
 
-As of 2026-03-16, the project has:
+As of 2026-03-18, the project has:
 
-- Fastify backend with /ping and /health routes
-- React frontend scaffolded (App.tsx, index.html, main.tsx) — staged but not yet committed to main
+- Fastify backend with /ping, /health, and /api/settings routes
+- SQLite database via better-sqlite3 with WAL mode, settings table, Fastify plugin pattern
+- React frontend fetching and displaying settings from the API
 - Vite+ toolchain configured with yarn as package manager
-- Docker setup targeting Node 24
-- SQLite planned but not yet integrated
+- Docker setup targeting Node 24 with native build tools for better-sqlite3
 - No AI/recommendation logic implemented yet
 
 **Why:** Tracking project state helps orient future conversations quickly.

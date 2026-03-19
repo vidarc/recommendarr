@@ -42,6 +42,32 @@ No parameters or body required.
 
 ---
 
+## Settings
+
+### `GET /api/settings`
+
+Returns all application settings as a key-value JSON object.
+
+**Request**
+
+No parameters or body required.
+
+**Response `200 OK`**
+
+```json
+{
+	"app_version": "1.0.0"
+}
+```
+
+| Field         | Type     | Description         |
+| ------------- | -------- | ------------------- |
+| `app_version` | `string` | Current app version |
+
+Additional settings will appear as key-value pairs as they are added.
+
+---
+
 ## SSR
 
 ### `GET /*` (catch-all)

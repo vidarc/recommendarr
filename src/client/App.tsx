@@ -1,21 +1,34 @@
-import { useEffect, useState } from "react";
+import { useGetSettingsQuery } from "./api.ts";
 
-const intialTime = 0;
-const incrementTime = 1;
-const timeInterval = 1000;
+const SettingItem = ({ name, value }: { name: string; value: string }) => (
+	<li>
+		<strong>{name}</strong>: {value}
+	</li>
+);
 
 export const App = () => {
-	const [time, setTime] = useState(intialTime);
+	const { data: settings, error, isLoading } = useGetSettingsQuery();
 
-	useEffect(() => {
-		const interval = setInterval(() => {
-			setTime((current) => current + incrementTime);
-		}, timeInterval);
+	if (isLoading) {
+		return <p>Loading...</p>;
+	}
 
-		return () => {
-			clearInterval(interval);
-		};
-	});
+	if (error) {
+		return <p>Error loading settings</p>;
+	}
 
-	return <h1>Hello World - {time}</h1>;
+	if (!settings) {
+		return <p>No settings found</p>;
+	}
+
+	return (
+		<div>
+			<h1>Recommendarr</h1>
+			<ul>
+				{Object.entries(settings).map(([key, value]) => (
+					<SettingItem key={key} name={key} value={value} />
+				))}
+			</ul>
+		</div>
+	);
 };

@@ -56,12 +56,23 @@ The server uses a factory pattern: `buildServer()` in `src/server/app.ts` create
 
 Add new routes and plugins by registering them inside `buildServer()` before `await app.ready()`.
 
-`buildServer()` accepts an optional `{ skipSSR?: boolean }` options object. Tests pass `{ skipSSR: true }` to avoid loading Vite/SSR dependencies.
+`buildServer()` accepts an optional `{ skipSSR?: boolean, skipDB?: boolean }` options object. Tests pass `{ skipSSR: true }` to avoid loading Vite/SSR dependencies. Tests that don't need the database pass `{ skipDB: true }`.
+
+**Database:**
+
+The app uses SQLite via `better-sqlite3`. The `dbPlugin` in `src/server/db.ts`:
+
+- Opens/creates a database at `DATABASE_PATH` env var (default: `./data/recommendarr.db`)
+- Enables WAL mode for better concurrency
+- Runs migrations (currently: `settings` table)
+- Decorates Fastify with `app.db` for route access
+- Closes the database on server shutdown
 
 **Current routes:**
 
 - `GET /ping` — health check, returns `{ "status": "ok" }` (also used by Docker health check)
 - `GET /health` — returns `{ "status": "ok", "uptimeSeconds": number }` — uptime is measured from when `buildServer()` is called
+- `GET /api/settings` — returns all settings from the database as a JSON key-value object
 - `GET /*` — SSR catch-all (registered last so API routes take priority)
 
 ### SSR

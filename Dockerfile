@@ -5,6 +5,9 @@ WORKDIR /app
 
 RUN corepack enable
 
+# Install native build tools for better-sqlite3
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies first for best layer caching
 COPY .yarn/ .yarn/
 COPY ["package.json", "yarn.lock", ".yarnrc.yml", "./"]
@@ -37,5 +40,7 @@ EXPOSE ${PORT}
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://localhost:'+process.env.PORT+'/ping').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+
+VOLUME /app/data
 
 CMD ["node", "dist/server/server.js"]
