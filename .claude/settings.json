@@ -2,12 +2,6 @@
 	"env": {
 		"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
 	},
-	"mcpServers": {
-		"vite-plus": {
-			"command": "npx",
-			"args": ["vp", "mcp"]
-		}
-	},
 	"hooks": {
 		"PostToolUse": [
 			{
@@ -22,5 +16,19 @@
 				]
 			}
 		]
+	},
+	"enabledPlugins": {
+		"frontend-design@claude-plugins-official": true,
+		"skill-creator@claude-plugins-official": true,
+		"superpowers@claude-plugins-official": true,
+		"code-review@claude-plugins-official": true,
+		"code-simplifier@claude-plugins-official": true,
+		"claude-md-management@claude-plugins-official": true
+	},
+	"mcpServers": {
+		"vite-plus": {
+			"command": "npx",
+			"args": ["vp", "mcp"]
+		}
 	}
 }

@@ -118,6 +118,26 @@ The app uses wouter for routing. Routes: `/login`, `/register`, `/` (dashboard).
 
 The project uses ESM (`"type": "module"` in package.json). Use `.ts` extensions in imports (e.g. `import { buildServer } from "./app.ts"`).
 
+## Styling
+
+- CSS-in-JS: Linaria (`@linaria/atomic` for component styles, `@linaria/core` for global styles)
+- Vite plugin: `@wyw-in-js/vite` — requires `babelOptions: { presets: ["@babel/preset-typescript"] }` to parse TS
+- CSS reset: `sanitize.css` + `sanitize.css/typography.css` (imported in `entry-client.tsx`)
+- Theme tokens: `src/client/theme.ts` (Night Owl color scheme)
+- CSS side-effect imports need declarations in `src/client/css.d.ts`
+
+## Lint Gotchas
+
+- `jsx-max-depth` (max 2): Extract sub-components to avoid nesting violations (e.g., `FormField`, `AuthFooter`)
+- `import/no-unassigned-import`: CSS imports are allowed via `["error", { allow: ["**/*.css"] }]`
+- `import/group-exports`: Use a single `export { a, b }` statement instead of multiple `export const`
+
+## Import Sorting
+
+- Handled by Oxfmt (not Oxlint) in `fmt.sortImports` in `vite.config.ts`
+- Groups: node builtins → packages → source code → type imports → styles/side-effects
+- Newlines between groups enforced (`newlinesBetween: true`)
+
 ## Testing and Quality Standards
 
 - `vitest` is used for all unit testing (imported from `vite-plus/test`)
