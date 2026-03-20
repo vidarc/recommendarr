@@ -39,11 +39,18 @@ yarn vp fmt          # Format only
 
 ## Project Structure
 
-- `src/server` — Fastify backend (exists)
-- `src/client` — React frontend (exists: `App.tsx`, `index.html`, `entry-client.tsx`, `entry-server.tsx`)
+- `src/server` — Fastify backend
+  - `routes/` — Route handlers (api, auth, health)
+  - `services/` — Business logic (auth-utils)
+  - Root: app factory, entry point, db plugin, SSR plugin, schema
+- `src/client` — React frontend
+  - `pages/` — Route-level page components (Login, Register, Dashboard)
+  - `components/` — Reusable UI primitives (FormField, AuthFooter)
+  - `features/` — Feature-scoped state (auth/auth-slice)
+  - Root: entry points, store, api, theme, global styles
 - `src/shared` — Shared types and utilities (planned, not yet created)
 - `docs/` — Architecture decisions, API docs, environment variable reference
-- Tests are colocated as `*.test.ts` files alongside source (pattern: `src/**/*.test.ts`)
+- Tests: `__tests__/` folders colocated with source (e.g., `src/client/pages/__tests__/Login.test.tsx`)
 
 ## Workflows
 
