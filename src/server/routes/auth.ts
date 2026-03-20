@@ -4,8 +4,8 @@ import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { hashPassword, verifyPassword } from "./auth-utils.ts";
-import { users } from "./schema.ts";
+import { users } from "../schema.ts";
+import { hashPassword, verifyPassword } from "../services/auth-utils.ts";
 
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
