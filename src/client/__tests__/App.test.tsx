@@ -15,7 +15,7 @@ import { Router } from "wouter";
 
 import { api } from "../api.ts";
 import { App } from "../App.tsx";
-import { setUser } from "../auth-slice.ts";
+import { setUser } from "../features/auth/auth-slice.ts";
 import { createStore } from "../store.ts";
 
 const server = setupServer();

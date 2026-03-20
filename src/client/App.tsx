@@ -4,8 +4,8 @@ import { Redirect, Route, Switch } from "wouter";
 
 import { useGetSettingsQuery, useGetSetupStatusQuery } from "./api.ts";
 import { globals } from "./global-styles.ts";
-import { Login } from "./Login.tsx";
-import { Register } from "./Register.tsx";
+import { Login } from "./pages/Login.tsx";
+import { Register } from "./pages/Register.tsx";
 import { colors, fonts, radii, spacing } from "./theme.ts";
 
 import type { RootState } from "./store.ts";

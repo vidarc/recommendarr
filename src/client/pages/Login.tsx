@@ -3,11 +3,11 @@ import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation } from "wouter";
 
-import { useLoginMutation } from "./api.ts";
-import { setUser } from "./auth-slice.ts";
-import { LoginFooter } from "./AuthFooter.tsx";
-import { FormField } from "./FormField.tsx";
-import { colors, radii, spacing } from "./theme.ts";
+import { useLoginMutation } from "../api.ts";
+import { LoginFooter } from "../components/AuthFooter.tsx";
+import { FormField } from "../components/FormField.tsx";
+import { setUser } from "../features/auth/auth-slice.ts";
+import { colors, radii, spacing } from "../theme.ts";
 
 const formWrapper = css`
 	display: flex;

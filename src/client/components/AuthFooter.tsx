@@ -1,6 +1,6 @@
 import { css } from "@linaria/atomic";
 
-import { colors, spacing } from "./theme.ts";
+import { colors, spacing } from "../theme.ts";
 
 const footerText = css`
 	text-align: center;
