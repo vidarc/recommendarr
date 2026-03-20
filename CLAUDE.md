@@ -12,7 +12,7 @@ This project is an AI based recommendation engine for use of the \*arr stack (ra
 - Runtime: Node24
 - Language: TypeScript (strictest mode via `@tsconfig/strictest`)
 - Backend: Fastify v5
-- Frontend: React
+- Frontend: React + wouter (routing)
 - Database: SQLite via better-sqlite3 + Drizzle ORM (v1 beta)
 - Validation: Zod (integrated with Drizzle via `drizzle-orm/zod` and Fastify via `fastify-type-provider-zod`)
 - Build/Test/Lint: Vite+ (`yarn vp`)
@@ -80,6 +80,9 @@ Fastify uses `fastify-type-provider-zod` for request/response validation and typ
 
 - `GET /ping` — health check, returns `{ "status": "ok" }` (also used by Docker health check)
 - `GET /health` — returns `{ "status": "ok", "uptimeSeconds": number }` — uptime is measured from when `buildServer()` is called
+- `GET /api/auth/setup-status` — returns `{ "needsSetup": boolean }` indicating if any users exist
+- `POST /api/auth/register` — creates a new user; first user becomes admin
+- `POST /api/auth/login` — authenticates a user by username/password
 - `GET /api/settings` — returns all settings from the database as a JSON key-value object
 - `GET /*` — SSR catch-all (registered last so API routes take priority)
 
@@ -89,7 +92,7 @@ The app uses Vite's built-in SSR with Fastify:
 
 - **Dev**: Vite runs in middleware mode via `@fastify/middie`. `ssrLoadModule` renders `entry-server.tsx` on each request with HMR support.
 - **Prod**: Pre-built SSR bundle (`dist/ssr/entry-server.js`) renders HTML. `@fastify/static` serves client assets from `dist/client/assets/`.
-- **Entry points**: `entry-client.tsx` (hydration via `hydrateRoot`) and `entry-server.tsx` (server render via `renderToString`).
+- **Entry points**: `entry-client.tsx` (hydration via `hydrateRoot`) and `entry-server.tsx` (server render via `renderToString`). The SSR entry accepts a URL string for wouter's `<Router ssrPath>` prop.
 - **HTML template**: `index.html` contains `<!--ssr-outlet-->` placeholder replaced with rendered HTML.
 
 **Build pipeline** (3 steps, run via `yarn build`):
@@ -97,6 +100,14 @@ The app uses Vite's built-in SSR with Fastify:
 1. `vp build` — client bundle → `dist/client/`
 2. `vp build --ssr` — SSR bundle → `dist/ssr/`
 3. `tsc -p tsconfig.server.json` — server TypeScript → `dist/server/`
+
+**Authentication:**
+
+The app uses a `users` table with scrypt-hashed passwords (via `node:crypto`). The first user to register becomes admin. Alternatively, set `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` env vars to create an admin on first boot. Auth state lives in a Redux slice (`authSlice`); session/JWT handling is not yet implemented.
+
+**Client-side routing:**
+
+The app uses wouter for routing. Routes: `/login`, `/register`, `/` (dashboard). Auth gates redirect unauthenticated users to `/login`, and if no users exist yet, `/login` redirects to `/register`.
 
 **Environment variables** (see `docs/README.md` for full list):
 

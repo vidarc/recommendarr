@@ -46,7 +46,7 @@ export default defineConfig({
 			typeAware: true,
 			typeCheck: true,
 		},
-		plugins: ["import", "jsx-a11y", "node", "promise", "react-perf", "react", "vitest"],
+		plugins: ["import", "jsx-a11y", "node", "promise", "react-perf", "react", "vitest", "unicorn"],
 		categories: {
 			correctness: "error",
 			perf: "error",
@@ -54,6 +54,7 @@ export default defineConfig({
 			suspicious: "error",
 		},
 		rules: {
+			"eslint/no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
 			"import/prefer-default-export": "off",
 			"import/no-named-export": "off",
 			"max-statements": "off",
@@ -62,6 +63,15 @@ export default defineConfig({
 			"react/react-in-jsx-scope": "off",
 			"sort-imports": "off",
 			"sort-keys": "off",
+			"unicorn/filename-case": [
+				"error",
+				{
+					cases: {
+						kebabCase: true,
+						pascalCase: true,
+					},
+				},
+			],
 		},
 		overrides: [
 			{

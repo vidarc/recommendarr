@@ -2,6 +2,7 @@ import { fastify } from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 import { randomUUID } from "node:crypto";
 import { apiRoutes } from "./api.ts";
+import { authRoutes } from "./auth.ts";
 import { dbPlugin } from "./db.ts";
 import { healthRoutes } from "./health.ts";
 import { ssrRoutes } from "./ssr.ts";
@@ -24,6 +25,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 
 	if (!options.skipDB) {
 		dbPlugin(app);
+		authRoutes(app);
 		apiRoutes(app);
 	}
 

@@ -23,14 +23,14 @@ const ssrRoutes = async (app: FastifyInstance) => {
 		app.get("/*", async (_request, reply) => {
 			const { url } = _request;
 			const templatePath = resolve(root, "src/client/index.html");
-			let template = await readFile(templatePath, "utf-8");
+			let template = await readFile(templatePath, "utf8");
 			template = await vite.transformIndexHtml(url, template);
 
 			const { render } = (await vite.ssrLoadModule(
 				resolve(root, "src/client/entry-server.tsx"),
-			)) as { render: () => string };
+			)) as { render: (url: string) => string };
 
-			const appHtml = render();
+			const appHtml = render(url);
 			const html = template.replace("<!--ssr-outlet-->", appHtml);
 
 			return reply.type("text/html").send(html);
@@ -45,14 +45,14 @@ const ssrRoutes = async (app: FastifyInstance) => {
 		});
 
 		const templatePath = resolve(clientDist, "index.html");
-		const template = await readFile(templatePath, "utf-8");
+		const template = await readFile(templatePath, "utf8");
 
 		const { render } = (await import(resolve(root, "dist/ssr/entry-server.js"))) as {
-			render: () => string;
+			render: (url: string) => string;
 		};
 
 		app.get("/*", async (_request, reply) => {
-			const appHtml = render();
+			const appHtml = render(_request.url);
 			const html = template.replace("<!--ssr-outlet-->", appHtml);
 
 			return reply.type("text/html").send(html);

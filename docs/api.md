@@ -68,6 +68,100 @@ Additional settings will appear as key-value pairs as they are added.
 
 ---
 
+## Auth
+
+### `GET /api/auth/setup-status`
+
+Returns whether the application needs initial setup (no users exist yet).
+
+**Request**
+
+No parameters or body required.
+
+**Response `200 OK`**
+
+```json
+{ "needsSetup": true }
+```
+
+| Field        | Type      | Description                              |
+| ------------ | --------- | ---------------------------------------- |
+| `needsSetup` | `boolean` | `true` if no users exist in the database |
+
+---
+
+### `POST /api/auth/register`
+
+Creates a new user account. The first user to register automatically becomes an admin.
+
+**Request**
+
+```json
+{
+	"username": "myuser",
+	"password": "mypassword"
+}
+```
+
+| Field      | Type     | Description                    |
+| ---------- | -------- | ------------------------------ |
+| `username` | `string` | Required, minimum 1 character  |
+| `password` | `string` | Required, minimum 8 characters |
+
+**Response `201 Created`**
+
+```json
+{
+	"id": "550e8400-e29b-41d4-a716-446655440000",
+	"username": "myuser",
+	"isAdmin": true
+}
+```
+
+**Response `409 Conflict`**
+
+```json
+{ "error": "Username already taken" }
+```
+
+---
+
+### `POST /api/auth/login`
+
+Authenticates a user with username and password.
+
+**Request**
+
+```json
+{
+	"username": "myuser",
+	"password": "mypassword"
+}
+```
+
+| Field      | Type     | Description                    |
+| ---------- | -------- | ------------------------------ |
+| `username` | `string` | Required, minimum 1 character  |
+| `password` | `string` | Required, minimum 8 characters |
+
+**Response `200 OK`**
+
+```json
+{
+	"id": "550e8400-e29b-41d4-a716-446655440000",
+	"username": "myuser",
+	"isAdmin": true
+}
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Invalid username or password" }
+```
+
+---
+
 ## SSR
 
 ### `GET /*` (catch-all)

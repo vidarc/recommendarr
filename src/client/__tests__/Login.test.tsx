@@ -1,15 +1,53 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { Provider } from "react-redux";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	onTestFinished,
+	test,
+} from "vite-plus/test";
+import { Router } from "wouter";
+import { api } from "../api.ts";
 import { Login } from "../Login.tsx";
+import { createStore } from "../store.ts";
 
-const renderLogin = (onLogin = vi.fn()) => {
+const server = setupServer();
+
+beforeAll(() => {
+	server.listen();
+});
+
+afterEach(() => {
+	server.resetHandlers();
+});
+
+afterAll(() => {
+	server.close();
+});
+
+const renderLogin = () => {
+	const testStore = createStore();
+
 	onTestFinished(() => {
 		cleanup();
+		testStore.dispatch(api.util.resetApiState());
 	});
 
-	render(<Login onLogin={onLogin} />);
-	return { onLogin };
+	render(
+		<Provider store={testStore}>
+			<Router ssrPath="/login">
+				<Login />
+			</Router>
+		</Provider>,
+	);
+
+	return { store: testStore };
 };
 
 describe("Login", () => {
@@ -36,16 +74,22 @@ describe("Login", () => {
 		expect(passwordInput).toHaveValue("secret123");
 	});
 
-	test("calls onLogin with correct credentials on submit", async () => {
-		const { onLogin } = renderLogin();
+	test("shows error message on failed login", async () => {
+		const unauthorizedCode = 401;
+		server.use(
+			http.post("/api/auth/login", () =>
+				HttpResponse.json({ error: "Invalid credentials" }, { status: unauthorizedCode }),
+			),
+		);
+
+		renderLogin();
 		const user = userEvent.setup();
 
 		await user.type(screen.getByLabelText(/username/i), "admin");
-		await user.type(screen.getByLabelText(/password/i), "password");
+		await user.type(screen.getByLabelText(/password/i), "wrongpassword");
 		await user.click(screen.getByRole("button", { name: /log in/i }));
 
-		expect(onLogin).toHaveBeenCalledOnce();
-		expect(onLogin).toHaveBeenCalledWith("admin", "password");
+		expect(await screen.findByText(/invalid username or password/i)).toBeInTheDocument();
 	});
 
 	test("submit button is present and accessible", () => {
