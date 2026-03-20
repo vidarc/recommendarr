@@ -1,4 +1,5 @@
 import { describe, expect, onTestFinished, test } from "vite-plus/test";
+
 import { buildServer } from "../app.ts";
 
 describe("GET /health", () => {

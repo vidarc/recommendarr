@@ -90,12 +90,13 @@ export default defineConfig({
 	// Oxfmt configuration.
 	fmt: {
 		sortImports: {
-			newlinesBetween: false,
+			newlinesBetween: true,
 			groups: [
-				["value-builtin", "value-external"],
+				"value-builtin",
+				"value-external",
 				["value-internal", "value-parent", "value-sibling", "value-index"],
-				{ newlinesBetween: true },
 				"type-import",
+				["style", "side_effect", "side_effect_style"],
 				"unknown",
 			],
 		},

@@ -1,5 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
+
 import { settings } from "./schema.ts";
 
 import type { FastifyInstance } from "fastify";

@@ -1,6 +1,7 @@
 import { renderToString } from "react-dom/server";
 import { Provider } from "react-redux";
 import { Router } from "wouter";
+
 import { App } from "./App.tsx";
 import { createStore } from "./store.ts";
 

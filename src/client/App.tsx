@@ -1,15 +1,18 @@
 import { css } from "@linaria/atomic";
 import { useSelector } from "react-redux";
 import { Redirect, Route, Switch } from "wouter";
+
 import { useGetSettingsQuery, useGetSetupStatusQuery } from "./api.ts";
 import { globals } from "./global-styles.ts";
 import { Login } from "./Login.tsx";
 import { Register } from "./Register.tsx";
 import { colors, fonts, radii, spacing } from "./theme.ts";
+
+import type { RootState } from "./store.ts";
+
 import "sanitize.css";
 import "sanitize.css/typography.css";
 import "sanitize.css/forms.css";
-import type { RootState } from "./store.ts";
 
 const appWrapper = css`
 	min-height: 100vh;

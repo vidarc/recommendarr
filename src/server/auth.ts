@@ -1,7 +1,9 @@
+import { randomUUID } from "node:crypto";
+
 import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
+
 import { hashPassword, verifyPassword } from "./auth-utils.ts";
 import { users } from "./schema.ts";
 

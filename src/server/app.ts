@@ -1,6 +1,8 @@
+import { randomUUID } from "node:crypto";
+
 import { fastify } from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
-import { randomUUID } from "node:crypto";
+
 import { apiRoutes } from "./api.ts";
 import { authRoutes } from "./auth.ts";
 import { dbPlugin } from "./db.ts";

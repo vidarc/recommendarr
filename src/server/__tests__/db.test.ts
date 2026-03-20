@@ -1,8 +1,10 @@
-import { eq } from "drizzle-orm";
 import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+import { eq } from "drizzle-orm";
 import { describe, expect, onTestFinished, test } from "vite-plus/test";
+
 import { buildServer } from "../app.ts";
 import { settings } from "../schema.ts";
 

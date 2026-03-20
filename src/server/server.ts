@@ -1,4 +1,5 @@
 import closeWithGrace from "close-with-grace";
+
 import { buildServer } from "./app.ts";
 
 const defaultPort = 3000;

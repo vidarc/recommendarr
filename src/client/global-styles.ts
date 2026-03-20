@@ -1,4 +1,5 @@
 import { css } from "@linaria/core";
+
 import { colors, fonts } from "./theme.ts";
 
 export const globals = css`

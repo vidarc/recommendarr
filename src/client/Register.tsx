@@ -2,6 +2,7 @@ import { css } from "@linaria/atomic";
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation } from "wouter";
+
 import { useRegisterMutation } from "./api.ts";
 import { setUser } from "./auth-slice.ts";
 import { RegisterFooter } from "./AuthFooter.tsx";

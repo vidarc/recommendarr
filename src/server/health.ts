@@ -1,5 +1,6 @@
-import { StatusCodes } from "http-status-codes";
 import { uptime } from "node:process";
+
+import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import type { FastifyInstance } from "fastify";
