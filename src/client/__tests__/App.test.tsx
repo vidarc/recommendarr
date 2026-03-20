@@ -1,4 +1,5 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { delay, http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Provider } from "react-redux";
@@ -44,8 +45,15 @@ const renderApp = () => {
 	);
 };
 
+const loginFirst = async () => {
+	const user = userEvent.setup();
+	await user.type(screen.getByLabelText(/username/i), "testuser");
+	await user.type(screen.getByLabelText(/password/i), "password");
+	await user.click(screen.getByRole("button", { name: /log in/i }));
+};
+
 describe("App", () => {
-	test("shows loading state while fetching", () => {
+	test("shows loading state while fetching", async () => {
 		server.use(
 			http.get("/api/settings", async () => {
 				await delay("infinite");
@@ -54,6 +62,7 @@ describe("App", () => {
 		);
 
 		renderApp();
+		await loginFirst();
 
 		expect(screen.getByText(/Loading/)).toBeInTheDocument();
 	});
@@ -65,6 +74,7 @@ describe("App", () => {
 		);
 
 		renderApp();
+		await loginFirst();
 
 		await waitFor(() => {
 			expect(screen.getByText(/Error loading settings/)).toBeInTheDocument();
@@ -77,6 +87,7 @@ describe("App", () => {
 		);
 
 		renderApp();
+		await loginFirst();
 
 		await waitFor(() => {
 			expect(screen.getByText("Recommendarr")).toBeInTheDocument();

@@ -9,6 +9,7 @@
 ## Feedback
 
 - [feedback_testing.md](feedback_testing.md) — Testing preferences: use onTestFinished for cleanup, msw for HTTP mocks, avoid mocking hooks
+- [feedback_react19_event_types.md](feedback_react19_event_types.md) — Use specific event types (SubmitEvent, ChangeEvent, etc.) instead of deprecated FormEvent in React 19
 
 ## Decisions
 

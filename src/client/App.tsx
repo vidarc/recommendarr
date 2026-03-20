@@ -1,4 +1,6 @@
+import { useCallback, useState } from "react";
 import { useGetSettingsQuery } from "./api.ts";
+import { Login } from "./Login.tsx";
 
 const SettingItem = ({ name, value }: { name: string; value: string }) => (
 	<li>
@@ -6,7 +8,7 @@ const SettingItem = ({ name, value }: { name: string; value: string }) => (
 	</li>
 );
 
-export const App = () => {
+const Settings = () => {
 	const { data: settings, error, isLoading } = useGetSettingsQuery();
 
 	if (isLoading) {
@@ -31,4 +33,18 @@ export const App = () => {
 			</ul>
 		</div>
 	);
+};
+
+export const App = () => {
+	const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+	const handleLogin = useCallback(() => {
+		setIsAuthenticated(true);
+	}, []);
+
+	if (!isAuthenticated) {
+		return <Login onLogin={handleLogin} />;
+	}
+
+	return <Settings />;
 };
