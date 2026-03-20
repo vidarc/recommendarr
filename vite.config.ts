@@ -1,5 +1,6 @@
 import babel from "@rolldown/plugin-babel";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import wyw from "@wyw-in-js/vite";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
@@ -9,7 +10,11 @@ export default defineConfig({
 		emptyOutDir: true,
 		outDir: "../../dist/client",
 	},
-	plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
+	plugins: [
+		react(),
+		babel({ presets: [reactCompilerPreset()] }),
+		wyw({ babelOptions: { presets: ["@babel/preset-typescript"] } }),
+	],
 
 	// Vitest configuration.
 	test: {
@@ -55,6 +60,7 @@ export default defineConfig({
 		},
 		rules: {
 			"eslint/no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
+			"import/no-unassigned-import": ["error", { allow: ["**/*.css"] }],
 			"import/prefer-default-export": "off",
 			"import/no-named-export": "off",
 			"max-statements": "off",
