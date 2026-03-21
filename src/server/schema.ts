@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 
 const settings = sqliteTable("settings", {
@@ -44,12 +44,33 @@ const plexConnections = sqliteTable("plex_connections", {
 const selectPlexConnectionSchema = createSelectSchema(plexConnections);
 const insertPlexConnectionSchema = createInsertSchema(plexConnections);
 
+const DEFAULT_TEMPERATURE = 0.7;
+const DEFAULT_MAX_TOKENS = 2048;
+
+const aiConfigs = sqliteTable("ai_configs", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull().unique(),
+	endpointUrl: text("endpoint_url").notNull(),
+	apiKey: text("api_key").notNull(),
+	modelName: text("model_name").notNull(),
+	temperature: real("temperature").notNull().default(DEFAULT_TEMPERATURE),
+	maxTokens: integer("max_tokens").notNull().default(DEFAULT_MAX_TOKENS),
+	createdAt: text("created_at").notNull(),
+	updatedAt: text("updated_at").notNull(),
+});
+
+const selectAiConfigSchema = createSelectSchema(aiConfigs);
+const insertAiConfigSchema = createInsertSchema(aiConfigs);
+
 export {
+	aiConfigs,
+	insertAiConfigSchema,
 	insertPlexConnectionSchema,
 	insertSessionSchema,
 	insertSettingSchema,
 	insertUserSchema,
 	plexConnections,
+	selectAiConfigSchema,
 	selectPlexConnectionSchema,
 	selectSessionSchema,
 	selectSettingSchema,
