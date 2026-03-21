@@ -26,7 +26,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 	healthRoutes(app);
 
 	if (!options.skipDB) {
-		dbPlugin(app);
+		await dbPlugin(app);
 		authRoutes(app);
 		apiRoutes(app);
 	}
