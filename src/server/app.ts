@@ -6,9 +6,12 @@ import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod
 
 import { dbPlugin } from "./db.ts";
 import { authMiddleware } from "./middleware/auth.ts";
+import { aiRoutes } from "./routes/ai.ts";
 import { apiRoutes } from "./routes/api.ts";
 import { authRoutes } from "./routes/auth.ts";
+import { chatRoutes } from "./routes/chat.ts";
 import { healthRoutes } from "./routes/health.ts";
+import { plexRoutes } from "./routes/plex.ts";
 import { getKey } from "./services/encryption.ts";
 import { ssrRoutes } from "./ssr.ts";
 
@@ -36,7 +39,10 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 		await dbPlugin(app);
 		authMiddleware(app);
 		authRoutes(app);
+		aiRoutes(app);
 		apiRoutes(app);
+		chatRoutes(app);
+		plexRoutes(app);
 	}
 
 	if (!options.skipSSR) {

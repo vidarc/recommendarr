@@ -1,15 +1,15 @@
 import { css } from "@linaria/atomic";
-import { useSelector } from "react-redux";
 import { Redirect, Route, Switch } from "wouter";
 
-import { useGetSetupStatusQuery } from "./api.ts";
+import { useGetMeQuery, useGetSetupStatusQuery } from "./api.ts";
+import { AppLayout } from "./components/AppLayout.tsx";
 import { globals } from "./global-styles.ts";
-import { Dashboard } from "./pages/Dashboard.tsx";
+import { History } from "./pages/History.tsx";
 import { Login } from "./pages/Login.tsx";
+import { Recommendations } from "./pages/Recommendations.tsx";
 import { Register } from "./pages/Register.tsx";
+import { Settings } from "./pages/Settings.tsx";
 import { colors } from "./theme.ts";
-
-import type { RootState } from "./store.ts";
 
 import "sanitize.css";
 import "sanitize.css/typography.css";
@@ -31,18 +31,37 @@ const loadingWrapper = css`
 	letter-spacing: 0.5px;
 `;
 
-const ProtectedDashboard = () => {
-	const user = useSelector((state: RootState) => state.auth.user);
+const CatchAll = () => <Redirect to="/" />;
+
+const AuthenticatedRoutes = () => (
+	<AppLayout>
+		<Switch>
+			<Route path="/" component={Recommendations} />
+			<Route path="/history" component={History} />
+			<Route path="/settings" component={Settings} />
+			<Route component={CatchAll} />
+		</Switch>
+	</AppLayout>
+);
+
+const ProtectedApp = () => {
+	const { data: user, isLoading } = useGetMeQuery();
+	if (isLoading) {
+		return <p className={loadingWrapper}>Loading...</p>;
+	}
 	if (!user) {
 		return <Redirect to="/login" />;
 	}
-	return <Dashboard />;
+	return <AuthenticatedRoutes />;
 };
 
 const LoginPage = () => {
-	const user = useSelector((state: RootState) => state.auth.user);
+	const { data: user, isLoading: isMeLoading } = useGetMeQuery();
 	const { data: setupStatus } = useGetSetupStatusQuery();
 
+	if (isMeLoading) {
+		return <p className={loadingWrapper}>Loading...</p>;
+	}
 	if (user) {
 		return <Redirect to="/" />;
 	}
@@ -53,14 +72,15 @@ const LoginPage = () => {
 };
 
 const RegisterPage = () => {
-	const user = useSelector((state: RootState) => state.auth.user);
+	const { data: user, isLoading } = useGetMeQuery();
+	if (isLoading) {
+		return <p className={loadingWrapper}>Loading...</p>;
+	}
 	if (user) {
 		return <Redirect to="/" />;
 	}
 	return <Register />;
 };
-
-const CatchAll = () => <Redirect to="/" />;
 
 export const App = () => {
 	const { isLoading } = useGetSetupStatusQuery();
@@ -74,8 +94,7 @@ export const App = () => {
 			<Switch>
 				<Route path="/login" component={LoginPage} />
 				<Route path="/register" component={RegisterPage} />
-				<Route path="/" component={ProtectedDashboard} />
-				<Route component={CatchAll} />
+				<Route component={ProtectedApp} />
 			</Switch>
 		</div>
 	);

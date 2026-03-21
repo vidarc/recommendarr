@@ -15,6 +15,7 @@ COPY ["package.json", "yarn.lock", ".yarnrc.yml", "./"]
 RUN yarn install --immutable
 
 # Copy source and config, then build
+COPY drizzle/ drizzle/
 COPY vite.config.ts tsconfig.json tsconfig.client.json tsconfig.server.json ./
 COPY src/ src/
 
@@ -31,10 +32,11 @@ FROM node:24.14.0-bookworm-slim AS runner
 WORKDIR /app
 
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/dist ./dist
 
-ENV PORT=3000
-ENV NODE_ENV=production
+ARG PORT=3000
+ARG NODE_ENV=production
 
 EXPOSE ${PORT}
 

@@ -1,12 +1,10 @@
 import { css } from "@linaria/atomic";
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
-import { useLocation } from "wouter";
 
-import { useRegisterMutation } from "../api.ts";
+import { api, useRegisterMutation } from "../api.ts";
 import { RegisterFooter } from "../components/AuthFooter.tsx";
 import { FormField } from "../components/FormField.tsx";
-import { setUser } from "../features/auth/auth-slice.ts";
 import { colors, radii, spacing } from "../theme.ts";
 
 const minPasswordLength = 8;
@@ -77,7 +75,6 @@ export const Register = () => {
 	const [validationError, setValidationError] = useState("");
 	const [register, { error, isLoading }] = useRegisterMutation();
 	const dispatch = useDispatch();
-	const [, navigate] = useLocation();
 
 	const handleSubmit = useCallback(
 		async (event: React.FormEvent<HTMLFormElement>) => {
@@ -91,11 +88,10 @@ export const Register = () => {
 
 			const result = await register({ username, password });
 			if ("data" in result && result.data) {
-				dispatch(setUser(result.data));
-				navigate("/");
+				dispatch(api.util.resetApiState());
 			}
 		},
-		[username, password, confirmPassword, register, dispatch, navigate],
+		[username, password, confirmPassword, register, dispatch],
 	);
 
 	const handleUsernameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {

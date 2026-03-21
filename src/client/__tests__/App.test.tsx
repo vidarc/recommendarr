@@ -1,22 +1,27 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { delay, http, HttpResponse } from "msw";
+import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Provider } from "react-redux";
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	describe,
-	expect,
-	onTestFinished,
-	test,
-} from "vite-plus/test";
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from "vite-plus/test";
 import { Router } from "wouter";
 
 import { api } from "../api.ts";
 import { App } from "../App.tsx";
-import { setUser } from "../features/auth/auth-slice.ts";
 import { createStore } from "../store.ts";
+
+// Mock heavy page components to avoid Node 24 libuv crash
+// When rendering large Linaria-styled components multiple times in happy-dom
+vi.mock("../pages/Settings.tsx", () => ({
+	Settings: () => <div>Settings Mock</div>,
+}));
+
+vi.mock("../pages/Recommendations.tsx", () => ({
+	Recommendations: () => (
+		<div>
+			<h1>Recommendations</h1>
+		</div>
+	),
+}));
 
 const server = setupServer();
 
@@ -25,6 +30,7 @@ beforeAll(() => {
 });
 
 afterEach(() => {
+	cleanup();
 	server.resetHandlers();
 });
 
@@ -35,13 +41,17 @@ afterAll(() => {
 const setupStatusHandler = (needsSetup = false) =>
 	http.get("/api/auth/setup-status", () => HttpResponse.json({ needsSetup }));
 
+const meHandler = (authenticated = false) =>
+	http.get("/api/auth/me", () => {
+		if (authenticated) {
+			return HttpResponse.json({ id: "1", username: "testuser", isAdmin: false });
+		}
+		const unauthorizedStatus = 401;
+		return HttpResponse.json({ error: "Unauthorized" }, { status: unauthorizedStatus });
+	});
+
 const renderApp = (path = "/") => {
 	const testStore = createStore();
-
-	onTestFinished(() => {
-		cleanup();
-		testStore.dispatch(api.util.resetApiState());
-	});
 
 	render(
 		<Provider store={testStore}>
@@ -54,79 +64,55 @@ const renderApp = (path = "/") => {
 	return { store: testStore };
 };
 
-const loginUser = (store: ReturnType<typeof createStore>) => {
-	store.dispatch(setUser({ id: "1", username: "testuser", isAdmin: false }));
-};
-
 describe("App", () => {
 	test("redirects to login when not authenticated", async () => {
-		server.use(setupStatusHandler());
-
-		renderApp("/");
-
+		server.use(setupStatusHandler(), meHandler(false));
+		const { store } = renderApp("/");
 		await waitFor(() => {
 			expect(screen.getByRole("heading", { name: /login/i })).toBeInTheDocument();
 		});
+		store.dispatch(api.util.resetApiState());
 	});
 
 	test("redirects to register when setup is needed", async () => {
-		server.use(setupStatusHandler(true));
-
-		renderApp("/login");
-
+		server.use(setupStatusHandler(true), meHandler(false));
+		const { store } = renderApp("/login");
 		await waitFor(() => {
 			expect(screen.getByRole("heading", { name: /register/i })).toBeInTheDocument();
 		});
+		store.dispatch(api.util.resetApiState());
 	});
 
-	test("shows loading state while fetching settings", async () => {
-		server.use(
-			setupStatusHandler(),
-			http.get("/api/settings", async () => {
-				await delay("infinite");
-				return HttpResponse.json({});
-			}),
-		);
-
+	test("shows recommendations page when authenticated", async () => {
+		server.use(setupStatusHandler(), meHandler(true));
 		const { store } = renderApp("/");
-		loginUser(store);
-
 		await waitFor(() => {
-			expect(screen.getByText(/Loading/)).toBeInTheDocument();
+			expect(screen.getByRole("heading", { name: /recommendations/i })).toBeInTheDocument();
 		});
+		store.dispatch(api.util.resetApiState());
 	});
 
-	test("shows error state when settings API returns an error", async () => {
-		const errorStatusCode = 500;
-		server.use(
-			setupStatusHandler(),
-			http.get("/api/settings", () => HttpResponse.json(undefined, { status: errorStatusCode })),
-		);
-
+	test("shows sidebar navigation when authenticated", async () => {
+		server.use(setupStatusHandler(), meHandler(true));
 		const { store } = renderApp("/");
-		loginUser(store);
-
-		await waitFor(() => {
-			expect(screen.getByText(/Error loading settings/)).toBeInTheDocument();
-		});
-	});
-
-	test("renders settings as a list when authenticated", async () => {
-		server.use(
-			setupStatusHandler(),
-			http.get("/api/settings", () => HttpResponse.json({ app_version: "1.0.0", theme: "dark" })),
-		);
-
-		const { store } = renderApp("/");
-		loginUser(store);
-
 		await waitFor(() => {
 			expect(screen.getByText("Recommendarr")).toBeInTheDocument();
 		});
+		expect(screen.getByRole("navigation")).toBeInTheDocument();
+		const navAndHeading = 2;
+		expect(screen.getAllByText("Recommendations")).toHaveLength(navAndHeading);
+		expect(screen.getByText("History")).toBeInTheDocument();
+		expect(screen.getByText("Settings")).toBeInTheDocument();
+		expect(screen.getByText("Log out")).toBeInTheDocument();
+		store.dispatch(api.util.resetApiState());
+	});
 
-		expect(screen.getByText("app_version")).toBeInTheDocument();
-		expect(screen.getByText(/1\.0\.0/)).toBeInTheDocument();
-		expect(screen.getByText("theme")).toBeInTheDocument();
-		expect(screen.getByText(/dark/)).toBeInTheDocument();
+	test("redirects authenticated user away from login", async () => {
+		server.use(setupStatusHandler(), meHandler(true));
+		const { store } = renderApp("/login");
+		await waitFor(() => {
+			expect(screen.getByText("Recommendarr")).toBeInTheDocument();
+		});
+		store.dispatch(api.util.resetApiState());
 	});
 });
