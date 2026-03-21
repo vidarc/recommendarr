@@ -5,6 +5,7 @@ import { useGetMeQuery, useGetSetupStatusQuery } from "./api.ts";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { globals } from "./global-styles.ts";
 import { Login } from "./pages/Login.tsx";
+import { Recommendations } from "./pages/Recommendations.tsx";
 import { Register } from "./pages/Register.tsx";
 import { Settings } from "./pages/Settings.tsx";
 import { colors, spacing } from "./theme.ts";
@@ -47,13 +48,6 @@ const placeholderTitle = css`
 const placeholderText = css`
 	color: ${colors.textMuted};
 `;
-
-const Recommendations = () => (
-	<div className={placeholderPage}>
-		<h1 className={placeholderTitle}>Recommendations</h1>
-		<p className={placeholderText}>Coming soon.</p>
-	</div>
-);
 
 const History = () => (
 	<div className={placeholderPage}>

@@ -93,8 +93,8 @@ interface SendChatMessageBody {
 	message: string;
 	mediaType: string;
 	resultCount: number;
-	conversationId?: string;
-	libraryIds?: string[];
+	conversationId?: string | undefined;
+	libraryIds?: string[] | undefined;
 }
 
 interface SendChatMessageResponse {
