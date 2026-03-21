@@ -8,7 +8,7 @@ import { describe, expect, onTestFinished, test } from "vite-plus/test";
 import { buildServer } from "../app.ts";
 import { settings } from "../schema.ts";
 
-const expectedTableCount = 2;
+const expectedTableCount = 3;
 const firstIndex = 0;
 const testDbDir = join(tmpdir(), "recommendarr-test-db");
 const testDbPath = join(testDbDir, "test.db");
@@ -34,7 +34,7 @@ describe("database plugin", () => {
 
 		const rows = app.sqlite
 			.prepare(
-				"SELECT name FROM sqlite_master WHERE type='table' AND name IN ('settings', 'users')",
+				"SELECT name FROM sqlite_master WHERE type='table' AND name IN ('sessions', 'settings', 'users')",
 			)
 			.all();
 		expect(rows).toHaveLength(expectedTableCount);

@@ -20,11 +20,24 @@ const users = sqliteTable("users", {
 const selectUserSchema = createSelectSchema(users);
 const insertUserSchema = createInsertSchema(users);
 
+const sessions = sqliteTable("sessions", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull(),
+	createdAt: text("created_at").notNull(),
+	expiresAt: text("expires_at").notNull(),
+});
+
+const selectSessionSchema = createSelectSchema(sessions);
+const insertSessionSchema = createInsertSchema(sessions);
+
 export {
+	insertSessionSchema,
 	insertSettingSchema,
 	insertUserSchema,
+	selectSessionSchema,
 	selectSettingSchema,
 	selectUserSchema,
+	sessions,
 	settings,
 	users,
 };
