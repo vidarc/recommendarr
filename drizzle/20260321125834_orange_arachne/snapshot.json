@@ -1,0 +1,108 @@
+{
+	"version": "7",
+	"dialect": "sqlite",
+	"id": "91526fdc-4758-4c58-8767-dee63646e671",
+	"prevIds": ["00000000-0000-0000-0000-000000000000"],
+	"ddl": [
+		{
+			"name": "settings",
+			"entityType": "tables"
+		},
+		{
+			"name": "users",
+			"entityType": "tables"
+		},
+		{
+			"type": "text",
+			"notNull": false,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "key",
+			"entityType": "columns",
+			"table": "settings"
+		},
+		{
+			"type": "text",
+			"notNull": false,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "value",
+			"entityType": "columns",
+			"table": "settings"
+		},
+		{
+			"type": "text",
+			"notNull": false,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "id",
+			"entityType": "columns",
+			"table": "users"
+		},
+		{
+			"type": "text",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "username",
+			"entityType": "columns",
+			"table": "users"
+		},
+		{
+			"type": "text",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "password_hash",
+			"entityType": "columns",
+			"table": "users"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": "false",
+			"generated": null,
+			"name": "is_admin",
+			"entityType": "columns",
+			"table": "users"
+		},
+		{
+			"type": "text",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "created_at",
+			"entityType": "columns",
+			"table": "users"
+		},
+		{
+			"columns": ["key"],
+			"nameExplicit": false,
+			"name": "settings_pk",
+			"table": "settings",
+			"entityType": "pks"
+		},
+		{
+			"columns": ["id"],
+			"nameExplicit": false,
+			"name": "users_pk",
+			"table": "users",
+			"entityType": "pks"
+		},
+		{
+			"columns": ["username"],
+			"nameExplicit": false,
+			"name": "users_username_unique",
+			"entityType": "uniques",
+			"table": "users"
+		}
+	],
+	"renames": []
+}

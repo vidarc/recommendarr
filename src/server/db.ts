@@ -4,9 +4,11 @@ import { dirname } from "node:path";
 
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
-import { settings, users } from "./schema.ts";
+import { sessions, settings, users } from "./schema.ts";
 import { hashPassword } from "./services/auth-utils.ts";
+import { purgeExpiredSessions } from "./services/session.ts";
 
 import type { FastifyInstance } from "fastify";
 
@@ -23,24 +25,11 @@ const dbPlugin = async (app: FastifyInstance) => {
 	const sqlite = new Database(dbPath);
 	sqlite.pragma("journal_mode = WAL");
 
-	const db = drizzle({ client: sqlite, schema: { settings, users } });
+	const db = drizzle({ client: sqlite, schema: { sessions, settings, users } });
 
-	db.run(
-		`CREATE TABLE IF NOT EXISTS settings (
-			key TEXT PRIMARY KEY,
-			value TEXT
-		)`,
-	);
+	migrate(db, { migrationsFolder: "./drizzle" });
 
-	db.run(
-		`CREATE TABLE IF NOT EXISTS users (
-			id TEXT PRIMARY KEY,
-			username TEXT NOT NULL UNIQUE,
-			password_hash TEXT NOT NULL,
-			is_admin INTEGER NOT NULL DEFAULT 0,
-			created_at TEXT NOT NULL
-		)`,
-	);
+	purgeExpiredSessions(db);
 
 	db.insert(settings).values({ key: "app_version", value: "1.0.0" }).onConflictDoNothing().run();
 
