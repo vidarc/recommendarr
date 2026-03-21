@@ -115,6 +115,20 @@ describe("App", () => {
 		});
 	});
 
+	test("redirects authenticated user away from login", async () => {
+		server.use(
+			setupStatusHandler(),
+			meHandler(true),
+			http.get("/api/settings", () => HttpResponse.json({ app_version: "1.0.0" })),
+		);
+
+		renderApp("/login");
+
+		await waitFor(() => {
+			expect(screen.getByText("Recommendarr")).toBeInTheDocument();
+		});
+	});
+
 	test("renders settings as a list when authenticated", async () => {
 		server.use(
 			setupStatusHandler(),

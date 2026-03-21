@@ -1,6 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-import type { User } from "./features/auth/auth-slice.ts";
+interface User {
+	id: string;
+	username: string;
+	isAdmin: boolean;
+}
 
 interface Settings {
 	[key: string]: string;
@@ -69,3 +73,4 @@ export {
 	useLogoutMutation,
 	useRegisterMutation,
 };
+export type { User };
