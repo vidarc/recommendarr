@@ -4,6 +4,8 @@
 	"scripts": {
 		"dev": "NODE_ENV=development node --experimental-strip-types --experimental-transform-types src/server/server.ts",
 		"build": "vp build && vp build --ssr entry-server.tsx --outDir ../../dist/ssr && tsc -p tsconfig.server.json",
+		"docker:build": "docker build . -t recommendarr",
+		"docker:run": "docker run -p 8080:8080 --env-file .env recommendarr",
 		"lint": "vp check",
 		"test": "vp test",
 		"test:watch": "vp test watch",

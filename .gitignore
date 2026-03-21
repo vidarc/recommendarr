@@ -20,5 +20,6 @@ coverage
 dist
 data
 .remember
+.env
 
 *.tsbuildinfo
