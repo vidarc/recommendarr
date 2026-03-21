@@ -6,6 +6,7 @@ import { AppLayout } from "./components/AppLayout.tsx";
 import { globals } from "./global-styles.ts";
 import { Login } from "./pages/Login.tsx";
 import { Register } from "./pages/Register.tsx";
+import { Settings } from "./pages/Settings.tsx";
 import { colors, spacing } from "./theme.ts";
 
 import "sanitize.css";
@@ -57,13 +58,6 @@ const Recommendations = () => (
 const History = () => (
 	<div className={placeholderPage}>
 		<h1 className={placeholderTitle}>History</h1>
-		<p className={placeholderText}>Coming soon.</p>
-	</div>
-);
-
-const Settings = () => (
-	<div className={placeholderPage}>
-		<h1 className={placeholderTitle}>Settings</h1>
 		<p className={placeholderText}>Coming soon.</p>
 	</div>
 );
