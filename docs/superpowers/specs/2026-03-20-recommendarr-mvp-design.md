@@ -15,6 +15,13 @@ The app is built as a Fastify + React SSR application with SQLite storage. Featu
 5. Settings page & navigation
 6. \*arr integration hooks (design-only)
 
+## Prerequisites
+
+Before implementing the slices above, two foundational issues must be addressed:
+
+1. **Migration strategy** — The current codebase uses raw `CREATE TABLE IF NOT EXISTS` statements. Before adding new tables, switch to Drizzle's migration system so that schema changes are applied safely to existing databases across Docker upgrades.
+2. **Fix `dbPlugin` await** — The `dbPlugin` call in `app.ts` is not awaited. Since the plugin is async, the database may not be fully initialized before routes try to use it. This must be fixed before adding session purge-on-startup or any other startup logic.
+
 ---
 
 ## Section 1: Session Management
@@ -47,7 +54,12 @@ A Fastify `preHandler` hook on all `/api/*` routes except:
 - `/api/auth/register`
 - `/api/auth/setup-status`
 
-The middleware reads the session cookie, looks up the session in the DB, checks expiry, and attaches `request.user` (`{ id, username, isAdmin }`). Invalid or expired sessions return 401 and clear the cookie.
+The middleware reads the session cookie (named `session`), looks up the session in the DB, checks expiry, and attaches `request.user` (`{ id, username, isAdmin }`). Invalid or expired sessions return 401 and clear the cookie.
+
+**Cookie configuration:**
+
+- `httpOnly: true`, `sameSite: "strict"`, `path: "/"`
+- `secure: true` only when `NODE_ENV === "production"` (allows HTTP in dev)
 
 ### Frontend Changes
 
@@ -65,7 +77,7 @@ The middleware reads the session cookie, looks up the session in the DB, checks 
 1. User clicks "Connect Plex" in settings
 2. `POST /api/plex/auth/start` → backend creates a PIN via Plex API, returns `{ pinId, authUrl }`
 3. Frontend opens `authUrl` in a new browser window
-4. Frontend polls `POST /api/plex/auth/check` with the `pinId`
+4. Frontend polls `GET /api/plex/auth/check?pinId=<id>` for PIN status
 5. Backend checks PIN status with Plex API. On success, receives auth token → encrypts and stores it
 6. `GET /api/plex/servers` → backend uses stored token to list Plex servers
 7. `POST /api/plex/servers/select` → user picks a server, backend stores selection
@@ -83,27 +95,32 @@ New `plex_connections` table:
 | `server_name`        | TEXT                 | Display name                            |
 | `machine_identifier` | TEXT                 | Plex server machine ID                  |
 | `created_at`         | TEXT NOT NULL        | ISO 8601                                |
+| `updated_at`         | TEXT NOT NULL        | ISO 8601                                |
 
 ### API Endpoints
 
-| Method | Path                       | Description                                   |
-| ------ | -------------------------- | --------------------------------------------- |
-| POST   | `/api/plex/auth/start`     | Create Plex PIN, return auth URL              |
-| POST   | `/api/plex/auth/check`     | Poll PIN status, store token on success       |
-| GET    | `/api/plex/servers`        | List servers using stored token               |
-| POST   | `/api/plex/servers/select` | Save chosen server                            |
-| DELETE | `/api/plex/connection`     | Disconnect Plex, remove stored token          |
-| GET    | `/api/plex/libraries`      | Fetch movie/TV libraries from selected server |
+| Method | Path                       | Description                                            |
+| ------ | -------------------------- | ------------------------------------------------------ |
+| POST   | `/api/plex/auth/start`     | Create Plex PIN, return auth URL                       |
+| GET    | `/api/plex/auth/check`     | Poll PIN status (query: pinId), store token on success |
+| GET    | `/api/plex/servers`        | List servers using stored token                        |
+| POST   | `/api/plex/servers/select` | Save chosen server                                     |
+| DELETE | `/api/plex/connection`     | Disconnect Plex, remove stored token                   |
+| GET    | `/api/plex/libraries`      | Fetch movie/TV libraries from selected server          |
 
 ### Token Encryption
 
-- AES-256-GCM using a key derived from `ENCRYPTION_KEY` env var
-- Required in production, auto-generated in dev (logged with warning)
+- AES-256-GCM using `ENCRYPTION_KEY` env var
+- `ENCRYPTION_KEY` must be a 64-character hex string (32 bytes). Used directly as the AES-256 key — no derivation.
+- **Required in all environments.** If not set, the server refuses to start with a clear error message. No auto-generation — this prevents data loss from key rotation on restart.
+- A CLI helper or startup log message suggests how to generate one: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 - Used for all stored secrets (Plex token, AI API keys, future \*arr API keys)
 
 ### Watch History
 
 Fetched on-demand from Plex API during recommendation generation. Not cached initially — can add caching later if performance is a concern.
+
+**Bounds:** Fetch at most the 200 most recently watched items. If the resulting text exceeds the AI model's context budget, truncate oldest items first. The system prompt should target no more than ~2000 tokens for watch history.
 
 ---
 
@@ -225,12 +242,44 @@ New `recommendations` table:
 
 ### API Endpoints
 
-| Method | Path                     | Description                                             |
-| ------ | ------------------------ | ------------------------------------------------------- |
-| POST   | `/api/chat`              | Send message, receive AI response with recommendations  |
-| GET    | `/api/conversations`     | List past conversations                                 |
-| GET    | `/api/conversations/:id` | Get full conversation with messages and recommendations |
-| DELETE | `/api/conversations/:id` | Delete a conversation                                   |
+| Method | Path                     | Description                                                                       |
+| ------ | ------------------------ | --------------------------------------------------------------------------------- |
+| POST   | `/api/chat`              | Send message, receive AI response with recommendations (see request schema below) |
+| GET    | `/api/conversations`     | List past conversations                                                           |
+| GET    | `/api/conversations/:id` | Get full conversation with messages and recommendations                           |
+| DELETE | `/api/conversations/:id` | Delete a conversation                                                             |
+
+### `POST /api/chat` Request Schema
+
+```json
+{
+	"conversationId": "uuid (optional — omit to start a new conversation)",
+	"message": "string (user's text, genre pick, or predefined prompt)",
+	"mediaType": "movie | tv | either",
+	"libraryIds": ["string (optional — Plex library IDs, omit for whole library)"],
+	"resultCount": 10
+}
+```
+
+`mediaType`, `libraryIds`, and `resultCount` are sent with every message (reflecting the current state of the top controls). The conversation's `media_type` column is updated to match the latest `mediaType` sent.
+
+### Response Format
+
+Returns full response (no streaming in MVP). Streaming can be added later as an enhancement.
+
+```json
+{
+	"conversationId": "uuid",
+	"message": "conversational text from AI",
+	"recommendations": [
+		{ "id": "uuid", "title": "...", "year": 2024, "mediaType": "movie", "synopsis": "..." }
+	]
+}
+```
+
+### Conversation Title Generation
+
+The conversation `title` is auto-generated after the first AI response by asking the AI model to summarize the conversation topic in ≤6 words. This is a separate, cheap API call appended after the main recommendation response.
 
 ### Prompt Engineering
 
@@ -299,14 +348,14 @@ Not built in MVP, but schema and UI placeholders are added.
 
 New `arr_connections` table:
 
-| Column         | Type          | Notes                 |
-| -------------- | ------------- | --------------------- |
-| `id`           | TEXT PK       | UUID                  |
-| `user_id`      | TEXT NOT NULL | FK to users.id        |
-| `service_type` | TEXT NOT NULL | `radarr` or `sonarr`  |
-| `url`          | TEXT NOT NULL | Service URL           |
-| `api_key`      | TEXT NOT NULL | AES-256-GCM encrypted |
-| `created_at`   | TEXT NOT NULL | ISO 8601              |
+| Column         | Type          | Notes                                      |
+| -------------- | ------------- | ------------------------------------------ |
+| `id`           | TEXT PK       | UUID                                       |
+| `user_id`      | TEXT NOT NULL | FK to users.id                             |
+| `service_type` | TEXT NOT NULL | `radarr` or `sonarr` (UNIQUE with user_id) |
+| `url`          | TEXT NOT NULL | Service URL                                |
+| `api_key`      | TEXT NOT NULL | AES-256-GCM encrypted                      |
+| `created_at`   | TEXT NOT NULL | ISO 8601                                   |
 
 ### UI
 
@@ -318,10 +367,10 @@ New `arr_connections` table:
 
 ## Environment Variables (New)
 
-| Variable                | Required   | Default              | Purpose                                       |
-| ----------------------- | ---------- | -------------------- | --------------------------------------------- |
-| `ENCRYPTION_KEY`        | Production | Auto-generated (dev) | AES-256-GCM key for encrypting stored secrets |
-| `SESSION_DURATION_DAYS` | No         | `7`                  | Session expiry duration                       |
+| Variable                | Required | Default                        | Purpose                                                           |
+| ----------------------- | -------- | ------------------------------ | ----------------------------------------------------------------- |
+| `ENCRYPTION_KEY`        | Yes      | None (server refuses to start) | 64-char hex string, AES-256-GCM key for encrypting stored secrets |
+| `SESSION_DURATION_DAYS` | No       | `7`                            | Session expiry duration                                           |
 
 ---
 
