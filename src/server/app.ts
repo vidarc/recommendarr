@@ -9,6 +9,7 @@ import { authMiddleware } from "./middleware/auth.ts";
 import { apiRoutes } from "./routes/api.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { healthRoutes } from "./routes/health.ts";
+import { plexRoutes } from "./routes/plex.ts";
 import { getKey } from "./services/encryption.ts";
 import { ssrRoutes } from "./ssr.ts";
 
@@ -37,6 +38,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 		authMiddleware(app);
 		authRoutes(app);
 		apiRoutes(app);
+		plexRoutes(app);
 	}
 
 	if (!options.skipSSR) {
