@@ -3,7 +3,7 @@ import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { describe, expect, onTestFinished, test } from "vite-plus/test";
+import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
 
 import { buildServer } from "../app.ts";
 import { sessions } from "../schema.ts";
@@ -23,14 +23,13 @@ const testDbDir = join(tmpdir(), "recommendarr-test-session");
 const testDbPath = join(testDbDir, "test.db");
 
 const setupDb = async () => {
-	process.env["DATABASE_PATH"] = testDbPath;
-	process.env["ENCRYPTION_KEY"] = "a".repeat(HEX_KEY_LENGTH);
+	vi.stubEnv("DATABASE_PATH", testDbPath);
+	vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
 	const app = await buildServer({ skipSSR: true });
 
 	onTestFinished(async () => {
 		await app.close();
-		delete process.env["DATABASE_PATH"];
-		delete process.env["ENCRYPTION_KEY"];
+		vi.unstubAllEnvs();
 		if (existsSync(testDbDir)) {
 			rmSync(testDbDir, { recursive: true });
 		}
