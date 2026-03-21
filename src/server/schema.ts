@@ -30,10 +30,27 @@ const sessions = sqliteTable("sessions", {
 const selectSessionSchema = createSelectSchema(sessions);
 const insertSessionSchema = createInsertSchema(sessions);
 
+const plexConnections = sqliteTable("plex_connections", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull().unique(),
+	authToken: text("auth_token").notNull(),
+	serverUrl: text("server_url"),
+	serverName: text("server_name"),
+	machineIdentifier: text("machine_identifier"),
+	createdAt: text("created_at").notNull(),
+	updatedAt: text("updated_at").notNull(),
+});
+
+const selectPlexConnectionSchema = createSelectSchema(plexConnections);
+const insertPlexConnectionSchema = createInsertSchema(plexConnections);
+
 export {
+	insertPlexConnectionSchema,
 	insertSessionSchema,
 	insertSettingSchema,
 	insertUserSchema,
+	plexConnections,
+	selectPlexConnectionSchema,
 	selectSessionSchema,
 	selectSettingSchema,
 	selectUserSchema,

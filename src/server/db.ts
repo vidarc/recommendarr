@@ -6,7 +6,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
-import { sessions, settings, users } from "./schema.ts";
+import { plexConnections, sessions, settings, users } from "./schema.ts";
 import { hashPassword } from "./services/auth-utils.ts";
 import { purgeExpiredSessions } from "./services/session.ts";
 
@@ -25,7 +25,7 @@ const dbPlugin = async (app: FastifyInstance) => {
 	const sqlite = new Database(dbPath);
 	sqlite.pragma("journal_mode = WAL");
 
-	const db = drizzle({ client: sqlite, schema: { sessions, settings, users } });
+	const db = drizzle({ client: sqlite, schema: { plexConnections, sessions, settings, users } });
 
 	migrate(db, { migrationsFolder: "./drizzle" });
 
