@@ -6,7 +6,12 @@ import { getSession } from "../services/session.ts";
 
 import type { FastifyInstance } from "fastify";
 
-const publicRoutes = new Set(["/api/auth/login", "/api/auth/register", "/api/auth/setup-status"]);
+const publicRoutes = new Set([
+	"/api/auth/login",
+	"/api/auth/logout",
+	"/api/auth/register",
+	"/api/auth/setup-status",
+]);
 
 const apiPrefix = "/api/";
 

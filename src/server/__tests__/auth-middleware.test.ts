@@ -112,3 +112,93 @@ describe("auth middleware", () => {
 		expect(response.json()).toStrictEqual({ error: "Invalid or expired session" });
 	});
 });
+
+describe("auth routes with sessions", () => {
+	test("login sets a session cookie", async () => {
+		const app = await setupDb();
+
+		await app.inject({
+			method: "POST",
+			url: "/api/auth/register",
+			payload: testUser,
+		});
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/auth/login",
+			payload: testUser,
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		const { cookies } = response;
+		const sessionCookie = cookies.find((ck) => ck.name === "session");
+		expect(sessionCookie).toBeDefined();
+		expect(sessionCookie?.httpOnly).toBe(true);
+	});
+
+	test("register sets a session cookie", async () => {
+		const app = await setupDb();
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/auth/register",
+			payload: testUser,
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.CREATED);
+		const { cookies } = response;
+		const sessionCookie = cookies.find((ck) => ck.name === "session");
+		expect(sessionCookie).toBeDefined();
+		expect(sessionCookie?.httpOnly).toBe(true);
+	});
+
+	test("GET /api/auth/me returns user with valid session", async () => {
+		const app = await setupDb();
+		const sessionId = await getSessionCookie(app);
+
+		const response = await app.inject({
+			method: "GET",
+			url: "/api/auth/me",
+			cookies: { session: sessionId },
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		const body = response.json();
+		expect(body.username).toBe(testUser.username);
+		expect(body.id).toBeDefined();
+		expect(body.isAdmin).toBe(true);
+	});
+
+	test("GET /api/auth/me returns 401 without session", async () => {
+		const app = await setupDb();
+
+		const response = await app.inject({
+			method: "GET",
+			url: "/api/auth/me",
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
+	});
+
+	test("POST /api/auth/logout clears session and cookie", async () => {
+		const app = await setupDb();
+		const sessionId = await getSessionCookie(app);
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/auth/logout",
+			cookies: { session: sessionId },
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		expect(response.json()).toStrictEqual({ success: true });
+
+		// Verify session is no longer valid
+		const meResponse = await app.inject({
+			method: "GET",
+			url: "/api/auth/me",
+			cookies: { session: sessionId },
+		});
+		expect(meResponse.statusCode).toBe(StatusCodes.UNAUTHORIZED);
+	});
+});
