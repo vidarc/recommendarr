@@ -62,16 +62,61 @@ const aiConfigs = sqliteTable("ai_configs", {
 const selectAiConfigSchema = createSelectSchema(aiConfigs);
 const insertAiConfigSchema = createInsertSchema(aiConfigs);
 
+const conversations = sqliteTable("conversations", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull(),
+	mediaType: text("media_type").notNull(),
+	title: text("title"),
+	createdAt: text("created_at").notNull(),
+});
+
+const selectConversationSchema = createSelectSchema(conversations);
+const insertConversationSchema = createInsertSchema(conversations);
+
+const messages = sqliteTable("messages", {
+	id: text("id").primaryKey(),
+	conversationId: text("conversation_id").notNull(),
+	role: text("role").notNull(),
+	content: text("content").notNull(),
+	createdAt: text("created_at").notNull(),
+});
+
+const selectMessageSchema = createSelectSchema(messages);
+const insertMessageSchema = createInsertSchema(messages);
+
+const recommendations = sqliteTable("recommendations", {
+	id: text("id").primaryKey(),
+	messageId: text("message_id").notNull(),
+	title: text("title").notNull(),
+	year: integer("year"),
+	mediaType: text("media_type").notNull(),
+	synopsis: text("synopsis"),
+	tmdbId: integer("tmdb_id"),
+	addedToArr: integer("added_to_arr", { mode: "boolean" }).notNull().default(false),
+});
+
+const selectRecommendationSchema = createSelectSchema(recommendations);
+const insertRecommendationSchema = createInsertSchema(recommendations);
+
 export {
 	aiConfigs,
+	conversations,
 	insertAiConfigSchema,
+	insertConversationSchema,
+	insertMessageSchema,
 	insertPlexConnectionSchema,
+	insertRecommendationSchema,
 	insertSessionSchema,
 	insertSettingSchema,
 	insertUserSchema,
+	messages,
 	plexConnections,
+	recommendations,
 	selectAiConfigSchema,
+	selectConversationSchema,
+	selectMessageSchema,
 	selectPlexConnectionSchema,
+	selectRecommendationSchema,
 	selectSessionSchema,
 	selectSettingSchema,
 	selectUserSchema,

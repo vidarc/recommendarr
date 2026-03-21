@@ -1,4 +1,13 @@
-import type { aiConfigs, plexConnections, sessions, settings, users } from "./schema.ts";
+import type {
+	aiConfigs,
+	conversations,
+	messages,
+	plexConnections,
+	recommendations,
+	sessions,
+	settings,
+	users,
+} from "./schema.ts";
 import type Database from "better-sqlite3";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 
@@ -12,7 +21,10 @@ declare module "fastify" {
 	interface FastifyInstance {
 		db: BetterSQLite3Database<{
 			aiConfigs: typeof aiConfigs;
+			conversations: typeof conversations;
+			messages: typeof messages;
 			plexConnections: typeof plexConnections;
+			recommendations: typeof recommendations;
 			sessions: typeof sessions;
 			settings: typeof settings;
 			users: typeof users;

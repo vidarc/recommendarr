@@ -6,7 +6,16 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
-import { aiConfigs, plexConnections, sessions, settings, users } from "./schema.ts";
+import {
+	aiConfigs,
+	conversations,
+	messages,
+	plexConnections,
+	recommendations,
+	sessions,
+	settings,
+	users,
+} from "./schema.ts";
 import { hashPassword } from "./services/auth-utils.ts";
 import { purgeExpiredSessions } from "./services/session.ts";
 
@@ -27,7 +36,16 @@ const dbPlugin = async (app: FastifyInstance) => {
 
 	const db = drizzle({
 		client: sqlite,
-		schema: { aiConfigs, plexConnections, sessions, settings, users },
+		schema: {
+			aiConfigs,
+			conversations,
+			messages,
+			plexConnections,
+			recommendations,
+			sessions,
+			settings,
+			users,
+		},
 	});
 
 	migrate(db, { migrationsFolder: "./drizzle" });
