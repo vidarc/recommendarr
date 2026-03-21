@@ -19,6 +19,8 @@ As of 2026-03-21, the project has:
 - Plex OAuth backend: PIN-based auth flow, server discovery, library listing, watch history — tokens encrypted at rest
 - AI configuration backend: per-user ai_configs table, CRUD routes (GET/PUT/DELETE /api/ai/config), connection test (POST /api/ai/test), API keys encrypted at rest and masked in responses
 - AI client service: thin fetch wrapper for OpenAI-compatible /v1/chat/completions endpoint (chatCompletion + testConnection functions, no SDK dependency)
+- Recommendation chat backend: conversations/messages/recommendations tables, POST /api/chat (creates conversations, fetches Plex history, calls AI, parses recommendations), GET/DELETE /api/conversations endpoints, prompt builder and response parser services
+- App layout with sidebar navigation (Recommendations, History, Settings links + logout) wrapping authenticated routes; Dashboard page replaced by placeholder pages pending Tasks 8-10
 
 **Why:** Tracking project state helps orient future conversations quickly.
 **How to apply:** Use this to understand what exists before suggesting new work.
