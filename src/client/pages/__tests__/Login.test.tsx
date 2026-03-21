@@ -14,9 +14,9 @@ import {
 } from "vite-plus/test";
 import { Router } from "wouter";
 
-import { api } from "../api.ts";
+import { api } from "../../api.ts";
+import { createStore } from "../../store.ts";
 import { Login } from "../Login.tsx";
-import { createStore } from "../store.ts";
 
 const server = setupServer();
 

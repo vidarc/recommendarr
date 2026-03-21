@@ -3,11 +3,11 @@ import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation } from "wouter";
 
-import { useRegisterMutation } from "./api.ts";
-import { setUser } from "./auth-slice.ts";
-import { RegisterFooter } from "./AuthFooter.tsx";
-import { FormField } from "./FormField.tsx";
-import { colors, radii, spacing } from "./theme.ts";
+import { useRegisterMutation } from "../api.ts";
+import { RegisterFooter } from "../components/AuthFooter.tsx";
+import { FormField } from "../components/FormField.tsx";
+import { setUser } from "../features/auth/auth-slice.ts";
+import { colors, radii, spacing } from "../theme.ts";
 
 const minPasswordLength = 8;
 

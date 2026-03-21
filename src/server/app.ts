@@ -3,10 +3,10 @@ import { randomUUID } from "node:crypto";
 import { fastify } from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 
-import { apiRoutes } from "./api.ts";
-import { authRoutes } from "./auth.ts";
 import { dbPlugin } from "./db.ts";
-import { healthRoutes } from "./health.ts";
+import { apiRoutes } from "./routes/api.ts";
+import { authRoutes } from "./routes/auth.ts";
+import { healthRoutes } from "./routes/health.ts";
 import { ssrRoutes } from "./ssr.ts";
 
 interface BuildServerOptions {

@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-import type { User } from "./auth-slice.ts";
+import type { User } from "./features/auth/auth-slice.ts";
 
 interface Settings {
 	[key: string]: string;
