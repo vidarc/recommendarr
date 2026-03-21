@@ -8,6 +8,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
 import { sessions, settings, users } from "./schema.ts";
 import { hashPassword } from "./services/auth-utils.ts";
+import { purgeExpiredSessions } from "./services/session.ts";
 
 import type { FastifyInstance } from "fastify";
 
@@ -27,6 +28,8 @@ const dbPlugin = async (app: FastifyInstance) => {
 	const db = drizzle({ client: sqlite, schema: { sessions, settings, users } });
 
 	migrate(db, { migrationsFolder: "./drizzle" });
+
+	purgeExpiredSessions(db);
 
 	db.insert(settings).values({ key: "app_version", value: "1.0.0" }).onConflictDoNothing().run();
 
