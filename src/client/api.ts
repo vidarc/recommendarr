@@ -39,9 +39,33 @@ const api = createApi({
 				body,
 			}),
 		}),
+		getMe: builder.query<User, void>({
+			query: () => "api/auth/me",
+		}),
+		logout: builder.mutation<{ success: boolean }, void>({
+			query: () => ({
+				url: "api/auth/logout",
+				method: "POST",
+			}),
+		}),
 	}),
 });
 
-const { useGetSettingsQuery, useGetSetupStatusQuery, useLoginMutation, useRegisterMutation } = api;
+const {
+	useGetSettingsQuery,
+	useGetSetupStatusQuery,
+	useLoginMutation,
+	useRegisterMutation,
+	useGetMeQuery,
+	useLogoutMutation,
+} = api;
 
-export { api, useGetSettingsQuery, useGetSetupStatusQuery, useLoginMutation, useRegisterMutation };
+export {
+	api,
+	useGetMeQuery,
+	useGetSettingsQuery,
+	useGetSetupStatusQuery,
+	useLoginMutation,
+	useLogoutMutation,
+	useRegisterMutation,
+};
