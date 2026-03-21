@@ -71,10 +71,66 @@ interface AiTestResult {
 	error?: string;
 }
 
+interface Recommendation {
+	id: string;
+	title: string;
+	year?: number;
+	mediaType: string;
+	synopsis?: string;
+	tmdbId?: string;
+	addedToArr: boolean;
+}
+
+interface ChatMessageResponse {
+	id: string;
+	content: string;
+	role: string;
+	createdAt: string;
+	recommendations: Recommendation[];
+}
+
+interface SendChatMessageBody {
+	message: string;
+	mediaType: string;
+	resultCount: number;
+	conversationId?: string;
+	libraryIds?: string[];
+}
+
+interface SendChatMessageResponse {
+	conversationId: string;
+	message: ChatMessageResponse;
+}
+
+interface ConversationSummary {
+	id: string;
+	title: string;
+	mediaType: string;
+	createdAt: string;
+}
+
+interface ConversationsResponse {
+	conversations: ConversationSummary[];
+}
+
+interface ConversationDetail {
+	conversation: {
+		id: string;
+		title: string;
+		mediaType: string;
+		createdAt: string;
+		messages: ChatMessageResponse[];
+	};
+}
+
+interface DeleteConversationResponse {
+	success: boolean;
+}
+
 const api = createApi({
 	reducerPath: "api",
 	baseQuery: fetchBaseQuery({ baseUrl: "/" }),
-	tagTypes: ["PlexConnection", "AiConfig"],
+	tagTypes: ["PlexConnection", "AiConfig", "Conversations"],
 	endpoints: (builder) => ({
 		getSettings: builder.query<Settings, void>({
 			query: () => "api/settings",
@@ -162,6 +218,29 @@ const api = createApi({
 				method: "POST",
 			}),
 		}),
+		sendChatMessage: builder.mutation<SendChatMessageResponse, SendChatMessageBody>({
+			query: (body) => ({
+				url: "api/chat",
+				method: "POST",
+				body,
+			}),
+			invalidatesTags: ["Conversations"],
+		}),
+		getConversations: builder.query<ConversationsResponse, void>({
+			query: () => "api/conversations",
+			providesTags: ["Conversations"],
+		}),
+		getConversation: builder.query<ConversationDetail, string>({
+			query: (id) => `api/conversations/${id}`,
+			providesTags: ["Conversations"],
+		}),
+		deleteConversation: builder.mutation<DeleteConversationResponse, string>({
+			query: (id) => ({
+				url: `api/conversations/${id}`,
+				method: "DELETE",
+			}),
+			invalidatesTags: ["Conversations"],
+		}),
 	}),
 });
 
@@ -182,13 +261,20 @@ const {
 	useUpdateAiConfigMutation,
 	useDeleteAiConfigMutation,
 	useTestAiConnectionMutation,
+	useSendChatMessageMutation,
+	useGetConversationsQuery,
+	useGetConversationQuery,
+	useDeleteConversationMutation,
 } = api;
 
 export {
 	api,
 	useDeleteAiConfigMutation,
+	useDeleteConversationMutation,
 	useDisconnectPlexMutation,
 	useGetAiConfigQuery,
+	useGetConversationQuery,
+	useGetConversationsQuery,
 	useGetMeQuery,
 	useGetPlexLibrariesQuery,
 	useGetPlexServersQuery,
@@ -199,8 +285,16 @@ export {
 	useLogoutMutation,
 	useRegisterMutation,
 	useSelectPlexServerMutation,
+	useSendChatMessageMutation,
 	useStartPlexAuthMutation,
 	useTestAiConnectionMutation,
 	useUpdateAiConfigMutation,
 };
-export type { AiConfig, PlexServer, User };
+export type {
+	AiConfig,
+	ChatMessageResponse,
+	ConversationSummary,
+	PlexServer,
+	Recommendation,
+	User,
+};
