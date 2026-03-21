@@ -181,8 +181,9 @@ const getWatchHistory = async (options: WatchHistoryOptions): Promise<PlexWatche
 		"X-Plex-Container-Size": limit.toString(),
 	});
 
+	params.set("viewedAt>>", "0");
 	const basePath = libraryId ? `/library/sections/${libraryId}/allLeaves` : "/library/all";
-	const url = `${serverUrl}${basePath}?type=4&${params.toString()}&viewedAt>>=0`;
+	const url = `${serverUrl}${basePath}?type=4&${params.toString()}`;
 
 	const response = await fetch(url, {
 		method: "GET",

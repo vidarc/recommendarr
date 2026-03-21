@@ -76,10 +76,15 @@ const plexRoutes = (app: FastifyInstance) => {
 			schema: {
 				response: {
 					[StatusCodes.OK]: authStartResponseSchema,
+					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
 			},
 		},
-		async (_request, reply) => {
+		async (request, reply) => {
+			if (!request.user) {
+				return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Authentication required" });
+			}
+
 			const pin = await createPlexPin();
 			return reply.code(StatusCodes.OK).send({ pinId: pin.id, authUrl: pin.authUrl });
 		},
