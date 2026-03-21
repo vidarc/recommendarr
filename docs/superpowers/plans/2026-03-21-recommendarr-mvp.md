@@ -114,9 +114,29 @@ git commit -m "fix: await dbPlugin to ensure DB is ready before routes register"
 
 ### 0b: Switch to Drizzle migrations
 
-- [ ] **Step 5: Remove raw CREATE TABLE statements from db.ts**
+- [ ] **Step 5: Generate initial migration from existing schema FIRST**
 
-Replace the raw SQL `CREATE TABLE IF NOT EXISTS` statements in `src/server/db.ts` with Drizzle's `migrate()` function. The schema definitions in `schema.ts` are already Drizzle-format.
+Run: `yarn vp exec drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
+
+This creates a `drizzle/` folder with the migration SQL for the existing `settings` and `users` tables. **This must be done before modifying db.ts** so that `migrate()` has a migrations folder to read from.
+
+- [ ] **Step 6: Add drizzle.config.ts**
+
+Create `drizzle.config.ts` at the project root:
+
+```typescript
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+	dialect: "sqlite",
+	schema: "./src/server/schema.ts",
+	out: "./drizzle",
+});
+```
+
+- [ ] **Step 7: Replace raw CREATE TABLE with Drizzle migrations in db.ts**
+
+Replace the raw SQL `CREATE TABLE IF NOT EXISTS` statements in `src/server/db.ts` with Drizzle's `migrate()` function. Keep explicit table imports (don't use `import *` — the beta Drizzle version may not handle Zod schema exports cleanly).
 
 Update `src/server/db.ts` to:
 
@@ -129,7 +149,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
-import * as schema from "./schema.ts";
+import { settings, users } from "./schema.ts";
 import { hashPassword } from "./services/auth-utils.ts";
 
 import type { FastifyInstance } from "fastify";
@@ -147,19 +167,16 @@ const dbPlugin = async (app: FastifyInstance) => {
 	const sqlite = new Database(dbPath);
 	sqlite.pragma("journal_mode = WAL");
 
-	const db = drizzle({ client: sqlite, schema });
+	const db = drizzle({ client: sqlite, schema: { settings, users } });
 
 	migrate(db, { migrationsFolder: "./drizzle" });
 
-	db.insert(schema.settings)
-		.values({ key: "app_version", value: "1.0.0" })
-		.onConflictDoNothing()
-		.run();
+	db.insert(settings).values({ key: "app_version", value: "1.0.0" }).onConflictDoNothing().run();
 
 	const defaultAdminPassword = process.env["DEFAULT_ADMIN_PASSWORD"];
 	if (defaultAdminPassword) {
 		const defaultAdminUsername = process.env["DEFAULT_ADMIN_USERNAME"] ?? "admin";
-		db.insert(schema.users)
+		db.insert(users)
 			.values({
 				id: randomUUID(),
 				username: defaultAdminUsername,
@@ -180,26 +197,6 @@ const dbPlugin = async (app: FastifyInstance) => {
 };
 
 export { dbPlugin };
-```
-
-- [ ] **Step 6: Generate initial migration from existing schema**
-
-Run: `yarn vp dlx drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
-
-This creates a `drizzle/` folder with the migration SQL for the existing `settings` and `users` tables.
-
-- [ ] **Step 7: Add drizzle.config.ts**
-
-Create `drizzle.config.ts` at the project root:
-
-```typescript
-import { defineConfig } from "drizzle-kit";
-
-export default defineConfig({
-	dialect: "sqlite",
-	schema: "./src/server/schema.ts",
-	out: "./drizzle",
-});
 ```
 
 - [ ] **Step 8: Run tests to verify migration works**
@@ -297,7 +294,7 @@ Add `sessions`, `selectSessionSchema`, `insertSessionSchema` to the export block
 
 - [ ] **Step 4: Generate migration for new table**
 
-Run: `yarn vp dlx drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
+Run: `yarn vp exec drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
 
 - [ ] **Step 5: Update types.d.ts to include sessions in schema**
 
@@ -584,7 +581,15 @@ describe("auth middleware", () => {
 Run: `yarn vp test src/server/__tests__/auth-middleware.test.ts`
 Expected: FAIL — /api/settings returns 200 without session (no middleware yet)
 
-- [ ] **Step 15: Implement auth middleware**
+- [ ] **Step 15: Install @fastify/cookie**
+
+This must be installed before writing the auth middleware, as the middleware accesses `request.cookies` which is typed by this plugin.
+
+```bash
+yarn vp add @fastify/cookie
+```
+
+- [ ] **Step 16: Implement auth middleware**
 
 Create `src/server/middleware/auth.ts`:
 
@@ -637,13 +642,7 @@ const authMiddleware = (app: FastifyInstance) => {
 export { authMiddleware };
 ```
 
-- [ ] **Step 16: Add cookie support and register middleware in app.ts**
-
-Install `@fastify/cookie`:
-
-```bash
-yarn vp add @fastify/cookie
-```
+- [ ] **Step 17: Register cookie plugin and auth middleware in app.ts**
 
 Update `src/server/app.ts`:
 
@@ -698,7 +697,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 export { buildServer };
 ```
 
-- [ ] **Step 17: Update types.d.ts for request.user and cookies**
+- [ ] **Step 18: Update types.d.ts for request.user**
 
 Update `src/server/types.d.ts`:
 
@@ -731,14 +730,14 @@ declare module "fastify" {
 
 Note: `@fastify/cookie` adds its own `cookies` type to `FastifyRequest`, so you do not need to declare `cookies` manually.
 
-- [ ] **Step 18: Run tests to verify they pass**
+- [ ] **Step 19: Run tests to verify they pass**
 
 Run: `yarn vp test src/server/__tests__/auth-middleware.test.ts`
 Expected: PASS
 
 Note: The existing `api.test.ts` tests will now fail because `/api/settings` requires auth. They need to be updated to include a session cookie.
 
-- [ ] **Step 19: Fix existing api.test.ts tests**
+- [ ] **Step 20: Fix existing api.test.ts tests**
 
 Update `src/server/__tests__/api.test.ts` to register a user and use a session cookie:
 
@@ -867,12 +866,12 @@ describe("skipDB option", () => {
 });
 ```
 
-- [ ] **Step 20: Run all tests**
+- [ ] **Step 21: Run all tests**
 
 Run: `yarn vp test`
 Expected: All tests pass
 
-- [ ] **Step 21: Commit**
+- [ ] **Step 22: Commit**
 
 ```bash
 git add src/server/middleware/auth.ts src/server/__tests__/auth-middleware.test.ts src/server/__tests__/api.test.ts src/server/app.ts src/server/types.d.ts package.json yarn.lock
@@ -881,7 +880,7 @@ git commit -m "feat: add session auth middleware with cookie support"
 
 ### 1d: Update auth routes for sessions
 
-- [ ] **Step 22: Write tests for session-based login/register/logout/me**
+- [ ] **Step 23: Write tests for session-based login/register/logout/me**
 
 Add tests to `src/server/__tests__/auth-middleware.test.ts`:
 
@@ -982,12 +981,12 @@ describe("auth routes with sessions", () => {
 });
 ```
 
-- [ ] **Step 23: Run tests to verify they fail**
+- [ ] **Step 24: Run tests to verify they fail**
 
 Run: `yarn vp test src/server/__tests__/auth-middleware.test.ts`
 Expected: FAIL — no /me or /logout routes, no cookies set on login/register
 
-- [ ] **Step 24: Update auth routes**
+- [ ] **Step 25: Update auth routes**
 
 Update `src/server/routes/auth.ts` to:
 
@@ -999,17 +998,17 @@ Update `src/server/routes/auth.ts` to:
 
 Cookie options: `{ path: "/", httpOnly: true, secure: process.env["NODE_ENV"] === "production", sameSite: "strict" }`
 
-- [ ] **Step 25: Run all tests**
+- [ ] **Step 26: Run all tests**
 
 Run: `yarn vp test`
 Expected: All tests pass
 
-- [ ] **Step 26: Run check**
+- [ ] **Step 27: Run check**
 
 Run: `yarn vp check`
 Expected: No lint or type errors
 
-- [ ] **Step 27: Commit**
+- [ ] **Step 28: Commit**
 
 ```bash
 git add src/server/routes/auth.ts src/server/__tests__/auth-middleware.test.ts
@@ -1018,7 +1017,7 @@ git commit -m "feat: add session cookies to login/register, add /me and /logout 
 
 ### 1e: Purge expired sessions on startup
 
-- [ ] **Step 28: Add purge call to dbPlugin**
+- [ ] **Step 29: Add purge call to dbPlugin**
 
 In `src/server/db.ts`, after `migrate(db, ...)`, add:
 
@@ -1028,12 +1027,12 @@ import { purgeExpiredSessions } from "./services/session.ts";
 purgeExpiredSessions(db);
 ```
 
-- [ ] **Step 29: Run all tests**
+- [ ] **Step 30: Run all tests**
 
 Run: `yarn vp test`
 Expected: All tests pass
 
-- [ ] **Step 30: Commit**
+- [ ] **Step 31: Commit**
 
 ```bash
 git add src/server/db.ts
@@ -1236,8 +1235,10 @@ const decrypt = (ciphertext: string): string => {
 	return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
 };
 
-export { decrypt, encrypt };
+export { decrypt, encrypt, getKey };
 ```
+
+Also export `getKey` so it can be called at startup to validate the key is present.
 
 - [ ] **Step 4: Run tests**
 
@@ -1249,6 +1250,56 @@ Expected: PASS
 ```bash
 git add src/server/services/encryption.ts src/server/__tests__/encryption.test.ts
 git commit -m "feat: add AES-256-GCM encryption service for stored secrets"
+```
+
+### 3b: Enforce ENCRYPTION_KEY at server startup
+
+- [ ] **Step 6: Add ENCRYPTION_KEY validation to server startup**
+
+The spec requires: "If not set, the server refuses to start with a clear error message."
+
+In `src/server/app.ts`, add a call to `getKey()` from the encryption service at the top of `buildServer()` (before any plugins are loaded). This validates the key format and throws a clear error if it is missing or malformed.
+
+```typescript
+import { getKey } from "./services/encryption.ts";
+
+// At the top of buildServer():
+getKey(); // Validates ENCRYPTION_KEY is set and correctly formatted
+```
+
+**Important:** This means ALL existing tests that use `buildServer()` without `skipDB: true` will need `ENCRYPTION_KEY` set. Update the test helper `setupDb` functions across test files to set `process.env["ENCRYPTION_KEY"] = "a".repeat(64)` in their setup, and clean it up in `onTestFinished`.
+
+- [ ] **Step 7: Update all test setupDb functions to set ENCRYPTION_KEY**
+
+In each test file that calls `buildServer({ skipSSR: true })`:
+
+- `src/server/__tests__/db.test.ts`
+- `src/server/__tests__/api.test.ts`
+- `src/server/__tests__/session.test.ts`
+- `src/server/__tests__/auth-middleware.test.ts`
+
+Add to each `setupDb`:
+
+```typescript
+process.env["ENCRYPTION_KEY"] = "a".repeat(64);
+```
+
+And in `onTestFinished`:
+
+```typescript
+delete process.env["ENCRYPTION_KEY"];
+```
+
+- [ ] **Step 8: Run all tests**
+
+Run: `yarn vp test`
+Expected: All pass
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add src/server/app.ts src/server/__tests__/
+git commit -m "feat: enforce ENCRYPTION_KEY validation at server startup"
 ```
 
 ---
@@ -1285,7 +1336,7 @@ Export it. Update `types.d.ts` to include `plexConnections` in the db schema typ
 
 - [ ] **Step 2: Generate migration and run tests**
 
-Run: `yarn vp dlx drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
+Run: `yarn vp exec drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
 Run: `yarn vp test`
 Expected: All tests pass
 
@@ -1402,7 +1453,7 @@ Export. Update `types.d.ts`.
 
 - [ ] **Step 2: Generate migration and run tests**
 
-Run: `yarn vp dlx drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
+Run: `yarn vp exec drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
 Run: `yarn vp test`
 Expected: All pass
 
@@ -1545,7 +1596,7 @@ Export all. Update `types.d.ts`.
 
 - [ ] **Step 2: Generate migration and run tests**
 
-Run: `yarn vp dlx drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
+Run: `yarn vp exec drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
 Run: `yarn vp test`
 Expected: All pass
 
@@ -1752,7 +1803,7 @@ git commit -m "feat: add app layout with sidebar navigation"
 
 Add to `src/client/api.ts`:
 
-- Plex endpoints: `startPlexAuth`, `checkPlexAuth`, `getPlexServers`, `selectPlexServer`, `disconnectPlex`
+- Plex endpoints: `startPlexAuth`, `checkPlexAuth`, `getPlexServers`, `selectPlexServer`, `disconnectPlex`, `getPlexLibraries`
 - AI endpoints: `getAiConfig`, `updateAiConfig`, `deleteAiConfig`, `testAiConnection`
 
 Export all hooks.
@@ -1775,7 +1826,7 @@ Create `src/client/pages/Settings.tsx`:
 
 **Account tab:**
 
-- Change password form
+- Change password form (deferred — render as disabled with "Coming soon" for MVP, no backend endpoint yet)
 - Logout button
 
 **Integrations tab (placeholder):**
@@ -1941,21 +1992,27 @@ git commit -m "feat: add History page for past conversations"
 - [ ] **Step 1: Add arr_connections table to schema**
 
 ```typescript
-const arrConnections = sqliteTable("arr_connections", {
-	id: text("id").primaryKey(),
-	userId: text("user_id").notNull(),
-	serviceType: text("service_type").notNull(),
-	url: text("url").notNull(),
-	apiKey: text("api_key").notNull(),
-	createdAt: text("created_at").notNull(),
-});
+import { uniqueIndex } from "drizzle-orm/sqlite-core";
+
+const arrConnections = sqliteTable(
+	"arr_connections",
+	{
+		id: text("id").primaryKey(),
+		userId: text("user_id").notNull(),
+		serviceType: text("service_type").notNull(),
+		url: text("url").notNull(),
+		apiKey: text("api_key").notNull(),
+		createdAt: text("created_at").notNull(),
+	},
+	(table) => [uniqueIndex("arr_user_service_idx").on(table.userId, table.serviceType)],
+);
 ```
 
-Add a unique index on `(userId, serviceType)`. Export. Update `types.d.ts`.
+Export. Update `types.d.ts`.
 
 - [ ] **Step 2: Generate migration**
 
-Run: `yarn vp dlx drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
+Run: `yarn vp exec drizzle-kit generate --dialect sqlite --schema src/server/schema.ts --out drizzle`
 
 - [ ] **Step 3: Run all tests**
 
