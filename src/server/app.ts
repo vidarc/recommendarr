@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 
+import cookie from "@fastify/cookie";
 import { fastify } from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 
 import { dbPlugin } from "./db.ts";
+import { authMiddleware } from "./middleware/auth.ts";
 import { apiRoutes } from "./routes/api.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { healthRoutes } from "./routes/health.ts";
@@ -25,8 +27,11 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 
 	healthRoutes(app);
 
+	await app.register(cookie);
+
 	if (!options.skipDB) {
 		await dbPlugin(app);
+		authMiddleware(app);
 		authRoutes(app);
 		apiRoutes(app);
 	}
