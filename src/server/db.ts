@@ -4,6 +4,7 @@ import { dirname } from "node:path";
 
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
 import { settings, users } from "./schema.ts";
 import { hashPassword } from "./services/auth-utils.ts";
@@ -25,22 +26,7 @@ const dbPlugin = async (app: FastifyInstance) => {
 
 	const db = drizzle({ client: sqlite, schema: { settings, users } });
 
-	db.run(
-		`CREATE TABLE IF NOT EXISTS settings (
-			key TEXT PRIMARY KEY,
-			value TEXT
-		)`,
-	);
-
-	db.run(
-		`CREATE TABLE IF NOT EXISTS users (
-			id TEXT PRIMARY KEY,
-			username TEXT NOT NULL UNIQUE,
-			password_hash TEXT NOT NULL,
-			is_admin INTEGER NOT NULL DEFAULT 0,
-			created_at TEXT NOT NULL
-		)`,
-	);
+	migrate(db, { migrationsFolder: "./drizzle" });
 
 	db.insert(settings).values({ key: "app_version", value: "1.0.0" }).onConflictDoNothing().run();
 
