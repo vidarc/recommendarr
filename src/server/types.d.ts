@@ -1,5 +1,6 @@
 import type {
 	aiConfigs,
+	arrConnections,
 	conversations,
 	messages,
 	plexConnections,
@@ -21,6 +22,7 @@ declare module "fastify" {
 	interface FastifyInstance {
 		db: BetterSQLite3Database<{
 			aiConfigs: typeof aiConfigs;
+			arrConnections: typeof arrConnections;
 			conversations: typeof conversations;
 			messages: typeof messages;
 			plexConnections: typeof plexConnections;

@@ -1,4 +1,4 @@
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 
 const settings = sqliteTable("settings", {
@@ -98,10 +98,28 @@ const recommendations = sqliteTable("recommendations", {
 const selectRecommendationSchema = createSelectSchema(recommendations);
 const insertRecommendationSchema = createInsertSchema(recommendations);
 
+const arrConnections = sqliteTable(
+	"arr_connections",
+	{
+		id: text("id").primaryKey(),
+		userId: text("user_id").notNull(),
+		serviceType: text("service_type").notNull(),
+		url: text("url").notNull(),
+		apiKey: text("api_key").notNull(),
+		createdAt: text("created_at").notNull(),
+	},
+	(table) => [uniqueIndex("arr_user_service_idx").on(table.userId, table.serviceType)],
+);
+
+const selectArrConnectionSchema = createSelectSchema(arrConnections);
+const insertArrConnectionSchema = createInsertSchema(arrConnections);
+
 export {
 	aiConfigs,
+	arrConnections,
 	conversations,
 	insertAiConfigSchema,
+	insertArrConnectionSchema,
 	insertConversationSchema,
 	insertMessageSchema,
 	insertPlexConnectionSchema,
@@ -113,6 +131,7 @@ export {
 	plexConnections,
 	recommendations,
 	selectAiConfigSchema,
+	selectArrConnectionSchema,
 	selectConversationSchema,
 	selectMessageSchema,
 	selectPlexConnectionSchema,

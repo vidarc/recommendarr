@@ -8,6 +8,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
 import {
 	aiConfigs,
+	arrConnections,
 	conversations,
 	messages,
 	plexConnections,
@@ -38,6 +39,7 @@ const dbPlugin = async (app: FastifyInstance) => {
 		client: sqlite,
 		schema: {
 			aiConfigs,
+			arrConnections,
 			conversations,
 			messages,
 			plexConnections,

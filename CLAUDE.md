@@ -40,12 +40,13 @@ yarn vp fmt          # Format only
 ## Project Structure
 
 - `src/server` — Fastify backend
-  - `routes/` — Route handlers (api, auth, health)
-  - `services/` — Business logic (auth-utils)
+  - `routes/` — Route handlers (auth, health, plex, ai, chat)
+  - `services/` — Business logic (auth-utils, session, encryption, plex-api, ai-client, prompt-builder, response-parser)
+  - `middleware/` — Request middleware (auth — session-based authentication via httpOnly cookies)
   - Root: app factory, entry point, db plugin, SSR plugin, schema
 - `src/client` — React frontend
-  - `pages/` — Route-level page components (Login, Register, Dashboard)
-  - `components/` — Reusable UI primitives (FormField, AuthFooter)
+  - `pages/` — Route-level page components (Login, Register, Settings, Recommendations, History)
+  - `components/` — Reusable UI primitives (FormField, AuthFooter, AppLayout, ChatControls, ChatInput, ChatMessage, RecommendationCard)
   - `features/` — Feature-scoped state (auth/auth-slice)
   - Root: entry points, store, api, theme, global styles
 - `src/shared` — Shared types and utilities (planned, not yet created)
@@ -73,7 +74,7 @@ The app uses SQLite via `better-sqlite3` + Drizzle ORM. The `dbPlugin` in `src/s
 
 - Opens/creates a database at `DATABASE_PATH` env var (default: `./data/recommendarr.db`)
 - Enables WAL mode for better concurrency
-- Runs migrations (currently: `settings` table)
+- Runs migrations (tables: `settings`, `users`, `sessions`, `plex_connections`, `ai_configs`, `conversations`, `messages`, `recommendations`, `arr_connections`)
 - Decorates Fastify with `app.db` (Drizzle instance) and `app.sqlite` (raw better-sqlite3 instance) for route access
 - Closes the database on server shutdown
 
@@ -88,9 +89,25 @@ Fastify uses `fastify-type-provider-zod` for request/response validation and typ
 - `GET /ping` — health check, returns `{ "status": "ok" }` (also used by Docker health check)
 - `GET /health` — returns `{ "status": "ok", "uptimeSeconds": number }` — uptime is measured from when `buildServer()` is called
 - `GET /api/auth/setup-status` — returns `{ "needsSetup": boolean }` indicating if any users exist
-- `POST /api/auth/register` — creates a new user; first user becomes admin
-- `POST /api/auth/login` — authenticates a user by username/password
+- `POST /api/auth/register` — creates a new user; first user becomes admin, sets session cookie
+- `POST /api/auth/login` — authenticates a user by username/password, sets session cookie
+- `GET /api/auth/me` — returns the currently authenticated user from session cookie
+- `POST /api/auth/logout` — deletes the server-side session and clears the session cookie
 - `GET /api/settings` — returns all settings from the database as a JSON key-value object
+- `POST /api/plex/auth/start` — initiates Plex OAuth flow, returns PIN ID and auth URL
+- `GET /api/plex/auth/check` — checks if a Plex PIN has been claimed, stores encrypted auth token
+- `GET /api/plex/servers` — returns available Plex servers for the user
+- `POST /api/plex/servers/select` — saves the selected Plex server
+- `DELETE /api/plex/connection` — removes the user's Plex connection
+- `GET /api/plex/libraries` — returns libraries on the selected Plex server
+- `GET /api/ai/config` — returns the user's AI configuration (API key masked)
+- `PUT /api/ai/config` — creates or updates AI configuration (API key encrypted)
+- `DELETE /api/ai/config` — removes the user's AI configuration
+- `POST /api/ai/test` — tests the saved AI configuration by connecting to the endpoint
+- `POST /api/chat` — sends a message for AI recommendations, creates/continues conversations
+- `GET /api/conversations` — lists all conversations for the user
+- `GET /api/conversations/:id` — returns a conversation with all messages and recommendations
+- `DELETE /api/conversations/:id` — deletes a conversation and its messages/recommendations
 - `GET /*` — SSR catch-all (registered last so API routes take priority)
 
 ### SSR
@@ -110,16 +127,18 @@ The app uses Vite's built-in SSR with Fastify:
 
 **Authentication:**
 
-The app uses a `users` table with scrypt-hashed passwords (via `node:crypto`). The first user to register becomes admin. Alternatively, set `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` env vars to create an admin on first boot. Auth state lives in a Redux slice (`authSlice`); session/JWT handling is not yet implemented.
+The app uses a `users` table with scrypt-hashed passwords (via `node:crypto`). The first user to register becomes admin. Alternatively, set `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` env vars to create an admin on first boot. Auth uses server-side sessions stored in a `sessions` table with httpOnly cookies. The `authMiddleware` in `src/server/middleware/auth.ts` validates session cookies on all `/api/` routes (except public routes like login, register, setup-status, and logout). Session duration is controlled by `SESSION_DURATION_DAYS` (default: 7). Secrets (Plex tokens, AI API keys) are encrypted at rest using AES-256-GCM via the `ENCRYPTION_KEY` env var. Client-side auth state lives in a Redux slice (`authSlice`).
 
 **Client-side routing:**
 
-The app uses wouter for routing. Routes: `/login`, `/register`, `/` (dashboard). Auth gates redirect unauthenticated users to `/login`, and if no users exist yet, `/login` redirects to `/register`.
+The app uses wouter for routing. Routes: `/login`, `/register`, `/` (recommendations), `/history`, `/settings`. Auth gates redirect unauthenticated users to `/login`, and if no users exist yet, `/login` redirects to `/register`. The `AppLayout` component provides shared navigation.
 
 **Environment variables** (see `docs/README.md` for full list):
 
 - `PORT` — server port (default: `3000`)
 - `HOST` — bind address (default: `0.0.0.0`)
+- `ENCRYPTION_KEY` — required, 64-character hex string for AES-256-GCM encryption of stored secrets
+- `SESSION_DURATION_DAYS` — session lifetime in days (default: `7`)
 
 ### Modules
 

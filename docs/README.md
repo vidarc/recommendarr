@@ -11,6 +11,8 @@ AI-based recommendation engine for the \*arr stack (Radarr, Sonarr, Lidarr) and 
 | `DATABASE_PATH`          | `./data/recommendarr.db` | Path to the SQLite database file                                               |
 | `DEFAULT_ADMIN_USERNAME` | `admin`                  | Username for the default admin account (only used with DEFAULT_ADMIN_PASSWORD) |
 | `DEFAULT_ADMIN_PASSWORD` | (none)                   | If set, creates an admin user on first boot with these credentials             |
+| `ENCRYPTION_KEY`         | (none)                   | Required, 64-character hex string for AES-256-GCM encryption of stored secrets |
+| `SESSION_DURATION_DAYS`  | `7`                      | Controls how long login sessions last (in days)                                |
 
 ## API Reference
 

@@ -4,11 +4,12 @@ import { Redirect, Route, Switch } from "wouter";
 import { useGetMeQuery, useGetSetupStatusQuery } from "./api.ts";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { globals } from "./global-styles.ts";
+import { History } from "./pages/History.tsx";
 import { Login } from "./pages/Login.tsx";
 import { Recommendations } from "./pages/Recommendations.tsx";
 import { Register } from "./pages/Register.tsx";
 import { Settings } from "./pages/Settings.tsx";
-import { colors, spacing } from "./theme.ts";
+import { colors } from "./theme.ts";
 
 import "sanitize.css";
 import "sanitize.css/typography.css";
@@ -29,32 +30,6 @@ const loadingWrapper = css`
 	font-size: 1.1rem;
 	letter-spacing: 0.5px;
 `;
-
-const placeholderPage = css`
-	max-width: 800px;
-	width: 100%;
-	margin: 0 auto;
-	padding: ${spacing.xl};
-`;
-
-const placeholderTitle = css`
-	font-size: 2rem;
-	font-weight: 700;
-	color: ${colors.text};
-	margin-bottom: ${spacing.md};
-	letter-spacing: -0.5px;
-`;
-
-const placeholderText = css`
-	color: ${colors.textMuted};
-`;
-
-const History = () => (
-	<div className={placeholderPage}>
-		<h1 className={placeholderTitle}>History</h1>
-		<p className={placeholderText}>Coming soon.</p>
-	</div>
-);
 
 const CatchAll = () => <Redirect to="/" />;
 
