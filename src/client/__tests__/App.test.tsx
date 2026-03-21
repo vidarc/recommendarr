@@ -15,7 +15,6 @@ import { Router } from "wouter";
 
 import { api } from "../api.ts";
 import { App } from "../App.tsx";
-import { setUser } from "../features/auth/auth-slice.ts";
 import { createStore } from "../store.ts";
 
 const server = setupServer();
@@ -34,6 +33,15 @@ afterAll(() => {
 
 const setupStatusHandler = (needsSetup = false) =>
 	http.get("/api/auth/setup-status", () => HttpResponse.json({ needsSetup }));
+
+const meHandler = (authenticated = false) =>
+	http.get("/api/auth/me", () => {
+		if (authenticated) {
+			return HttpResponse.json({ id: "1", username: "testuser", isAdmin: false });
+		}
+		const unauthorizedStatus = 401;
+		return HttpResponse.json({ error: "Unauthorized" }, { status: unauthorizedStatus });
+	});
 
 const renderApp = (path = "/") => {
 	const testStore = createStore();
@@ -54,13 +62,9 @@ const renderApp = (path = "/") => {
 	return { store: testStore };
 };
 
-const loginUser = (store: ReturnType<typeof createStore>) => {
-	store.dispatch(setUser({ id: "1", username: "testuser", isAdmin: false }));
-};
-
 describe("App", () => {
 	test("redirects to login when not authenticated", async () => {
-		server.use(setupStatusHandler());
+		server.use(setupStatusHandler(), meHandler(false));
 
 		renderApp("/");
 
@@ -70,7 +74,7 @@ describe("App", () => {
 	});
 
 	test("redirects to register when setup is needed", async () => {
-		server.use(setupStatusHandler(true));
+		server.use(setupStatusHandler(true), meHandler(false));
 
 		renderApp("/login");
 
@@ -82,14 +86,14 @@ describe("App", () => {
 	test("shows loading state while fetching settings", async () => {
 		server.use(
 			setupStatusHandler(),
+			meHandler(true),
 			http.get("/api/settings", async () => {
 				await delay("infinite");
 				return HttpResponse.json({});
 			}),
 		);
 
-		const { store } = renderApp("/");
-		loginUser(store);
+		renderApp("/");
 
 		await waitFor(() => {
 			expect(screen.getByText(/Loading/)).toBeInTheDocument();
@@ -100,11 +104,11 @@ describe("App", () => {
 		const errorStatusCode = 500;
 		server.use(
 			setupStatusHandler(),
+			meHandler(true),
 			http.get("/api/settings", () => HttpResponse.json(undefined, { status: errorStatusCode })),
 		);
 
-		const { store } = renderApp("/");
-		loginUser(store);
+		renderApp("/");
 
 		await waitFor(() => {
 			expect(screen.getByText(/Error loading settings/)).toBeInTheDocument();
@@ -114,11 +118,11 @@ describe("App", () => {
 	test("renders settings as a list when authenticated", async () => {
 		server.use(
 			setupStatusHandler(),
+			meHandler(true),
 			http.get("/api/settings", () => HttpResponse.json({ app_version: "1.0.0", theme: "dark" })),
 		);
 
-		const { store } = renderApp("/");
-		loginUser(store);
+		renderApp("/");
 
 		await waitFor(() => {
 			expect(screen.getByText("Recommendarr")).toBeInTheDocument();

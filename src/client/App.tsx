@@ -1,15 +1,12 @@
 import { css } from "@linaria/atomic";
-import { useSelector } from "react-redux";
 import { Redirect, Route, Switch } from "wouter";
 
-import { useGetSetupStatusQuery } from "./api.ts";
+import { useGetMeQuery, useGetSetupStatusQuery } from "./api.ts";
 import { globals } from "./global-styles.ts";
 import { Dashboard } from "./pages/Dashboard.tsx";
 import { Login } from "./pages/Login.tsx";
 import { Register } from "./pages/Register.tsx";
 import { colors } from "./theme.ts";
-
-import type { RootState } from "./store.ts";
 
 import "sanitize.css";
 import "sanitize.css/typography.css";
@@ -32,7 +29,10 @@ const loadingWrapper = css`
 `;
 
 const ProtectedDashboard = () => {
-	const user = useSelector((state: RootState) => state.auth.user);
+	const { data: user, isLoading } = useGetMeQuery();
+	if (isLoading) {
+		return <p className={loadingWrapper}>Loading...</p>;
+	}
 	if (!user) {
 		return <Redirect to="/login" />;
 	}
@@ -40,9 +40,12 @@ const ProtectedDashboard = () => {
 };
 
 const LoginPage = () => {
-	const user = useSelector((state: RootState) => state.auth.user);
+	const { data: user, isLoading: isMeLoading } = useGetMeQuery();
 	const { data: setupStatus } = useGetSetupStatusQuery();
 
+	if (isMeLoading) {
+		return <p className={loadingWrapper}>Loading...</p>;
+	}
 	if (user) {
 		return <Redirect to="/" />;
 	}
@@ -53,7 +56,10 @@ const LoginPage = () => {
 };
 
 const RegisterPage = () => {
-	const user = useSelector((state: RootState) => state.auth.user);
+	const { data: user, isLoading } = useGetMeQuery();
+	if (isLoading) {
+		return <p className={loadingWrapper}>Loading...</p>;
+	}
 	if (user) {
 		return <Redirect to="/" />;
 	}

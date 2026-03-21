@@ -1,12 +1,10 @@
 import { css } from "@linaria/atomic";
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
-import { useLocation } from "wouter";
 
-import { useLoginMutation } from "../api.ts";
+import { api, useLoginMutation } from "../api.ts";
 import { LoginFooter } from "../components/AuthFooter.tsx";
 import { FormField } from "../components/FormField.tsx";
-import { setUser } from "../features/auth/auth-slice.ts";
 import { colors, radii, spacing } from "../theme.ts";
 
 const formWrapper = css`
@@ -73,18 +71,16 @@ export const Login = () => {
 	const [password, setPassword] = useState("");
 	const [login, { error, isLoading }] = useLoginMutation();
 	const dispatch = useDispatch();
-	const [, navigate] = useLocation();
 
 	const handleSubmit = useCallback(
 		async (event: React.FormEvent<HTMLFormElement>) => {
 			event.preventDefault();
 			const result = await login({ username, password });
 			if ("data" in result && result.data) {
-				dispatch(setUser(result.data));
-				navigate("/");
+				dispatch(api.util.resetApiState());
 			}
 		},
-		[username, password, login, dispatch, navigate],
+		[username, password, login, dispatch],
 	);
 
 	const handleUsernameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
