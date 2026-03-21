@@ -2,11 +2,11 @@ import { css } from "@linaria/atomic";
 import { Redirect, Route, Switch } from "wouter";
 
 import { useGetMeQuery, useGetSetupStatusQuery } from "./api.ts";
+import { AppLayout } from "./components/AppLayout.tsx";
 import { globals } from "./global-styles.ts";
-import { Dashboard } from "./pages/Dashboard.tsx";
 import { Login } from "./pages/Login.tsx";
 import { Register } from "./pages/Register.tsx";
-import { colors } from "./theme.ts";
+import { colors, spacing } from "./theme.ts";
 
 import "sanitize.css";
 import "sanitize.css/typography.css";
@@ -28,7 +28,60 @@ const loadingWrapper = css`
 	letter-spacing: 0.5px;
 `;
 
-const ProtectedDashboard = () => {
+const placeholderPage = css`
+	max-width: 800px;
+	width: 100%;
+	margin: 0 auto;
+	padding: ${spacing.xl};
+`;
+
+const placeholderTitle = css`
+	font-size: 2rem;
+	font-weight: 700;
+	color: ${colors.text};
+	margin-bottom: ${spacing.md};
+	letter-spacing: -0.5px;
+`;
+
+const placeholderText = css`
+	color: ${colors.textMuted};
+`;
+
+const Recommendations = () => (
+	<div className={placeholderPage}>
+		<h1 className={placeholderTitle}>Recommendations</h1>
+		<p className={placeholderText}>Coming soon.</p>
+	</div>
+);
+
+const History = () => (
+	<div className={placeholderPage}>
+		<h1 className={placeholderTitle}>History</h1>
+		<p className={placeholderText}>Coming soon.</p>
+	</div>
+);
+
+const Settings = () => (
+	<div className={placeholderPage}>
+		<h1 className={placeholderTitle}>Settings</h1>
+		<p className={placeholderText}>Coming soon.</p>
+	</div>
+);
+
+const CatchAll = () => <Redirect to="/" />;
+
+const AuthenticatedRoutes = () => (
+	<AppLayout>
+		<Switch>
+			<Route path="/" component={Recommendations} />
+			<Route path="/history" component={History} />
+			<Route path="/settings" component={Settings} />
+			<Route component={CatchAll} />
+		</Switch>
+	</AppLayout>
+);
+
+const ProtectedApp = () => {
 	const { data: user, isLoading } = useGetMeQuery();
 	if (isLoading) {
 		return <p className={loadingWrapper}>Loading...</p>;
@@ -36,7 +89,7 @@ const ProtectedDashboard = () => {
 	if (!user) {
 		return <Redirect to="/login" />;
 	}
-	return <Dashboard />;
+	return <AuthenticatedRoutes />;
 };
 
 const LoginPage = () => {
@@ -66,8 +119,6 @@ const RegisterPage = () => {
 	return <Register />;
 };
 
-const CatchAll = () => <Redirect to="/" />;
-
 export const App = () => {
 	const { isLoading } = useGetSetupStatusQuery();
 
@@ -80,8 +131,7 @@ export const App = () => {
 			<Switch>
 				<Route path="/login" component={LoginPage} />
 				<Route path="/register" component={RegisterPage} />
-				<Route path="/" component={ProtectedDashboard} />
-				<Route component={CatchAll} />
+				<Route component={ProtectedApp} />
 			</Switch>
 		</div>
 	);

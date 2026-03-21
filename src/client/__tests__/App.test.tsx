@@ -1,5 +1,5 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { delay, http, HttpResponse } from "msw";
+import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Provider } from "react-redux";
 import {
@@ -83,68 +83,40 @@ describe("App", () => {
 		});
 	});
 
-	test("shows loading state while fetching settings", async () => {
-		server.use(
-			setupStatusHandler(),
-			meHandler(true),
-			http.get("/api/settings", async () => {
-				await delay("infinite");
-				return HttpResponse.json({});
-			}),
-		);
+	test("shows recommendations page when authenticated", async () => {
+		server.use(setupStatusHandler(), meHandler(true));
 
 		renderApp("/");
 
 		await waitFor(() => {
-			expect(screen.getByText(/Loading/)).toBeInTheDocument();
+			expect(screen.getByRole("heading", { name: /recommendations/i })).toBeInTheDocument();
 		});
 	});
 
-	test("shows error state when settings API returns an error", async () => {
-		const errorStatusCode = 500;
-		server.use(
-			setupStatusHandler(),
-			meHandler(true),
-			http.get("/api/settings", () => HttpResponse.json(undefined, { status: errorStatusCode })),
-		);
+	test("shows sidebar navigation when authenticated", async () => {
+		server.use(setupStatusHandler(), meHandler(true));
 
 		renderApp("/");
 
 		await waitFor(() => {
-			expect(screen.getByText(/Error loading settings/)).toBeInTheDocument();
+			expect(screen.getByText("Recommendarr")).toBeInTheDocument();
 		});
+
+		expect(screen.getByRole("navigation")).toBeInTheDocument();
+		const navAndHeading = 2;
+		expect(screen.getAllByText("Recommendations")).toHaveLength(navAndHeading);
+		expect(screen.getByText("History")).toBeInTheDocument();
+		expect(screen.getByText("Settings")).toBeInTheDocument();
+		expect(screen.getByText("Log out")).toBeInTheDocument();
 	});
 
 	test("redirects authenticated user away from login", async () => {
-		server.use(
-			setupStatusHandler(),
-			meHandler(true),
-			http.get("/api/settings", () => HttpResponse.json({ app_version: "1.0.0" })),
-		);
+		server.use(setupStatusHandler(), meHandler(true));
 
 		renderApp("/login");
 
 		await waitFor(() => {
 			expect(screen.getByText("Recommendarr")).toBeInTheDocument();
 		});
-	});
-
-	test("renders settings as a list when authenticated", async () => {
-		server.use(
-			setupStatusHandler(),
-			meHandler(true),
-			http.get("/api/settings", () => HttpResponse.json({ app_version: "1.0.0", theme: "dark" })),
-		);
-
-		renderApp("/");
-
-		await waitFor(() => {
-			expect(screen.getByText("Recommendarr")).toBeInTheDocument();
-		});
-
-		expect(screen.getByText("app_version")).toBeInTheDocument();
-		expect(screen.getByText(/1\.0\.0/)).toBeInTheDocument();
-		expect(screen.getByText("theme")).toBeInTheDocument();
-		expect(screen.getByText(/dark/)).toBeInTheDocument();
 	});
 });
