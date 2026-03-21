@@ -17,17 +17,20 @@ import {
 const expectedSessionsTableCount = 1;
 const expectedOneSession = 1;
 const firstIndex = 0;
+const HEX_KEY_LENGTH = 64;
 const pastOffsetMs = 1000;
 const testDbDir = join(tmpdir(), "recommendarr-test-session");
 const testDbPath = join(testDbDir, "test.db");
 
 const setupDb = async () => {
 	process.env["DATABASE_PATH"] = testDbPath;
+	process.env["ENCRYPTION_KEY"] = "a".repeat(HEX_KEY_LENGTH);
 	const app = await buildServer({ skipSSR: true });
 
 	onTestFinished(async () => {
 		await app.close();
 		delete process.env["DATABASE_PATH"];
+		delete process.env["ENCRYPTION_KEY"];
 		if (existsSync(testDbDir)) {
 			rmSync(testDbDir, { recursive: true });
 		}

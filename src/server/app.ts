@@ -9,6 +9,7 @@ import { authMiddleware } from "./middleware/auth.ts";
 import { apiRoutes } from "./routes/api.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { healthRoutes } from "./routes/health.ts";
+import { getKey } from "./services/encryption.ts";
 import { ssrRoutes } from "./ssr.ts";
 
 interface BuildServerOptions {
@@ -17,6 +18,8 @@ interface BuildServerOptions {
 }
 
 const buildServer = async (options: BuildServerOptions = {}) => {
+	getKey(); // Validates ENCRYPTION_KEY is set and correctly formatted
+
 	const app = fastify({
 		logger: process.env["NODE_ENV"] !== "test",
 		genReqId: () => randomUUID(),

@@ -9,17 +9,20 @@ import { buildServer } from "../app.ts";
 import { settings, users } from "../schema.ts";
 import { createSession } from "../services/session.ts";
 
+const HEX_KEY_LENGTH = 64;
 const testDbDir = join(tmpdir(), "recommendarr-test-api");
 const testDbPath = join(testDbDir, "test.db");
 const testUser = { username: "testuser", password: "password123" };
 
 const setupDb = async () => {
 	process.env["DATABASE_PATH"] = testDbPath;
+	process.env["ENCRYPTION_KEY"] = "a".repeat(HEX_KEY_LENGTH);
 	const app = await buildServer({ skipSSR: true });
 
 	onTestFinished(async () => {
 		await app.close();
 		delete process.env["DATABASE_PATH"];
+		delete process.env["ENCRYPTION_KEY"];
 		if (existsSync(testDbDir)) {
 			rmSync(testDbDir, { recursive: true });
 		}
@@ -116,10 +119,12 @@ describe("GET /api/settings", () => {
 describe("skipDB option", () => {
 	test("does not register /api/settings when skipDB is true", async () => {
 		const expectedStatusCode = 404;
+		process.env["ENCRYPTION_KEY"] = "a".repeat(HEX_KEY_LENGTH);
 		const app = await buildServer({ skipSSR: true, skipDB: true });
 
 		onTestFinished(async () => {
 			await app.close();
+			delete process.env["ENCRYPTION_KEY"];
 		});
 
 		const response = await app.inject({ method: "GET", url: "/api/settings" });

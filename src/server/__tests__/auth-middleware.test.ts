@@ -10,6 +10,7 @@ import { buildServer } from "../app.ts";
 import { users } from "../schema.ts";
 import { createSession } from "../services/session.ts";
 
+const HEX_KEY_LENGTH = 64;
 const testDbDir = join(tmpdir(), "recommendarr-test-auth-middleware");
 const testDbPath = join(testDbDir, "test.db");
 
@@ -17,11 +18,13 @@ const testUser = { username: "testuser", password: "password123" };
 
 const setupDb = async () => {
 	process.env["DATABASE_PATH"] = testDbPath;
+	process.env["ENCRYPTION_KEY"] = "a".repeat(HEX_KEY_LENGTH);
 	const app = await buildServer({ skipSSR: true });
 
 	onTestFinished(async () => {
 		await app.close();
 		delete process.env["DATABASE_PATH"];
+		delete process.env["ENCRYPTION_KEY"];
 		if (existsSync(testDbDir)) {
 			rmSync(testDbDir, { recursive: true });
 		}

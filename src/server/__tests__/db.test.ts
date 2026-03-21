@@ -10,16 +10,19 @@ import { settings } from "../schema.ts";
 
 const expectedTableCount = 3;
 const firstIndex = 0;
+const HEX_KEY_LENGTH = 64;
 const testDbDir = join(tmpdir(), "recommendarr-test-db");
 const testDbPath = join(testDbDir, "test.db");
 
 const setupDb = async () => {
 	process.env["DATABASE_PATH"] = testDbPath;
+	process.env["ENCRYPTION_KEY"] = "a".repeat(HEX_KEY_LENGTH);
 	const app = await buildServer({ skipSSR: true });
 
 	onTestFinished(async () => {
 		await app.close();
 		delete process.env["DATABASE_PATH"];
+		delete process.env["ENCRYPTION_KEY"];
 		if (existsSync(testDbDir)) {
 			rmSync(testDbDir, { recursive: true });
 		}
@@ -56,6 +59,7 @@ describe("database plugin", () => {
 
 	test("does not overwrite existing app_version on restart", async () => {
 		process.env["DATABASE_PATH"] = testDbPath;
+		process.env["ENCRYPTION_KEY"] = "a".repeat(HEX_KEY_LENGTH);
 		const firstApp = await buildServer({ skipSSR: true });
 
 		firstApp.db
@@ -70,6 +74,7 @@ describe("database plugin", () => {
 		onTestFinished(async () => {
 			await secondApp.close();
 			delete process.env["DATABASE_PATH"];
+			delete process.env["ENCRYPTION_KEY"];
 			if (existsSync(testDbDir)) {
 				rmSync(testDbDir, { recursive: true });
 			}
@@ -83,12 +88,14 @@ describe("database plugin", () => {
 		const nestedDir = join(tmpdir(), "recommendarr-test-nested", "deep");
 		const nestedPath = join(nestedDir, "test.db");
 		process.env["DATABASE_PATH"] = nestedPath;
+		process.env["ENCRYPTION_KEY"] = "a".repeat(HEX_KEY_LENGTH);
 
 		const app = await buildServer({ skipSSR: true });
 
 		onTestFinished(async () => {
 			await app.close();
 			delete process.env["DATABASE_PATH"];
+			delete process.env["ENCRYPTION_KEY"];
 			rmSync(join(tmpdir(), "recommendarr-test-nested"), { recursive: true });
 		});
 
@@ -98,10 +105,12 @@ describe("database plugin", () => {
 
 	test("closes database on server close", async () => {
 		process.env["DATABASE_PATH"] = testDbPath;
+		process.env["ENCRYPTION_KEY"] = "a".repeat(HEX_KEY_LENGTH);
 		const app = await buildServer({ skipSSR: true });
 
 		onTestFinished(() => {
 			delete process.env["DATABASE_PATH"];
+			delete process.env["ENCRYPTION_KEY"];
 			if (existsSync(testDbDir)) {
 				rmSync(testDbDir, { recursive: true });
 			}
