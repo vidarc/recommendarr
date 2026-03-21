@@ -6,6 +6,7 @@ import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod
 
 import { dbPlugin } from "./db.ts";
 import { authMiddleware } from "./middleware/auth.ts";
+import { aiRoutes } from "./routes/ai.ts";
 import { apiRoutes } from "./routes/api.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { healthRoutes } from "./routes/health.ts";
@@ -37,6 +38,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 		await dbPlugin(app);
 		authMiddleware(app);
 		authRoutes(app);
+		aiRoutes(app);
 		apiRoutes(app);
 		plexRoutes(app);
 	}
