@@ -19,7 +19,7 @@ const MIN_RESULT_COUNT = 1;
 const MAX_RESULT_COUNT = 25;
 const DEFAULT_RESULT_COUNT = 5;
 const MAX_TITLE_WORDS = 6;
-const FIRST_MESSAGE_COUNT = 1;
+const NO_PRIOR_MESSAGES = 0;
 
 const errorResponseSchema = z.object({
 	error: z.string(),
@@ -237,7 +237,7 @@ const chatRoutes = (app: FastifyInstance) => {
 
 			// Generate title if first user message in conversation
 			const userMessageCount = conversationMessages.filter((msg) => msg.role === "user").length;
-			if (userMessageCount === FIRST_MESSAGE_COUNT && !conversationId) {
+			if (userMessageCount === NO_PRIOR_MESSAGES && !conversationId) {
 				try {
 					const titleResponse = await chatCompletion(
 						{
