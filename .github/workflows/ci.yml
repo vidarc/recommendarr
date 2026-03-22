@@ -30,7 +30,7 @@ jobs:
 
       - run: yarn install --immutable
 
-      - run: yarn vp check
+      - run: yarn lint
 
   test:
     name: Unit Tests
@@ -52,7 +52,7 @@ jobs:
 
       - run: yarn install --immutable
 
-      - run: yarn vp test
+      - run: yarn test
 
   build:
     name: Build
