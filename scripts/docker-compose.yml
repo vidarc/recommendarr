@@ -1,0 +1,23 @@
+services:
+  recommendarr:
+    image: recommendarr:e2e
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      ENCRYPTION_KEY: "97edee5ae27e974c3705ef05bd4a11f6cd1e233ee088de4892bf4417fca402f0"
+      NODE_ENV: "production"
+    tmpfs:
+      - /app/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:8080/ping').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
