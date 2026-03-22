@@ -8,7 +8,7 @@ import { users } from "../schema.ts";
 import { hashPassword, verifyPassword } from "../services/auth-utils.ts";
 import { createSession, deleteSession } from "../services/session.ts";
 
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
 const minUsernameLength = 1;
@@ -38,13 +38,11 @@ const successResponseSchema = z.object({
 	success: z.boolean(),
 });
 
-const isProduction = () => process.env["NODE_ENV"] === "production";
-
-const setSessionCookie = (reply: FastifyReply, sessionId: string) => {
+const setSessionCookie = (request: FastifyRequest, reply: FastifyReply, sessionId: string) => {
 	reply.setCookie("session", sessionId, {
 		path: "/",
 		httpOnly: true,
-		secure: isProduction(),
+		secure: request.protocol === "https",
 		sameSite: "strict",
 	});
 };
@@ -96,7 +94,7 @@ const authRoutes = (app: FastifyInstance) => {
 				.run();
 
 			const session = createSession(app.db, id);
-			setSessionCookie(reply, session.id);
+			setSessionCookie(request, reply, session.id);
 
 			return reply.code(StatusCodes.CREATED).send({ id, username, isAdmin });
 		},
@@ -123,7 +121,7 @@ const authRoutes = (app: FastifyInstance) => {
 			}
 
 			const session = createSession(app.db, user.id);
-			setSessionCookie(reply, session.id);
+			setSessionCookie(request, reply, session.id);
 
 			return reply.code(StatusCodes.OK).send({
 				id: user.id,
