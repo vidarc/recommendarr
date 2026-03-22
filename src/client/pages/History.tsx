@@ -38,18 +38,12 @@ const listWrapper = css`
 	gap: ${spacing.sm};
 `;
 
-const itemButton = css`
+const rowWrapper = css`
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	padding: ${spacing.md};
 	background: ${colors.surface};
 	border: 1px solid ${colors.border};
 	border-radius: ${radii.md};
-	cursor: pointer;
-	width: 100%;
-	text-align: left;
-	font: inherit;
 	transition:
 		background 0.2s ease,
 		border-color 0.2s ease;
@@ -58,6 +52,19 @@ const itemButton = css`
 		background: ${colors.surfaceHover};
 		border-color: ${colors.borderFocus};
 	}
+`;
+
+const itemButton = css`
+	display: flex;
+	align-items: center;
+	flex: 1;
+	min-width: 0;
+	padding: ${spacing.md};
+	background: none;
+	border: none;
+	cursor: pointer;
+	text-align: left;
+	font: inherit;
 `;
 
 const infoWrapper = css`
@@ -104,7 +111,7 @@ const deleteBtnStyle = css`
 	color: ${colors.textMuted};
 	cursor: pointer;
 	font-size: 0.8rem;
-	margin-left: ${spacing.md};
+	margin-right: ${spacing.md};
 	flex-shrink: 0;
 	transition:
 		color 0.2s ease,
@@ -124,7 +131,7 @@ const confirmBtnStyle = css`
 	color: ${colors.text};
 	cursor: pointer;
 	font-size: 0.8rem;
-	margin-left: ${spacing.xs};
+	margin-right: ${spacing.md};
 	flex-shrink: 0;
 	font-weight: 600;
 `;
@@ -137,7 +144,6 @@ const cancelBtnStyle = css`
 	color: ${colors.textMuted};
 	cursor: pointer;
 	font-size: 0.8rem;
-	margin-left: ${spacing.md};
 	flex-shrink: 0;
 `;
 
@@ -226,15 +232,17 @@ const ConversationRow = ({
 	);
 
 	return (
-		<button type="button" className={itemButton} onClick={handleClick} onKeyDown={handleKeyDown}>
-			<ConversationMeta conversation={conversation} />
+		<div className={rowWrapper}>
+			<button type="button" className={itemButton} onClick={handleClick} onKeyDown={handleKeyDown}>
+				<ConversationMeta conversation={conversation} />
+			</button>
 			<DeleteActions
 				isConfirming={isConfirming}
 				onDelete={handleDelete}
 				onConfirm={handleConfirm}
 				onCancel={onCancelDelete}
 			/>
-		</button>
+		</div>
 	);
 };
 
