@@ -1,12 +1,25 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useState } from "react";
+import { Suspense, lazy, useCallback, useState } from "react";
 
 import { colors, spacing } from "../theme.ts";
-import { AccountTab } from "./settings/AccountTab.tsx";
-import { AiTab } from "./settings/AiTab.tsx";
-import { IntegrationsTab } from "./settings/IntegrationsTab.tsx";
-import { PlexTab } from "./settings/PlexTab.tsx";
 import { pageTitle, pageWrapper } from "./settings/settings-styles.ts";
+
+const PlexTab = lazy(async () => {
+	const mod = await import("./settings/PlexTab.tsx");
+	return { default: mod.PlexTab };
+});
+const AiTab = lazy(async () => {
+	const mod = await import("./settings/AiTab.tsx");
+	return { default: mod.AiTab };
+});
+const AccountTab = lazy(async () => {
+	const mod = await import("./settings/AccountTab.tsx");
+	return { default: mod.AccountTab };
+});
+const IntegrationsTab = lazy(async () => {
+	const mod = await import("./settings/IntegrationsTab.tsx");
+	return { default: mod.IntegrationsTab };
+});
 
 type SettingsTab = "account" | "ai" | "integrations" | "plex";
 
@@ -91,18 +104,24 @@ const SettingsTabBar = ({
 	</div>
 );
 
-const TabContent = ({ tab }: { tab: SettingsTab }) => {
-	if (tab === "plex") {
-		return <PlexTab />;
-	}
-	if (tab === "ai") {
-		return <AiTab />;
-	}
-	if (tab === "account") {
-		return <AccountTab />;
-	}
-	return <IntegrationsTab />;
-};
+const tabLoadingFallback = css`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: ${spacing.xl};
+	color: ${colors.textMuted};
+`;
+
+const tabFallback = <p className={tabLoadingFallback}>Loading...</p>;
+
+const TabContent = ({ tab }: { tab: SettingsTab }) => (
+	<Suspense fallback={tabFallback}>
+		{tab === "plex" && <PlexTab />}
+		{tab === "ai" && <AiTab />}
+		{tab === "account" && <AccountTab />}
+		{tab === "integrations" && <IntegrationsTab />}
+	</Suspense>
+);
 
 /* ── Main Settings ─────────────────────────────────────────── */
 
