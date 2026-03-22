@@ -10,60 +10,60 @@ test.describe("admin login flow", () => {
 		// A fresh database has no users, so visiting / should redirect to /register
 		await page.goto("/");
 		await expect(page).toHaveURL(/\/register/);
-		await expect(page.locator("h1")).toHaveText("Register");
+		await expect(page.getByRole("heading", { level: 1 })).toHaveText("Register");
 	});
 
 	test("register first admin user", async ({ page }) => {
 		await page.goto("/register");
 
 		// Fill in the registration form
-		await page.locator("#username").fill(adminUsername);
-		await page.locator("#password").fill(adminPassword);
-		await page.locator("#confirmPassword").fill(adminPassword);
-		await page.locator('button[type="submit"]').click();
+		await page.getByLabel("Username").fill(adminUsername);
+		await page.getByLabel("Password", { exact: true }).fill(adminPassword);
+		await page.getByLabel("Confirm Password").fill(adminPassword);
+		await page.getByRole("button", { name: /register/i }).click();
 
 		// After registering (first user = admin), we should land on the main app
 		await expect(page).toHaveURL("/");
-		await expect(page.locator("text=Recommendarr")).toBeVisible();
+		await expect(page.getByText("Recommendarr")).toBeVisible();
 	});
 
 	test("can log out and log back in", async ({ page }) => {
 		// Log in via the login page
 		await page.goto("/login");
-		await page.locator("#username").fill(adminUsername);
-		await page.locator("#password").fill(adminPassword);
-		await page.locator('button[type="submit"]').click();
+		await page.getByLabel("Username").fill(adminUsername);
+		await page.getByLabel("Password").fill(adminPassword);
+		await page.getByRole("button", { name: /log in/i }).click();
 
 		// Should land on the main app
 		await expect(page).toHaveURL("/");
-		await expect(page.locator("text=Recommendarr")).toBeVisible();
+		await expect(page.getByText("Recommendarr")).toBeVisible();
 
 		// Log out via the sidebar button
-		await page.locator("text=Log out").click();
+		await page.getByRole("button", { name: /log out/i }).click();
 
 		// Should be redirected to login
 		await expect(page).toHaveURL(/\/login/);
-		await expect(page.locator("h1")).toHaveText("Login");
+		await expect(page.getByRole("heading", { level: 1 })).toHaveText("Login");
 
 		// Log back in
-		await page.locator("#username").fill(adminUsername);
-		await page.locator("#password").fill(adminPassword);
-		await page.locator('button[type="submit"]').click();
+		await page.getByLabel("Username").fill(adminUsername);
+		await page.getByLabel("Password").fill(adminPassword);
+		await page.getByRole("button", { name: /log in/i }).click();
 
 		// Should land on the main app again
 		await expect(page).toHaveURL("/");
-		await expect(page.locator("text=Recommendarr")).toBeVisible();
+		await expect(page.getByText("Recommendarr")).toBeVisible();
 	});
 
 	test("login with wrong credentials shows error", async ({ page }) => {
 		await page.goto("/login");
 
-		await page.locator("#username").fill(adminUsername);
-		await page.locator("#password").fill("wrongpassword");
-		await page.locator('button[type="submit"]').click();
+		await page.getByLabel("Username").fill(adminUsername);
+		await page.getByLabel("Password").fill("wrongpassword");
+		await page.getByRole("button", { name: /log in/i }).click();
 
 		// Should show error message and stay on login page
-		await expect(page.locator("text=Invalid username or password")).toBeVisible();
+		await expect(page.getByText("Invalid username or password")).toBeVisible();
 		await expect(page).toHaveURL(/\/login/);
 	});
 });
