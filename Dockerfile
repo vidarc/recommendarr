@@ -16,7 +16,7 @@ RUN yarn install --immutable
 
 # Copy source and config, then build
 COPY drizzle/ drizzle/
-COPY vite.config.ts tsconfig.json tsconfig.client.json tsconfig.server.json ./
+COPY vite.config.ts tsconfig.json tsconfig.client.json tsconfig.server.json tsconfig.test.json ./
 COPY src/ src/
 
 RUN yarn vp build && \
