@@ -45,6 +45,8 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 				fontSrc: ["'self'", "https://fonts.gstatic.com"],
 				imgSrc: ["'self'", "data:"],
 				connectSrc: ["'self'"],
+				// oxlint-disable-next-line unicorn/no-null
+				upgradeInsecureRequests: null,
 			},
 		},
 	});
