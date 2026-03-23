@@ -174,7 +174,7 @@ const chatRoutes = (app: FastifyInstance) => {
 			const aiMessages = [
 				{ role: "system" as const, content: systemPrompt },
 				...conversationMessages.map((msg) => ({
-					role: msg.role as "user" | "assistant",
+					role: msg.role === "assistant" ? ("assistant" as const) : ("user" as const),
 					content: msg.content,
 				})),
 			];
@@ -491,7 +491,7 @@ const mapWatchedItem = (item: {
 const getWatchHistoryItems = async (
 	plexConnection: PlexConnectionRow,
 	libraryIds: string[] | undefined,
-): Promise<Array<{ title: string; year: number | undefined; type: string }>> => {
+): Promise<{ title: string; year: number | undefined; type: string }[]> => {
 	if (!plexConnection.serverUrl) {
 		return [];
 	}

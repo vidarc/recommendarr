@@ -6,9 +6,7 @@ interface User {
 	isAdmin: boolean;
 }
 
-interface Settings {
-	[key: string]: string;
-}
+type Settings = Record<string, string>;
 
 interface Credentials {
 	username: string;

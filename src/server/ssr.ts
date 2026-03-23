@@ -26,11 +26,19 @@ const ssrRoutes = async (app: FastifyInstance) => {
 			let template = await readFile(templatePath, "utf8");
 			template = await vite.transformIndexHtml(url, template);
 
-			const { render } = (await vite.ssrLoadModule(
+			const mod: Record<string, unknown> = await vite.ssrLoadModule(
 				resolve(root, "src/client/entry-server.tsx"),
-			)) as { render: (url: string) => string };
+			);
+			const renderFn: unknown = mod["render"];
+			if (typeof renderFn !== "function") {
+				throw new Error("SSR module missing render function");
+			}
 
-			const appHtml = render(url);
+			const appHtml: unknown = renderFn(url);
+			if (typeof appHtml !== "string") {
+				throw new Error("SSR render must return a string");
+			}
+
 			const html = template.replace("<!--ssr-outlet-->", appHtml);
 
 			return reply.type("text/html").send(html);
@@ -47,12 +55,18 @@ const ssrRoutes = async (app: FastifyInstance) => {
 		const templatePath = resolve(clientDist, "index.html");
 		const template = await readFile(templatePath, "utf8");
 
-		const { render } = (await import(resolve(root, "dist/ssr/entry-server.js"))) as {
-			render: (url: string) => string;
-		};
+		const mod: Record<string, unknown> = await import(resolve(root, "dist/ssr/entry-server.js"));
+		const renderFn: unknown = mod["render"];
+		if (typeof renderFn !== "function") {
+			throw new Error("SSR module missing render function");
+		}
 
 		app.get("/*", async (_request, reply) => {
-			const appHtml = render(_request.url);
+			const appHtml: unknown = renderFn(_request.url);
+			if (typeof appHtml !== "string") {
+				throw new Error("SSR render must return a string");
+			}
+
 			const html = template.replace("<!--ssr-outlet-->", appHtml);
 
 			return reply.type("text/html").send(html);

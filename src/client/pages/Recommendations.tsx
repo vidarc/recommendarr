@@ -1,17 +1,15 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
-import { useSendChatMessageMutation } from "../api.ts";
 import { ChatControls } from "../components/ChatControls.tsx";
 import { ChatInput } from "../components/ChatInput.tsx";
 import { ChatMessage } from "../components/ChatMessage.tsx";
 import { RecommendationCard } from "../components/RecommendationCard.tsx";
+import { useChat } from "../hooks/use-chat.ts";
 import { colors, spacing } from "../theme.ts";
 
 import type { ChatMessageResponse } from "../api.ts";
-import type { MediaType } from "../components/ChatControls.tsx";
 
-const DEFAULT_RESULT_COUNT = 10;
 const NO_RECOMMENDATIONS = 0;
 const NO_MESSAGES = 0;
 
@@ -29,7 +27,7 @@ const headerBar = css`
 	border-bottom: 1px solid ${colors.border};
 `;
 
-const pageTitle = css`
+const pageTitleStyle = css`
 	font-size: 1.3rem;
 	font-weight: 700;
 	color: ${colors.text};
@@ -84,9 +82,11 @@ const loadingBubble = css`
 	font-size: 0.9rem;
 `;
 
+/* ── Sub-components ────────────────────────────────────────── */
+
 const PageHeader = ({ onNewConversation }: { onNewConversation: () => void }) => (
 	<div className={headerBar}>
-		<h1 className={pageTitle}>Recommendations</h1>
+		<h1 className={pageTitleStyle}>Recommendations</h1>
 		<button type="button" className={newConvoButton} onClick={onNewConversation}>
 			New Conversation
 		</button>
@@ -99,24 +99,14 @@ const LoadingBubble = () => (
 	</div>
 );
 
-const RecommendationsList = ({
-	recommendations,
-}: {
-	recommendations: ChatMessageResponse["recommendations"];
-}) => (
-	<>
-		{recommendations.map((rec) => (
-			<RecommendationCard key={rec.id} recommendation={rec} />
-		))}
-	</>
-);
-
 const MessageItem = ({ message }: { message: ChatMessageResponse }) => (
 	<>
 		<ChatMessage content={message.content} role={message.role} />
-		{message.recommendations.length > NO_RECOMMENDATIONS ? (
-			<RecommendationsList recommendations={message.recommendations} />
-		) : undefined}
+		{message.recommendations.length > NO_RECOMMENDATIONS
+			? message.recommendations.map((rec) => (
+					<RecommendationCard key={rec.id} recommendation={rec} />
+				))
+			: undefined}
 	</>
 );
 
@@ -153,59 +143,24 @@ const MessageThread = ({
 	);
 };
 
+/* ── Main Recommendations ──────────────────────────────────── */
+
 const Recommendations = () => {
-	const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
-	const [conversationId, setConversationId] = useState<string | undefined>(undefined);
-	const [mediaType, setMediaType] = useState<MediaType>("any");
-	const [libraryId, setLibraryId] = useState("");
-	const [resultCount, setResultCount] = useState(DEFAULT_RESULT_COUNT);
-	const [sendChatMessage, { isLoading }] = useSendChatMessageMutation();
-
-	const handleNewConversation = useCallback(() => {
-		setMessages([]);
-		setConversationId(undefined);
-	}, []);
-
-	const handleSend = useCallback(
-		async (message: string) => {
-			const userMessage: ChatMessageResponse = {
-				id: `temp-${Date.now().toString()}`,
-				content: message,
-				role: "user",
-				createdAt: new Date().toISOString(),
-				recommendations: [],
-			};
-			setMessages((prev) => [...prev, userMessage]);
-
-			const result = await sendChatMessage({
-				message,
-				mediaType,
-				resultCount,
-				conversationId,
-				libraryIds: libraryId ? [libraryId] : undefined,
-			});
-
-			if ("data" in result && result.data) {
-				setConversationId(result.data.conversationId);
-				setMessages((prev) => [...prev, result.data.message]);
-			}
-		},
-		[sendChatMessage, mediaType, resultCount, conversationId, libraryId],
-	);
+	const chat = useChat();
 
 	return (
 		<div className={pageWrapper}>
-			<PageHeader onNewConversation={handleNewConversation} />
+			<PageHeader onNewConversation={chat.handleNewConversation} />
 			<ChatControls
-				mediaType={mediaType}
-				onMediaTypeChange={setMediaType}
-				libraryId={libraryId}
-				onLibraryIdChange={setLibraryId}
-				resultCount={resultCount}
-				onResultCountChange={setResultCount}
+				mediaType={chat.mediaType}
+				onMediaTypeChange={chat.handleMediaTypeChange}
+				libraryId={chat.libraryId}
+				onLibraryIdChange={chat.handleLibraryIdChange}
+				resultCount={chat.resultCount}
+				onResultCountChange={chat.handleResultCountChange}
 			/>
-			<MessageThread messages={messages} isLoading={isLoading} />
-			<ChatInput onSend={handleSend} isLoading={isLoading} />
+			<MessageThread messages={chat.messages} isLoading={chat.isLoading} />
+			<ChatInput onSend={chat.handleSend} isLoading={chat.isLoading} />
 		</div>
 	);
 };

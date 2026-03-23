@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 interface AiConfig {
 	endpointUrl: string;
 	apiKey: string;
@@ -11,15 +13,17 @@ interface ChatMessage {
 	content: string;
 }
 
-interface ChatCompletionResponse {
-	id: string;
-	choices: Array<{
-		message: {
-			role: string;
-			content: string;
-		};
-	}>;
-}
+const chatCompletionResponseSchema = z.object({
+	id: z.string(),
+	choices: z.array(
+		z.object({
+			message: z.object({
+				role: z.string(),
+				content: z.string(),
+			}),
+		}),
+	),
+});
 
 interface TestConnectionResult {
 	success: boolean;
@@ -50,7 +54,7 @@ const chatCompletion = async (config: AiConfig, messages: ChatMessage[]): Promis
 		throw new Error(`AI API request failed (${String(response.status)}): ${text}`);
 	}
 
-	const data = (await response.json()) as ChatCompletionResponse;
+	const data = chatCompletionResponseSchema.parse(await response.json());
 	const content = data.choices[FIRST_CHOICE]?.message.content;
 
 	if (!content) {

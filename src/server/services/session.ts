@@ -9,17 +9,16 @@ import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 const DEFAULT_SESSION_DURATION_DAYS = 7;
 const MS_PER_DAY = 86_400_000;
 
-type DbSchema = {
-	sessions: typeof sessions;
-};
-
 const getSessionDurationMs = (): number => {
 	const envDays = process.env["SESSION_DURATION_DAYS"];
 	const days = envDays ? Number(envDays) : DEFAULT_SESSION_DURATION_DAYS;
 	return days * MS_PER_DAY;
 };
 
-const createSession = (db: BetterSQLite3Database<DbSchema>, userId: string) => {
+const createSession = <TSchema extends Record<string, unknown>>(
+	db: BetterSQLite3Database<TSchema>,
+	userId: string,
+) => {
 	const id = randomUUID();
 	const now = new Date();
 	const expiresAt = new Date(now.getTime() + getSessionDurationMs());
@@ -36,7 +35,10 @@ const createSession = (db: BetterSQLite3Database<DbSchema>, userId: string) => {
 	return session;
 };
 
-const getSession = (db: BetterSQLite3Database<DbSchema>, sessionId: string) => {
+const getSession = <TSchema extends Record<string, unknown>>(
+	db: BetterSQLite3Database<TSchema>,
+	sessionId: string,
+) => {
 	const session = db.select().from(sessions).where(eq(sessions.id, sessionId)).get();
 
 	if (!session) {
@@ -50,11 +52,16 @@ const getSession = (db: BetterSQLite3Database<DbSchema>, sessionId: string) => {
 	return session;
 };
 
-const deleteSession = (db: BetterSQLite3Database<DbSchema>, sessionId: string) => {
+const deleteSession = <TSchema extends Record<string, unknown>>(
+	db: BetterSQLite3Database<TSchema>,
+	sessionId: string,
+) => {
 	db.delete(sessions).where(eq(sessions.id, sessionId)).run();
 };
 
-const purgeExpiredSessions = (db: BetterSQLite3Database<DbSchema>) => {
+const purgeExpiredSessions = <TSchema extends Record<string, unknown>>(
+	db: BetterSQLite3Database<TSchema>,
+) => {
 	db.delete(sessions).where(lt(sessions.expiresAt, new Date().toISOString())).run();
 };
 

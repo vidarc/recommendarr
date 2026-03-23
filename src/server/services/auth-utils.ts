@@ -1,15 +1,18 @@
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 
-const execAsync = promisify(scrypt);
+const scryptAsync = promisify(scrypt);
 
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 64;
 
 const hashPassword = async (password: string): Promise<string> => {
 	const salt = randomBytes(SALT_LENGTH);
-	const hash = (await execAsync(password, salt, KEY_LENGTH)) as Buffer;
-	return `${salt.toString("hex")}:${hash.toString("hex")}`;
+	const result = await scryptAsync(password, salt, KEY_LENGTH);
+	if (!Buffer.isBuffer(result)) {
+		throw new Error("scrypt did not return a Buffer");
+	}
+	return `${salt.toString("hex")}:${result.toString("hex")}`;
 };
 
 const verifyPassword = async (password: string, stored: string): Promise<boolean> => {
@@ -20,9 +23,12 @@ const verifyPassword = async (password: string, stored: string): Promise<boolean
 
 	const salt = Buffer.from(saltHex, "hex");
 	const storedHash = Buffer.from(hashHex, "hex");
-	const hash = (await execAsync(password, salt, KEY_LENGTH)) as Buffer;
+	const result = await scryptAsync(password, salt, KEY_LENGTH);
+	if (!Buffer.isBuffer(result)) {
+		throw new Error("scrypt did not return a Buffer");
+	}
 
-	return timingSafeEqual(hash, storedHash);
+	return timingSafeEqual(result, storedHash);
 };
 
 export { hashPassword, verifyPassword };

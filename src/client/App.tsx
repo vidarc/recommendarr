@@ -1,19 +1,36 @@
 import { css } from "@linaria/atomic";
+import { Suspense, lazy } from "react";
 import { Redirect, Route, Switch } from "wouter";
 
 import { useGetMeQuery, useGetSetupStatusQuery } from "./api.ts";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { globals } from "./global-styles.ts";
-import { History } from "./pages/History.tsx";
-import { Login } from "./pages/Login.tsx";
-import { Recommendations } from "./pages/Recommendations.tsx";
-import { Register } from "./pages/Register.tsx";
-import { Settings } from "./pages/Settings.tsx";
 import { colors } from "./theme.ts";
 
 import "sanitize.css";
 import "sanitize.css/typography.css";
 import "sanitize.css/forms.css";
+
+const History = lazy(async () => {
+	const mod = await import("./pages/History.tsx");
+	return { default: mod.History };
+});
+const Login = lazy(async () => {
+	const mod = await import("./pages/Login.tsx");
+	return { default: mod.Login };
+});
+const Recommendations = lazy(async () => {
+	const mod = await import("./pages/Recommendations.tsx");
+	return { default: mod.Recommendations };
+});
+const Register = lazy(async () => {
+	const mod = await import("./pages/Register.tsx");
+	return { default: mod.Register };
+});
+const Settings = lazy(async () => {
+	const mod = await import("./pages/Settings.tsx");
+	return { default: mod.Settings };
+});
 
 const appWrapper = css`
 	min-height: 100vh;
@@ -31,16 +48,24 @@ const loadingWrapper = css`
 	letter-spacing: 0.5px;
 `;
 
+const loadingFallback = <p className={loadingWrapper}>Loading...</p>;
+
 const CatchAll = () => <Redirect to="/" />;
+
+const LazyRoutes = () => (
+	<Switch>
+		<Route path="/" component={Recommendations} />
+		<Route path="/history" component={History} />
+		<Route path="/settings" component={Settings} />
+		<Route component={CatchAll} />
+	</Switch>
+);
 
 const AuthenticatedRoutes = () => (
 	<AppLayout>
-		<Switch>
-			<Route path="/" component={Recommendations} />
-			<Route path="/history" component={History} />
-			<Route path="/settings" component={Settings} />
-			<Route component={CatchAll} />
-		</Switch>
+		<Suspense fallback={loadingFallback}>
+			<LazyRoutes />
+		</Suspense>
 	</AppLayout>
 );
 
@@ -68,7 +93,11 @@ const LoginPage = () => {
 	if (setupStatus?.needsSetup) {
 		return <Redirect to="/register" />;
 	}
-	return <Login />;
+	return (
+		<Suspense fallback={loadingFallback}>
+			<Login />
+		</Suspense>
+	);
 };
 
 const RegisterPage = () => {
@@ -79,7 +108,11 @@ const RegisterPage = () => {
 	if (user) {
 		return <Redirect to="/" />;
 	}
-	return <Register />;
+	return (
+		<Suspense fallback={loadingFallback}>
+			<Register />
+		</Suspense>
+	);
 };
 
 export const App = () => {

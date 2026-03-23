@@ -1,24 +1,14 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useMemo, useState } from "react";
-import { useLocation } from "wouter";
+import { useCallback } from "react";
 
-import { useDeleteConversationMutation, useGetConversationsQuery } from "../api.ts";
+import { useConversations } from "../hooks/use-conversations.ts";
 import { colors, radii, spacing } from "../theme.ts";
+import { formatRelativeDate } from "../utils/format-date.ts";
 
 import type { ConversationSummary } from "../api.ts";
 import type { KeyboardEvent, MouseEvent } from "react";
 
 const NO_CONVERSATIONS = 0;
-const NO_TIME_ELAPSED = 0;
-const MS_PER_SECOND = 1000;
-const SECONDS_PER_MINUTE = 60;
-const MINUTES_PER_HOUR = 60;
-const HOURS_PER_DAY = 24;
-const DAYS_PER_WEEK = 7;
-const DAYS_PER_MONTH = 30;
-const DAYS_PER_YEAR = 365;
-
-const EMPTY_CONVERSATIONS: ConversationSummary[] = [];
 
 const pageWrapper = css`
 	max-width: 800px;
@@ -48,18 +38,12 @@ const listWrapper = css`
 	gap: ${spacing.sm};
 `;
 
-const itemButton = css`
+const rowWrapper = css`
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	padding: ${spacing.md};
 	background: ${colors.surface};
 	border: 1px solid ${colors.border};
 	border-radius: ${radii.md};
-	cursor: pointer;
-	width: 100%;
-	text-align: left;
-	font: inherit;
 	transition:
 		background 0.2s ease,
 		border-color 0.2s ease;
@@ -68,6 +52,19 @@ const itemButton = css`
 		background: ${colors.surfaceHover};
 		border-color: ${colors.borderFocus};
 	}
+`;
+
+const itemButton = css`
+	display: flex;
+	align-items: center;
+	flex: 1;
+	min-width: 0;
+	padding: ${spacing.md};
+	background: none;
+	border: none;
+	cursor: pointer;
+	text-align: left;
+	font: inherit;
 `;
 
 const infoWrapper = css`
@@ -114,7 +111,7 @@ const deleteBtnStyle = css`
 	color: ${colors.textMuted};
 	cursor: pointer;
 	font-size: 0.8rem;
-	margin-left: ${spacing.md};
+	margin-right: ${spacing.md};
 	flex-shrink: 0;
 	transition:
 		color 0.2s ease,
@@ -134,7 +131,7 @@ const confirmBtnStyle = css`
 	color: ${colors.text};
 	cursor: pointer;
 	font-size: 0.8rem;
-	margin-left: ${spacing.xs};
+	margin-right: ${spacing.md};
 	flex-shrink: 0;
 	font-weight: 600;
 `;
@@ -147,42 +144,10 @@ const cancelBtnStyle = css`
 	color: ${colors.textMuted};
 	cursor: pointer;
 	font-size: 0.8rem;
-	margin-left: ${spacing.md};
 	flex-shrink: 0;
 `;
 
-const formatRelativeDate = (dateString: string): string => {
-	const date = new Date(dateString);
-	const now = new Date();
-	const diffMs = now.getTime() - date.getTime();
-	const diffSeconds = Math.floor(diffMs / MS_PER_SECOND);
-	const diffMinutes = Math.floor(diffSeconds / SECONDS_PER_MINUTE);
-	const diffHours = Math.floor(diffMinutes / MINUTES_PER_HOUR);
-	const diffDays = Math.floor(diffHours / HOURS_PER_DAY);
-
-	if (diffDays >= DAYS_PER_YEAR) {
-		const years = Math.floor(diffDays / DAYS_PER_YEAR);
-		return `${String(years)}y ago`;
-	}
-	if (diffDays >= DAYS_PER_MONTH) {
-		const months = Math.floor(diffDays / DAYS_PER_MONTH);
-		return `${String(months)}mo ago`;
-	}
-	if (diffDays >= DAYS_PER_WEEK) {
-		const weeks = Math.floor(diffDays / DAYS_PER_WEEK);
-		return `${String(weeks)}w ago`;
-	}
-	if (diffDays > NO_TIME_ELAPSED) {
-		return `${String(diffDays)}d ago`;
-	}
-	if (diffHours > NO_TIME_ELAPSED) {
-		return `${String(diffHours)}h ago`;
-	}
-	if (diffMinutes > NO_TIME_ELAPSED) {
-		return `${String(diffMinutes)}m ago`;
-	}
-	return "just now";
-};
+/* ── Sub-components ────────────────────────────────────────── */
 
 const DeleteActions = ({
 	isConfirming,
@@ -267,84 +232,31 @@ const ConversationRow = ({
 	);
 
 	return (
-		<button type="button" className={itemButton} onClick={handleClick} onKeyDown={handleKeyDown}>
-			<ConversationMeta conversation={conversation} />
+		<div className={rowWrapper}>
+			<button type="button" className={itemButton} onClick={handleClick} onKeyDown={handleKeyDown}>
+				<ConversationMeta conversation={conversation} />
+			</button>
 			<DeleteActions
 				isConfirming={isConfirming}
 				onDelete={handleDelete}
 				onConfirm={handleConfirm}
 				onCancel={onCancelDelete}
 			/>
-		</button>
+		</div>
 	);
 };
 
-const ConversationList = ({
-	conversations,
-	confirmingDeleteId,
-	onNavigate,
-	onDeleteClick,
-	onConfirmDelete,
-	onCancelDelete,
-}: {
-	conversations: ConversationSummary[];
-	confirmingDeleteId: string | undefined;
-	onNavigate: (id: string) => void;
-	onDeleteClick: (event: MouseEvent, id: string) => void;
-	onConfirmDelete: (event: MouseEvent, id: string) => void;
-	onCancelDelete: (event: MouseEvent) => void;
-}) => (
-	<div className={listWrapper}>
-		{conversations.map((conversation) => (
-			<ConversationRow
-				key={conversation.id}
-				conversation={conversation}
-				isConfirming={confirmingDeleteId === conversation.id}
-				onNavigate={onNavigate}
-				onDeleteClick={onDeleteClick}
-				onConfirmDelete={onConfirmDelete}
-				onCancelDelete={onCancelDelete}
-			/>
-		))}
-	</div>
-);
+/* ── Main History ──────────────────────────────────────────── */
 
 const History = () => {
-	const { data } = useGetConversationsQuery();
-	const [deleteConversation] = useDeleteConversationMutation();
-	const [, setLocation] = useLocation();
-	const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | undefined>(undefined);
-
-	const conversations = useMemo(
-		() => data?.conversations ?? EMPTY_CONVERSATIONS,
-		[data?.conversations],
-	);
-
-	const handleNavigate = useCallback(
-		(id: string) => {
-			setLocation(`/?conversation=${id}`);
-		},
-		[setLocation],
-	);
-
-	const handleDeleteClick = useCallback((event: MouseEvent, id: string) => {
-		event.stopPropagation();
-		setConfirmingDeleteId(id);
-	}, []);
-
-	const handleConfirmDelete = useCallback(
-		(event: MouseEvent, id: string) => {
-			event.stopPropagation();
-			void deleteConversation(id);
-			setConfirmingDeleteId(undefined);
-		},
-		[deleteConversation],
-	);
-
-	const handleCancelDelete = useCallback((event: MouseEvent) => {
-		event.stopPropagation();
-		setConfirmingDeleteId(undefined);
-	}, []);
+	const {
+		conversations,
+		confirmingDeleteId,
+		navigate,
+		requestDelete,
+		confirmDelete,
+		cancelDelete,
+	} = useConversations();
 
 	if (conversations.length === NO_CONVERSATIONS) {
 		return (
@@ -358,14 +270,19 @@ const History = () => {
 	return (
 		<div className={pageWrapper}>
 			<h1 className={pageTitle}>History</h1>
-			<ConversationList
-				conversations={conversations}
-				confirmingDeleteId={confirmingDeleteId}
-				onNavigate={handleNavigate}
-				onDeleteClick={handleDeleteClick}
-				onConfirmDelete={handleConfirmDelete}
-				onCancelDelete={handleCancelDelete}
-			/>
+			<div className={listWrapper}>
+				{conversations.map((conversation) => (
+					<ConversationRow
+						key={conversation.id}
+						conversation={conversation}
+						isConfirming={confirmingDeleteId === conversation.id}
+						onNavigate={navigate}
+						onDeleteClick={requestDelete}
+						onConfirmDelete={confirmDelete}
+						onCancelDelete={cancelDelete}
+					/>
+				))}
+			</div>
 		</div>
 	);
 };
