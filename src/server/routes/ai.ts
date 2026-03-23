@@ -48,6 +48,8 @@ const testConnectionResponseSchema = z.object({
 	error: z.string().optional(),
 });
 
+const testConnectionBodySchema = aiConfigBodySchema.or(z.null()).or(z.undefined());
+
 const maskApiKey = (key: string): string => {
 	if (key.length <= MASK_VISIBLE_CHARS) {
 		return "****";
@@ -194,6 +196,7 @@ const aiRoutes = (app: FastifyInstance) => {
 		"/api/ai/test",
 		{
 			schema: {
+				body: testConnectionBodySchema,
 				response: {
 					[StatusCodes.OK]: testConnectionResponseSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
@@ -206,6 +209,18 @@ const aiRoutes = (app: FastifyInstance) => {
 				return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Authentication required" });
 			}
 
+			if (request.body) {
+				const result = await testConnection({
+					endpointUrl: request.body.endpointUrl,
+					apiKey: request.body.apiKey,
+					modelName: request.body.modelName,
+					temperature: request.body.temperature,
+					maxTokens: request.body.maxTokens,
+				});
+
+				return reply.code(StatusCodes.OK).send(result);
+			}
+
 			const config = app.db
 				.select()
 				.from(aiConfigs)
@@ -216,10 +231,9 @@ const aiRoutes = (app: FastifyInstance) => {
 				return reply.code(StatusCodes.NOT_FOUND).send({ error: "No AI configuration found" });
 			}
 
-			const decryptedKey = decrypt(config.apiKey);
 			const result = await testConnection({
 				endpointUrl: config.endpointUrl,
-				apiKey: decryptedKey,
+				apiKey: decrypt(config.apiKey),
 				modelName: config.modelName,
 				temperature: config.temperature,
 				maxTokens: config.maxTokens,

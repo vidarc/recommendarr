@@ -439,4 +439,116 @@ describe("POST /api/ai/test", () => {
 
 		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
 	});
+
+	test("returns success when testing with body config (no saved config needed)", async () => {
+		const app = await setupDb();
+		const { sessionId } = await getSessionCookie(app);
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/ai/test",
+			cookies: { session: sessionId },
+			payload: {
+				endpointUrl: MOCK_AI_ENDPOINT,
+				apiKey: "sk-test-key-12345678",
+				modelName: "gpt-4",
+				temperature: 0.7,
+				maxTokens: 2048,
+			},
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		const body = response.json();
+		expect(body.success).toBe(true);
+	});
+
+	test("returns failure when testing with body config and endpoint is down", async () => {
+		const app = await setupDb();
+		const { sessionId } = await getSessionCookie(app);
+
+		mswServer.use(http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, () => HttpResponse.error()));
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/ai/test",
+			cookies: { session: sessionId },
+			payload: {
+				endpointUrl: MOCK_AI_ENDPOINT,
+				apiKey: "sk-test-key-12345678",
+				modelName: "gpt-4",
+				temperature: 0.7,
+				maxTokens: 2048,
+			},
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		const body = response.json();
+		expect(body.success).toBe(false);
+		expect(body.error).toBeDefined();
+	});
+
+	test("uses body config values instead of saved config", async () => {
+		const app = await setupDb();
+		const { sessionId } = await getSessionCookie(app);
+		const alternateEndpoint = "https://api.alternate-ai.example.com";
+
+		// Save a config pointing to the default mock endpoint
+		await app.inject({
+			method: "PUT",
+			url: "/api/ai/config",
+			cookies: { session: sessionId },
+			payload: {
+				endpointUrl: MOCK_AI_ENDPOINT,
+				apiKey: "sk-saved-key-12345678",
+				modelName: "gpt-4",
+				temperature: 0.7,
+				maxTokens: 2048,
+			},
+		});
+
+		// Set up a handler for the alternate endpoint
+		mswServer.use(
+			http.post(`${alternateEndpoint}/v1/chat/completions`, () =>
+				HttpResponse.json(mockCompletionResponse),
+			),
+		);
+
+		// Test with body pointing to the alternate endpoint
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/ai/test",
+			cookies: { session: sessionId },
+			payload: {
+				endpointUrl: alternateEndpoint,
+				apiKey: "sk-body-key-87654321",
+				modelName: "gpt-3.5",
+				temperature: 0.5,
+				maxTokens: 1024,
+			},
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		const body = response.json();
+		expect(body.success).toBe(true);
+	});
+
+	test("rejects invalid body config", async () => {
+		const app = await setupDb();
+		const { sessionId } = await getSessionCookie(app);
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/ai/test",
+			cookies: { session: sessionId },
+			payload: {
+				endpointUrl: "not-a-valid-url",
+				apiKey: "sk-test",
+				modelName: "gpt-4",
+				temperature: 0.7,
+				maxTokens: 2048,
+			},
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
+	});
 });
