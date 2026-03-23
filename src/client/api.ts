@@ -210,10 +210,11 @@ const api = createApi({
 			}),
 			invalidatesTags: ["AiConfig"],
 		}),
-		testAiConnection: builder.mutation<AiTestResult, void>({
-			query: () => ({
+		testAiConnection: builder.mutation<AiTestResult, AiConfig | void>({
+			query: (body) => ({
 				url: "api/ai/test",
 				method: "POST",
+				body: body ?? undefined,
 			}),
 		}),
 		sendChatMessage: builder.mutation<SendChatMessageResponse, SendChatMessageBody>({

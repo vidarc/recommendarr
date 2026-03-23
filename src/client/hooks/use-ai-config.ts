@@ -47,13 +47,19 @@ export const useAiConfig = () => {
 
 	const handleTest = useCallback(async () => {
 		setTestResult(undefined);
-		const result = await testConnection();
+		const result = await testConnection({
+			endpointUrl,
+			apiKey,
+			modelName,
+			temperature,
+			maxTokens: Number(maxTokens),
+		});
 		if ("data" in result && result.data) {
 			setTestResult(result.data);
 		} else {
 			setTestResult({ success: false, error: "Failed to test connection" });
 		}
-	}, [testConnection]);
+	}, [testConnection, endpointUrl, apiKey, modelName, temperature, maxTokens]);
 
 	const handleRemove = useCallback(async () => {
 		await deleteConfig();
