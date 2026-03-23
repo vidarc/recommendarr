@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 const PLEX_API_BASE = "https://plex.tv/api/v2";
 const CLIENT_IDENTIFIER = "recommendarr";
 const PRODUCT_NAME = "Recommendarr";
@@ -60,6 +62,59 @@ const plexHeaders = (authToken?: string): Record<string, string> => {
 	return headers;
 };
 
+const plexPinResponseSchema = z.object({ id: z.number(), code: z.string() });
+
+const plexPinCheckResponseSchema = z.object({ authToken: z.string().optional() });
+
+const plexResourceSchema = z.array(
+	z.object({
+		name: z.string(),
+		provides: z.string(),
+		owned: z.boolean(),
+		clientIdentifier: z.string(),
+		connections: z.array(
+			z.object({
+				address: z.string(),
+				port: z.number(),
+				protocol: z.string(),
+				uri: z.string(),
+				local: z.boolean(),
+			}),
+		),
+	}),
+);
+
+const plexLibrariesResponseSchema = z.object({
+	MediaContainer: z.object({
+		Directory: z.array(
+			z.object({
+				key: z.string(),
+				title: z.string(),
+				type: z.string(),
+			}),
+		),
+	}),
+});
+
+const plexWatchHistoryResponseSchema = z.object({
+	MediaContainer: z.object({
+		Metadata: z
+			.array(
+				z.object({
+					title: z.string(),
+					type: z.string(),
+					year: z.number().optional(),
+					ratingKey: z.string(),
+					grandparentTitle: z.string().optional(),
+					parentIndex: z.number().optional(),
+					index: z.number().optional(),
+					viewedAt: z.number(),
+				}),
+			)
+			.optional(),
+	}),
+});
+
 const createPlexPin = async (): Promise<PlexPin> => {
 	const response = await fetch(`${PLEX_API_BASE}/pins`, {
 		method: "POST",
@@ -74,7 +129,7 @@ const createPlexPin = async (): Promise<PlexPin> => {
 		throw new Error(`Failed to create Plex PIN: ${response.status.toString()}`);
 	}
 
-	const data = (await response.json()) as { id: number; code: string };
+	const data = plexPinResponseSchema.parse(await response.json());
 	const authUrl = `https://app.plex.tv/auth#?clientID=${CLIENT_IDENTIFIER}&code=${data.code}&context%5Bdevice%5D%5Bproduct%5D=${PRODUCT_NAME}`;
 
 	return {
@@ -94,7 +149,7 @@ const checkPlexPin = async (pinId: number): Promise<PlexPinCheck> => {
 		throw new Error(`Failed to check Plex PIN: ${response.status.toString()}`);
 	}
 
-	const data = (await response.json()) as { authToken: string | undefined };
+	const data = plexPinCheckResponseSchema.parse(await response.json());
 
 	return {
 		authToken: data.authToken ?? undefined,
@@ -111,19 +166,7 @@ const getPlexServers = async (authToken: string): Promise<PlexServer[]> => {
 		throw new Error(`Failed to get Plex servers: ${response.status.toString()}`);
 	}
 
-	const data = (await response.json()) as Array<{
-		name: string;
-		provides: string;
-		owned: boolean;
-		clientIdentifier: string;
-		connections: Array<{
-			address: string;
-			port: number;
-			protocol: string;
-			uri: string;
-			local: boolean;
-		}>;
-	}>;
+	const data = plexResourceSchema.parse(await response.json());
 
 	return data
 		.filter((resource) => resource.provides.includes("server"))
@@ -155,15 +198,7 @@ const getPlexLibraries = async (serverUrl: string, authToken: string): Promise<P
 		throw new Error(`Failed to get Plex libraries: ${response.status.toString()}`);
 	}
 
-	const data = (await response.json()) as {
-		MediaContainer: {
-			Directory: Array<{
-				key: string;
-				title: string;
-				type: string;
-			}>;
-		};
-	};
+	const data = plexLibrariesResponseSchema.parse(await response.json());
 
 	return data.MediaContainer.Directory.map((dir) => ({
 		key: dir.key,
@@ -194,20 +229,7 @@ const getWatchHistory = async (options: WatchHistoryOptions): Promise<PlexWatche
 		throw new Error(`Failed to get watch history: ${response.status.toString()}`);
 	}
 
-	const data = (await response.json()) as {
-		MediaContainer: {
-			Metadata?: Array<{
-				title: string;
-				type: string;
-				year?: number;
-				ratingKey: string;
-				grandparentTitle?: string;
-				parentIndex?: number;
-				index?: number;
-				viewedAt: number;
-			}>;
-		};
-	};
+	const data = plexWatchHistoryResponseSchema.parse(await response.json());
 
 	return (data.MediaContainer.Metadata ?? []).map((item) => ({
 		title: item.title,

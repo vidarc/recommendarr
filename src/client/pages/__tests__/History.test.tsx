@@ -252,7 +252,8 @@ describe("History", () => {
 				}),
 			),
 			http.delete("/api/conversations/:id", ({ params }) => {
-				deletedId = params["id"] as string;
+				const { id } = params;
+				deletedId = typeof id === "string" ? id : "";
 				return HttpResponse.json({ success: true });
 			}),
 		);

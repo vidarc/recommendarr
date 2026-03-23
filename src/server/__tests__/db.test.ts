@@ -45,8 +45,8 @@ describe("database plugin", () => {
 	test("enables WAL journal mode", async () => {
 		const app = await setupDb();
 
-		const result = app.sqlite.pragma("journal_mode") as { journal_mode: string }[];
-		expect(result[firstIndex]?.journal_mode).toBe("wal");
+		const result = app.sqlite.pragma("journal_mode");
+		expect(result).toEqual([{ journal_mode: "wal" }]);
 	});
 
 	test("seeds default app_version setting", async () => {
