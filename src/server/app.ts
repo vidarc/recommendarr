@@ -36,7 +36,18 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 	healthRoutes(app);
 
 	await app.register(fastifyCookie);
-	await app.register(fastifyHelmet);
+	await app.register(fastifyHelmet, {
+		contentSecurityPolicy: {
+			directives: {
+				defaultSrc: ["'self'"],
+				scriptSrc: ["'self'"],
+				styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+				fontSrc: ["'self'", "https://fonts.gstatic.com"],
+				imgSrc: ["'self'", "data:"],
+				connectSrc: ["'self'"],
+			},
+		},
+	});
 
 	if (!options.skipDB) {
 		await dbPlugin(app);
