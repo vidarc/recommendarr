@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-import cookie from "@fastify/cookie";
+import { fastifyCookie } from "@fastify/cookie";
+import { fastifyHelmet } from "@fastify/helmet";
 import { fastify } from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 
@@ -34,7 +35,8 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 
 	healthRoutes(app);
 
-	await app.register(cookie);
+	await app.register(fastifyCookie);
+	await app.register(fastifyHelmet);
 
 	if (!options.skipDB) {
 		await dbPlugin(app);
