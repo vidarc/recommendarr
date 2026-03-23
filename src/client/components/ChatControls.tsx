@@ -38,10 +38,6 @@ const toggleButtonBase = css`
 		border-radius: 0 ${radii.sm} ${radii.sm} 0;
 	}
 
-	&:not(:first-child) {
-		border-left: none;
-	}
-
 	&:hover {
 		background: ${colors.surfaceHover};
 		color: ${colors.text};
