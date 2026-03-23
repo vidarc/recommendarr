@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-import cookie from "@fastify/cookie";
+import { fastifyCookie } from "@fastify/cookie";
+import { fastifyHelmet } from "@fastify/helmet";
 import { fastify } from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 
@@ -34,7 +35,21 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 
 	healthRoutes(app);
 
-	await app.register(cookie);
+	await app.register(fastifyCookie);
+	await app.register(fastifyHelmet, {
+		contentSecurityPolicy: {
+			directives: {
+				defaultSrc: ["'self'"],
+				scriptSrc: ["'self'"],
+				styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+				fontSrc: ["'self'", "https://fonts.gstatic.com"],
+				imgSrc: ["'self'", "data:"],
+				connectSrc: ["'self'"],
+				// oxlint-disable-next-line unicorn/no-null
+				upgradeInsecureRequests: null,
+			},
+		},
+	});
 
 	if (!options.skipDB) {
 		await dbPlugin(app);
