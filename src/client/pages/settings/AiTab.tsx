@@ -138,11 +138,10 @@ const AiTabButtons = ({
 		<button type="button" className={primaryButton} onClick={onSave} disabled={isSaving}>
 			{isSaving ? "Saving..." : "Save"}
 		</button>
-		{hasConfig && (
-			<button type="button" className={secondaryButton} onClick={onTest} disabled={isTesting}>
-				{isTesting ? "Testing..." : "Test Connection"}
-			</button>
-		)}
+		<button type="button" className={secondaryButton} onClick={onTest} disabled={isTesting}>
+			{isTesting ? "Testing..." : "Test Connection"}
+		</button>
+
 		{hasConfig && (
 			<button type="button" className={dangerButton} onClick={onDelete} disabled={isDeleting}>
 				{isDeleting ? "Removing..." : "Remove"}
