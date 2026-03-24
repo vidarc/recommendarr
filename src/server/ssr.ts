@@ -13,6 +13,7 @@ const ssrRoutes = async (app: FastifyInstance) => {
 
 		const vite = await createViteServer({
 			appType: "custom",
+			configFile: resolve(root, "vite.config.ts"),
 			root: resolve(root, "src/client"),
 			server: { middlewareMode: true },
 		});

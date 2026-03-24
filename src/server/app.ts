@@ -36,15 +36,16 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 	healthRoutes(app);
 
 	await app.register(fastifyCookie);
+	const isDev = process.env["NODE_ENV"] === "development";
 	await app.register(fastifyHelmet, {
 		contentSecurityPolicy: {
 			directives: {
 				defaultSrc: ["'self'"],
-				scriptSrc: ["'self'"],
+				scriptSrc: isDev ? ["'self'", "'unsafe-inline'"] : ["'self'"],
 				styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
 				fontSrc: ["'self'", "https://fonts.gstatic.com"],
 				imgSrc: ["'self'", "data:"],
-				connectSrc: ["'self'"],
+				connectSrc: isDev ? ["'self'", "ws:"] : ["'self'"],
 				// oxlint-disable-next-line unicorn/no-null
 				upgradeInsecureRequests: null,
 			},

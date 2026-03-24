@@ -13,7 +13,10 @@ export default defineConfig({
 	plugins: [
 		react(),
 		babel({ presets: [reactCompilerPreset()] }),
-		wyw({ babelOptions: { presets: ["@babel/preset-typescript"] } }),
+		wyw({
+			babelOptions: { presets: ["@babel/preset-typescript"] },
+			ssrDevCss: true,
+		}),
 	],
 
 	// Vitest configuration.
