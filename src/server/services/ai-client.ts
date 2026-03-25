@@ -1,4 +1,6 @@
-import { z } from "zod";
+import OpenAI from "openai";
+
+import type { FastifyRequest } from "fastify";
 
 interface AiConfig {
 	endpointUrl: string;
@@ -13,49 +15,27 @@ interface ChatMessage {
 	content: string;
 }
 
-const chatCompletionResponseSchema = z.object({
-	id: z.string(),
-	choices: z.array(
-		z.object({
-			message: z.object({
-				role: z.string(),
-				content: z.string(),
-			}),
-		}),
-	),
-});
-
 interface TestConnectionResult {
 	success: boolean;
-	error?: string;
 }
 
 const FIRST_CHOICE = 0;
 
 const chatCompletion = async (config: AiConfig, messages: ChatMessage[]): Promise<string> => {
-	const url = `${config.endpointUrl}/v1/chat/completions`;
-
-	const response = await fetch(url, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify({
-			model: config.modelName,
-			messages,
-			temperature: config.temperature,
-			max_tokens: config.maxTokens,
-		}),
+	const client = new OpenAI({
+		apiKey: config.apiKey,
+		baseURL: `${config.endpointUrl}/v1`,
+		maxRetries: 0,
 	});
 
-	if (!response.ok) {
-		const text = await response.text();
-		throw new Error(`AI API request failed (${String(response.status)}): ${text}`);
-	}
+	const response = await client.chat.completions.create({
+		model: config.modelName,
+		messages,
+		temperature: config.temperature,
+		max_tokens: config.maxTokens,
+	});
 
-	const data = chatCompletionResponseSchema.parse(await response.json());
-	const content = data.choices[FIRST_CHOICE]?.message.content;
+	const content = response.choices[FIRST_CHOICE]?.message.content;
 
 	if (!content) {
 		throw new Error("AI API returned no content in response");
@@ -64,13 +44,16 @@ const chatCompletion = async (config: AiConfig, messages: ChatMessage[]): Promis
 	return content;
 };
 
-const testConnection = async (config: AiConfig): Promise<TestConnectionResult> => {
+const testConnection = async (
+	request: FastifyRequest,
+	config: AiConfig,
+): Promise<TestConnectionResult> => {
 	try {
 		await chatCompletion(config, [{ role: "user", content: "Hello" }]);
 		return { success: true };
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown error";
-		return { success: false, error: message };
+		request.log.error(error, "AI Test conncetion call failed");
+		return { success: false };
 	}
 };
 
