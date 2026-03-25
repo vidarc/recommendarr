@@ -20,13 +20,19 @@ const healthRoutes = (app: FastifyInstance) => {
 
 	typedApp.get(
 		"/ping",
-		{ schema: { response: { [StatusCodes.OK]: pingResponseSchema } } },
+		{
+			logLevel: "error",
+			schema: { response: { [StatusCodes.OK]: pingResponseSchema } },
+		},
 		async (_request, reply) => reply.code(StatusCodes.OK).send({ ping: "pong" as const }),
 	);
 
 	typedApp.get(
 		"/health",
-		{ schema: { response: { [StatusCodes.OK]: healthResponseSchema } } },
+		{
+			logLevel: "error",
+			schema: { response: { [StatusCodes.OK]: healthResponseSchema } },
+		},
 		async (_request, reply) =>
 			reply.code(StatusCodes.OK).send({
 				status: "ok" as const,

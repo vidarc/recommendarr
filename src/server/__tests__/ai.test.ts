@@ -23,6 +23,7 @@ import { decrypt } from "../services/encryption.ts";
 import { createSession } from "../services/session.ts";
 
 import type { AiConfig } from "../services/ai-client.ts";
+import type { FastifyRequest } from "fastify";
 
 const HEX_KEY_LENGTH = 64;
 const MOCK_AI_ENDPOINT = "https://api.test-ai.example.com";
@@ -94,7 +95,7 @@ describe("chatCompletion", () => {
 
 		await expect(
 			chatCompletion(defaultTestConfig, [{ role: "user", content: "Hello" }]),
-		).rejects.toThrow("AI API request failed (500)");
+		).rejects.toThrow(/500/);
 	});
 
 	test("throws when response has no content", async () => {
@@ -113,23 +114,28 @@ describe("chatCompletion", () => {
 });
 
 describe("testConnection", () => {
+	// oxlint-disable-next-line typescript/no-unsafe-type-assertion
+	const mockRequest = {
+		log: { error: vi.fn() },
+	} as unknown as FastifyRequest;
+
 	test("returns success true on valid response", async () => {
 		const { testConnection } = await import("../services/ai-client.ts");
 
-		const result = await testConnection(defaultTestConfig);
+		const result = await testConnection(mockRequest, defaultTestConfig);
 
 		expect(result).toStrictEqual({ success: true });
 	});
 
-	test("returns success false with error on network failure", async () => {
+	test("returns success false on network failure and logs error", async () => {
 		const { testConnection } = await import("../services/ai-client.ts");
 
 		mswServer.use(http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, () => HttpResponse.error()));
 
-		const result = await testConnection(defaultTestConfig);
+		const result = await testConnection(mockRequest, defaultTestConfig);
 
-		expect(result.success).toBe(false);
-		expect(result.error).toBeDefined();
+		expect(result).toStrictEqual({ success: false });
+		expect(mockRequest.log.error).toHaveBeenCalled();
 	});
 });
 
@@ -424,7 +430,6 @@ describe("POST /api/ai/test", () => {
 		expect(response.statusCode).toBe(StatusCodes.OK);
 		const body = response.json();
 		expect(body.success).toBe(false);
-		expect(body.error).toBeDefined();
 	});
 
 	test("returns 404 when no config exists", async () => {
@@ -484,7 +489,6 @@ describe("POST /api/ai/test", () => {
 		expect(response.statusCode).toBe(StatusCodes.OK);
 		const body = response.json();
 		expect(body.success).toBe(false);
-		expect(body.error).toBeDefined();
 	});
 
 	test("uses body config values instead of saved config", async () => {

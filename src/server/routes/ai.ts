@@ -45,7 +45,6 @@ const aiConfigBodySchema = z.object({
 
 const testConnectionResponseSchema = z.object({
 	success: z.boolean(),
-	error: z.string().optional(),
 });
 
 const testConnectionBodySchema = aiConfigBodySchema.or(z.null()).or(z.undefined());
@@ -210,7 +209,7 @@ const aiRoutes = (app: FastifyInstance) => {
 			}
 
 			if (request.body) {
-				const result = await testConnection({
+				const result = await testConnection(request, {
 					endpointUrl: request.body.endpointUrl,
 					apiKey: request.body.apiKey,
 					modelName: request.body.modelName,
@@ -231,7 +230,7 @@ const aiRoutes = (app: FastifyInstance) => {
 				return reply.code(StatusCodes.NOT_FOUND).send({ error: "No AI configuration found" });
 			}
 
-			const result = await testConnection({
+			const result = await testConnection(request, {
 				endpointUrl: config.endpointUrl,
 				apiKey: decrypt(config.apiKey),
 				modelName: config.modelName,
