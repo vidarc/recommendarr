@@ -46,6 +46,7 @@ test.describe("arr integration settings flow", () => {
 		await page.getByLabel("Password").fill(adminPassword);
 		await page.getByRole("button", { name: /log in/i }).click();
 
+		await expect(page).toHaveURL("/");
 		await page.goto("/settings");
 		await page.getByRole("button", { name: "Integrations" }).click();
 
@@ -86,6 +87,7 @@ test.describe("arr integration settings flow", () => {
 		await page.getByLabel("Password").fill(adminPassword);
 		await page.getByRole("button", { name: /log in/i }).click();
 
+		await expect(page).toHaveURL("/");
 		await page.goto("/settings");
 		await page.getByRole("button", { name: "Integrations" }).click();
 
@@ -102,6 +104,7 @@ test.describe("arr integration settings flow", () => {
 		await page.getByLabel("Password").fill(adminPassword);
 		await page.getByRole("button", { name: /log in/i }).click();
 
+		await expect(page).toHaveURL("/");
 		await page.goto("/settings");
 		await page.getByRole("button", { name: "Integrations" }).click();
 
