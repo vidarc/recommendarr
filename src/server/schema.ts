@@ -107,6 +107,7 @@ const arrConnections = sqliteTable(
 		url: text("url").notNull(),
 		apiKey: text("api_key").notNull(),
 		createdAt: text("created_at").notNull(),
+		updatedAt: text("updated_at").notNull(),
 	},
 	(table) => [uniqueIndex("arr_user_service_idx").on(table.userId, table.serviceType)],
 );
