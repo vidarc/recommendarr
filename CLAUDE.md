@@ -58,6 +58,28 @@ yarn vp fmt          # Format only
 - Always make a plan first, then work on the implementation
 - When modifying files, keep changes scoped to what was requested. Do not fix or refactor unrelated code unless explicitly asked. If you discover pre-existing issues, mention them but ask before fixing.
 
+## TypeScript Standards
+
+- This is a TypeScript project. All source files use TypeScript.
+- Use modern types — avoid deprecated React types (e.g., use `SubmitEvent` not `React.FormEvent` or `SyntheticEvent`).
+- Fix all lint errors before considering a task complete.
+
+## Testing
+
+- Always run the full test suite after changes: `yarn vp test`
+- Test files use `.test.ts` / `.test.tsx` naming (NOT `.spec.ts`)
+- When fixing test failures, check for ALL occurrences of changed patterns (e.g., status codes, error types) across the entire test suite, not just the first match.
+
+## Environment & Ports
+
+- Always read .env file before assuming ports or connection strings. Default app port is 8080, not 3000.
+- For local dev: `yarn dev`. For Docker: check docker-compose.yml.
+
+## Git & Commits
+
+- Keep commits simple and fast. Do not add unnecessary steps before committing.
+- When asked to commit, just stage and commit — don't re-run full verification unless explicitly asked.
+
 ## Architecture
 
 ### Server
