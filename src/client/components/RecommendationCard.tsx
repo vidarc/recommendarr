@@ -1,6 +1,9 @@
 import { css } from "@linaria/atomic";
+import { useCallback, useState } from "react";
 
+import { useGetArrConfigQuery } from "../api.ts";
 import { colors, radii, spacing } from "../theme.ts";
+import { AddToArrModal } from "./AddToArrModal.tsx";
 
 import type { Recommendation } from "../api.ts";
 
@@ -64,6 +67,31 @@ const arrButton = css`
 	opacity: 0.6;
 `;
 
+const arrButtonEnabled = css`
+	padding: ${spacing.xs} ${spacing.sm};
+	background: none;
+	border: 1px solid ${colors.border};
+	border-radius: ${radii.sm};
+	color: ${colors.textDim};
+	font-size: 0.8rem;
+	cursor: pointer;
+	opacity: 1;
+
+	&:hover {
+		border-color: ${colors.accent};
+		color: ${colors.accent};
+	}
+`;
+
+const addedBadge = css`
+	padding: ${spacing.xs} ${spacing.sm};
+	border-radius: ${radii.sm};
+	font-size: 0.8rem;
+	color: ${colors.green};
+	background: rgba(173, 219, 103, 0.1);
+	border: 1px solid rgba(173, 219, 103, 0.3);
+`;
+
 const CardHeaderContent = ({
 	title,
 	year,
@@ -80,29 +108,87 @@ const CardHeaderContent = ({
 	</div>
 );
 
-const CardActions = ({ mediaType }: { mediaType: string }) => (
-	<div className={actionRow}>
-		<button
-			type="button"
-			className={arrButton}
-			disabled
-			title={`Connect ${mediaType === "movie" ? "Radarr" : "Sonarr"} in Settings to enable`}
-		>
-			Add to {mediaType === "movie" ? "Radarr" : "Sonarr"}
-		</button>
-	</div>
-);
+interface CardActionsProps {
+	mediaType: string;
+	addedToArr: boolean;
+	isConnected: boolean;
+	onAdd: () => void;
+}
 
-const RecommendationCard = ({ recommendation }: { recommendation: Recommendation }) => (
-	<div className={card}>
-		<CardHeaderContent
-			title={recommendation.title}
-			year={recommendation.year}
-			mediaType={recommendation.mediaType}
-		/>
-		{recommendation.synopsis ? <p className={synopsis}>{recommendation.synopsis}</p> : undefined}
-		<CardActions mediaType={recommendation.mediaType} />
-	</div>
-);
+const CardActions = ({ mediaType, addedToArr, isConnected, onAdd }: CardActionsProps) => {
+	const serviceName = mediaType === "movie" ? "Radarr" : "Sonarr";
+
+	if (addedToArr) {
+		return (
+			<div className={actionRow}>
+				<span className={addedBadge}>Added to {serviceName}</span>
+			</div>
+		);
+	}
+
+	if (isConnected) {
+		return (
+			<div className={actionRow}>
+				<button type="button" className={arrButtonEnabled} onClick={onAdd}>
+					Add to {serviceName}
+				</button>
+			</div>
+		);
+	}
+
+	return (
+		<div className={actionRow}>
+			<button
+				type="button"
+				className={arrButton}
+				disabled
+				title={`Connect ${serviceName} in Settings to enable`}
+			>
+				Add to {serviceName}
+			</button>
+		</div>
+	);
+};
+
+const RecommendationCard = ({ recommendation }: { recommendation: Recommendation }) => {
+	const [modalOpen, setModalOpen] = useState(false);
+	const serviceType = recommendation.mediaType === "movie" ? "radarr" : "sonarr";
+	const { data: arrConnections } = useGetArrConfigQuery();
+	const isConnected =
+		arrConnections !== undefined && arrConnections.some((conn) => conn.serviceType === serviceType);
+
+	const handleOpenModal = useCallback(() => {
+		setModalOpen(true);
+	}, []);
+
+	const handleCloseModal = useCallback(() => {
+		setModalOpen(false);
+	}, []);
+
+	return (
+		<div className={card}>
+			<CardHeaderContent
+				title={recommendation.title}
+				year={recommendation.year}
+				mediaType={recommendation.mediaType}
+			/>
+			{recommendation.synopsis ? <p className={synopsis}>{recommendation.synopsis}</p> : undefined}
+			<CardActions
+				mediaType={recommendation.mediaType}
+				addedToArr={recommendation.addedToArr}
+				isConnected={isConnected}
+				onAdd={handleOpenModal}
+			/>
+			{isConnected ? (
+				<AddToArrModal
+					recommendation={recommendation}
+					serviceType={serviceType}
+					isOpen={modalOpen}
+					onClose={handleCloseModal}
+				/>
+			) : undefined}
+		</div>
+	);
+};
 
 export { RecommendationCard };
