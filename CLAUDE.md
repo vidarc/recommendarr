@@ -130,6 +130,13 @@ Fastify uses `fastify-type-provider-zod` for request/response validation and typ
 - `GET /api/conversations` — lists all conversations for the user
 - `GET /api/conversations/:id` — returns a conversation with all messages and recommendations
 - `DELETE /api/conversations/:id` — deletes a conversation and its messages/recommendations
+- `GET /api/arr/config` — returns the user's arr connections (API keys masked)
+- `PUT /api/arr/config/:serviceType` — creates or updates an arr connection (API key encrypted)
+- `DELETE /api/arr/config/:serviceType` — removes an arr connection
+- `POST /api/arr/test` — tests a saved arr connection
+- `GET /api/arr/options/:serviceType` — returns root folders and quality profiles for an arr service
+- `POST /api/arr/lookup` — searches an arr service for media
+- `POST /api/arr/add` — adds media to an arr service, updates recommendation
 - `GET /*` — SSR catch-all (registered last so API routes take priority)
 
 ### SSR
