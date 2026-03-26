@@ -9,6 +9,7 @@ import { dbPlugin } from "./db.ts";
 import { authMiddleware } from "./middleware/auth.ts";
 import { aiRoutes } from "./routes/ai.ts";
 import { apiRoutes } from "./routes/api.ts";
+import { arrRoutes } from "./routes/arr.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { chatRoutes } from "./routes/chat.ts";
 import { healthRoutes } from "./routes/health.ts";
@@ -60,6 +61,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 		apiRoutes(app);
 		chatRoutes(app);
 		plexRoutes(app);
+		arrRoutes(app);
 	}
 
 	if (!options.skipSSR) {
