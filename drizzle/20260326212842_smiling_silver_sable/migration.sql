@@ -1,0 +1,1 @@
+ALTER TABLE `arr_connections` ADD `updated_at` text NOT NULL;

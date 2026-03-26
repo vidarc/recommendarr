@@ -1,6 +1,19 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { describe, expect, onTestFinished, test } from "vite-plus/test";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { Provider } from "react-redux";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	onTestFinished,
+	test,
+} from "vite-plus/test";
 
+import { api } from "../../api.ts";
+import { createStore } from "../../store.ts";
 import { RecommendationCard } from "../RecommendationCard.tsx";
 
 import type { Recommendation } from "../../api.ts";
@@ -21,9 +34,31 @@ const makeRecommendation = (overrides: Partial<Recommendation> = {}): Recommenda
 	...overrides,
 });
 
+const server = setupServer(http.get("/api/arr/config", () => HttpResponse.json([])));
+
+beforeAll(() => {
+	server.listen();
+});
+
+afterEach(() => {
+	server.resetHandlers();
+});
+
+afterAll(() => {
+	server.close();
+});
+
 const renderCard = (recommendation: Recommendation) => {
-	onTestFinished(cleanup);
-	render(<RecommendationCard recommendation={recommendation} />);
+	const testStore = createStore();
+	onTestFinished(() => {
+		cleanup();
+		testStore.dispatch(api.util.resetApiState());
+	});
+	render(
+		<Provider store={testStore}>
+			<RecommendationCard recommendation={recommendation} />
+		</Provider>,
+	);
 };
 
 describe("RecommendationCard", () => {
@@ -85,7 +120,7 @@ describe("RecommendationCard", () => {
 		expect(screen.getByRole("button", { name: /add to sonarr/i })).toBeInTheDocument();
 	});
 
-	test("arr button is disabled", () => {
+	test("arr button is disabled when service is NOT connected", () => {
 		renderCard(baseRecommendation);
 
 		expect(screen.getByRole("button", { name: /add to radarr/i })).toBeDisabled();
@@ -98,5 +133,27 @@ describe("RecommendationCard", () => {
 			"title",
 			expect.stringContaining("Settings"),
 		);
+	});
+
+	test("arr button is enabled when service is connected", async () => {
+		server.use(
+			http.get("/api/arr/config", () =>
+				HttpResponse.json([
+					{ id: "1", serviceType: "radarr", url: "http://localhost:7878", apiKey: "****1234" },
+				]),
+			),
+		);
+
+		renderCard(makeRecommendation({ mediaType: "movie" }));
+
+		const button = await screen.findByRole("button", { name: /add to radarr/i });
+		expect(button).not.toBeDisabled();
+	});
+
+	test('shows "Added" badge when addedToArr is true', () => {
+		renderCard(makeRecommendation({ addedToArr: true }));
+
+		expect(screen.getByText(/added to radarr/i)).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: /add to radarr/i })).not.toBeInTheDocument();
 	});
 });

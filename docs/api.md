@@ -785,6 +785,333 @@ Deletes a conversation and all its messages and recommendations (cascade delete)
 
 ---
 
+## Arr (Radarr/Sonarr)
+
+All arr endpoints require authentication via `session` cookie.
+
+### `GET /api/arr/config`
+
+Returns the arr connections for the authenticated user. API keys are masked for security.
+
+**Request**
+
+No parameters or body required.
+
+**Response `200 OK`**
+
+```json
+[
+	{
+		"id": "550e8400-e29b-41d4-a716-446655440000",
+		"serviceType": "radarr",
+		"url": "http://localhost:7878",
+		"apiKey": "****abcd"
+	}
+]
+```
+
+| Field         | Type     | Description                             |
+| ------------- | -------- | --------------------------------------- |
+| `id`          | `string` | Connection UUID                         |
+| `serviceType` | `string` | Service type (`"radarr"` or `"sonarr"`) |
+| `url`         | `string` | Base URL of the arr service             |
+| `apiKey`      | `string` | Masked API key                          |
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+### `PUT /api/arr/config/:serviceType`
+
+Creates or updates an arr connection for the authenticated user. The API key is encrypted before storage.
+
+**Request**
+
+| Path Param    | Type     | Description                            |
+| ------------- | -------- | -------------------------------------- |
+| `serviceType` | `string` | Service type: `"radarr"` or `"sonarr"` |
+
+```json
+{
+	"url": "http://localhost:7878",
+	"apiKey": "my-arr-api-key"
+}
+```
+
+| Field    | Type     | Description                   |
+| -------- | -------- | ----------------------------- |
+| `url`    | `string` | Required, valid URL           |
+| `apiKey` | `string` | Required, minimum 1 character |
+
+**Response `200 OK`**
+
+```json
+{ "success": true }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+### `DELETE /api/arr/config/:serviceType`
+
+Removes an arr connection for the authenticated user.
+
+**Request**
+
+| Path Param    | Type     | Description                            |
+| ------------- | -------- | -------------------------------------- |
+| `serviceType` | `string` | Service type: `"radarr"` or `"sonarr"` |
+
+**Response `200 OK`**
+
+```json
+{ "success": true }
+```
+
+**Response `404 Not Found`**
+
+```json
+{ "error": "No arr connection found for this service type" }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+### `POST /api/arr/test`
+
+Tests the saved arr connection by connecting to the arr service endpoint.
+
+**Request**
+
+```json
+{
+	"serviceType": "radarr"
+}
+```
+
+| Field         | Type     | Description                            |
+| ------------- | -------- | -------------------------------------- |
+| `serviceType` | `string` | Service type: `"radarr"` or `"sonarr"` |
+
+**Response `200 OK`**
+
+```json
+{
+	"success": true,
+	"version": "5.3.6"
+}
+```
+
+| Field     | Type      | Description                             |
+| --------- | --------- | --------------------------------------- |
+| `success` | `boolean` | Whether the connection test succeeded   |
+| `version` | `string`  | Optional. Service version if successful |
+| `error`   | `string`  | Optional. Error message if unsuccessful |
+
+**Response `404 Not Found`**
+
+```json
+{ "error": "No arr connection found for this service type" }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+### `GET /api/arr/options/:serviceType`
+
+Returns the root folders and quality profiles available on the arr service.
+
+**Request**
+
+| Path Param    | Type     | Description                            |
+| ------------- | -------- | -------------------------------------- |
+| `serviceType` | `string` | Service type: `"radarr"` or `"sonarr"` |
+
+**Response `200 OK`**
+
+```json
+{
+	"rootFolders": [
+		{
+			"id": 1,
+			"path": "/movies",
+			"freeSpace": 107374182400
+		}
+	],
+	"qualityProfiles": [
+		{
+			"id": 1,
+			"name": "HD-1080p"
+		}
+	]
+}
+```
+
+| Field                     | Type     | Description                  |
+| ------------------------- | -------- | ---------------------------- |
+| `rootFolders`             | `array`  | Available root folders       |
+| `rootFolders[].id`        | `number` | Root folder ID               |
+| `rootFolders[].path`      | `string` | Filesystem path              |
+| `rootFolders[].freeSpace` | `number` | Free disk space in bytes     |
+| `qualityProfiles`         | `array`  | Available quality profiles   |
+| `qualityProfiles[].id`    | `number` | Quality profile ID           |
+| `qualityProfiles[].name`  | `string` | Quality profile display name |
+
+**Response `404 Not Found`**
+
+```json
+{ "error": "No arr connection found for this service type" }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+### `POST /api/arr/lookup`
+
+Searches an arr service for media matching the given title (and optional year).
+
+**Request**
+
+```json
+{
+	"serviceType": "radarr",
+	"title": "Inception",
+	"year": 2010
+}
+```
+
+| Field         | Type     | Description                                      |
+| ------------- | -------- | ------------------------------------------------ |
+| `serviceType` | `string` | Required. Service type: `"radarr"` or `"sonarr"` |
+| `title`       | `string` | Required, minimum 1 character                    |
+| `year`        | `number` | Optional. Release year to narrow results         |
+
+**Response `200 OK`**
+
+```json
+[
+	{
+		"title": "Inception",
+		"year": 2010,
+		"tmdbId": 27205,
+		"overview": "A thief who steals corporate secrets...",
+		"existsInLibrary": false,
+		"arrId": 0
+	}
+]
+```
+
+| Field             | Type      | Description                                     |
+| ----------------- | --------- | ----------------------------------------------- |
+| `title`           | `string`  | Media title                                     |
+| `year`            | `number`  | Release year                                    |
+| `tmdbId`          | `number`  | Optional. TMDB ID (Radarr)                      |
+| `tvdbId`          | `number`  | Optional. TVDB ID (Sonarr)                      |
+| `overview`        | `string`  | Short description                               |
+| `existsInLibrary` | `boolean` | Whether the media is already in the arr library |
+| `arrId`           | `number`  | Arr internal ID (0 if not in library)           |
+
+**Response `404 Not Found`**
+
+```json
+{ "error": "No arr connection found for this service type" }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+### `POST /api/arr/add`
+
+Adds media to an arr service and updates the associated recommendation record.
+
+**Request**
+
+```json
+{
+	"serviceType": "radarr",
+	"recommendationId": "550e8400-e29b-41d4-a716-446655440001",
+	"tmdbId": 27205,
+	"title": "Inception",
+	"year": 2010,
+	"qualityProfileId": 1,
+	"rootFolderPath": "/movies"
+}
+```
+
+| Field              | Type     | Description                                          |
+| ------------------ | -------- | ---------------------------------------------------- |
+| `serviceType`      | `string` | Required. Service type: `"radarr"` or `"sonarr"`     |
+| `recommendationId` | `string` | Required. UUID of the recommendation to update       |
+| `tmdbId`           | `number` | Optional. TMDB ID (required for Radarr)              |
+| `tvdbId`           | `number` | Optional. TVDB ID (required for Sonarr)              |
+| `title`            | `string` | Required, minimum 1 character                        |
+| `year`             | `number` | Required. Release year                               |
+| `qualityProfileId` | `number` | Required. Quality profile ID from `/api/arr/options` |
+| `rootFolderPath`   | `string` | Required. Root folder path from `/api/arr/options`   |
+
+**Response `200 OK`**
+
+```json
+{ "success": true }
+```
+
+On failure:
+
+```json
+{
+	"success": false,
+	"error": "Item already exists in library"
+}
+```
+
+| Field     | Type      | Description                              |
+| --------- | --------- | ---------------------------------------- |
+| `success` | `boolean` | Whether the media was added successfully |
+| `error`   | `string`  | Optional. Error message if unsuccessful  |
+
+**Response `404 Not Found`**
+
+```json
+{ "error": "No arr connection found for this service type" }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
 ## SSR
 
 ### `GET /*` (catch-all)

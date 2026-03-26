@@ -58,6 +58,28 @@ yarn vp fmt          # Format only
 - Always make a plan first, then work on the implementation
 - When modifying files, keep changes scoped to what was requested. Do not fix or refactor unrelated code unless explicitly asked. If you discover pre-existing issues, mention them but ask before fixing.
 
+## TypeScript Standards
+
+- This is a TypeScript project. All source files use TypeScript.
+- Use modern types — avoid deprecated React types (e.g., use `SubmitEvent` not `React.FormEvent` or `SyntheticEvent`).
+- Fix all lint errors before considering a task complete.
+
+## Testing
+
+- Always run the full test suite after changes: `yarn vp test`
+- Test files use `.test.ts` / `.test.tsx` naming (NOT `.spec.ts`)
+- When fixing test failures, check for ALL occurrences of changed patterns (e.g., status codes, error types) across the entire test suite, not just the first match.
+
+## Environment & Ports
+
+- Always read .env file before assuming ports or connection strings. Default app port is 8080, not 3000.
+- For local dev: `yarn dev`. For Docker: check docker-compose.yml.
+
+## Git & Commits
+
+- Keep commits simple and fast. Do not add unnecessary steps before committing.
+- When asked to commit, just stage and commit — don't re-run full verification unless explicitly asked.
+
 ## Architecture
 
 ### Server
@@ -108,6 +130,13 @@ Fastify uses `fastify-type-provider-zod` for request/response validation and typ
 - `GET /api/conversations` — lists all conversations for the user
 - `GET /api/conversations/:id` — returns a conversation with all messages and recommendations
 - `DELETE /api/conversations/:id` — deletes a conversation and its messages/recommendations
+- `GET /api/arr/config` — returns the user's arr connections (API keys masked)
+- `PUT /api/arr/config/:serviceType` — creates or updates an arr connection (API key encrypted)
+- `DELETE /api/arr/config/:serviceType` — removes an arr connection
+- `POST /api/arr/test` — tests a saved arr connection
+- `GET /api/arr/options/:serviceType` — returns root folders and quality profiles for an arr service
+- `POST /api/arr/lookup` — searches an arr service for media
+- `POST /api/arr/add` — adds media to an arr service, updates recommendation
 - `GET /*` — SSR catch-all (registered last so API routes take priority)
 
 ### SSR

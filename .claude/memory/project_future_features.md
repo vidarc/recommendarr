@@ -1,0 +1,35 @@
+---
+name: Future Feature Ideas
+description: Brainstormed feature ideas beyond arr integration to revisit later
+type: project
+---
+
+## Smarter Recommendations
+
+- **Feedback loop** — thumbs-up/thumbs-down on recommendations so AI learns preferences
+- **Genre/mood preferences** — persistent filters like "lighthearted" or "horror only"
+- **Exclude already-in-library** — cross-reference against Plex/arr to avoid suggesting owned content
+- **Music support** — schema supports media_type="music" but no music-specific Plex history handling
+
+## Discovery & Social
+
+- **Shared recommendations** — shareable read-only link for recommendation lists
+- **Multi-user households** — combine watch histories from multiple Plex users
+- **Trending/popular** — surface what other users are getting recommended (opt-in, anonymized)
+
+## UX Improvements
+
+- **Conversation search** — search past recommendations across all conversations
+- **Recommendation status tracking** — did you watch it? did you like it?
+- **Streaming availability** — show where a recommendation is available (JustWatch API or similar)
+- **Poster art** — pull movie/show posters from TMDB for RecommendationCards
+
+## Power User Features
+
+- **Scheduled recommendations** — weekly email/notification with fresh picks
+- **Custom AI prompts** — let users tweak the system prompt
+- **Import/export** — export recommendation history as CSV/JSON
+- **Watchlist integration** — sync with Plex watchlist or Trakt
+
+**Why:** These came from a full codebase review on 2026-03-26. All are feasible given the current architecture.
+**How to apply:** When the user finishes arr integration or asks "what's next", reference these ideas.
