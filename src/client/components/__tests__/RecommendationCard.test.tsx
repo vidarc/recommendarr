@@ -16,7 +16,7 @@ import { api } from "../../api.ts";
 import { createStore } from "../../store.ts";
 import { RecommendationCard } from "../RecommendationCard.tsx";
 
-import type { Recommendation } from "../../api.ts";
+import type { Recommendation } from "../../shared/types.ts";
 
 const movieYear = 1988;
 

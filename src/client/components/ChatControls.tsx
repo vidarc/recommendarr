@@ -1,7 +1,7 @@
 import { css } from "@linaria/atomic";
 import { useCallback } from "react";
 
-import { useGetPlexLibrariesQuery } from "../api.ts";
+import { useGetPlexLibrariesQuery } from "../features/plex/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 
 const controlsBar = css`

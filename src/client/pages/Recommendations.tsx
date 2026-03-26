@@ -8,7 +8,7 @@ import { RecommendationCard } from "../components/RecommendationCard.tsx";
 import { useChat } from "../hooks/use-chat.ts";
 import { colors, spacing } from "../theme.ts";
 
-import type { ChatMessageResponse } from "../api.ts";
+import type { ChatMessageResponse } from "../shared/types.ts";
 
 const NO_RECOMMENDATIONS = 0;
 const NO_MESSAGES = 0;

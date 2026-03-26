@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
-import { useDeleteConversationMutation, useGetConversationsQuery } from "../api.ts";
+import { useDeleteConversationMutation, useGetConversationsQuery } from "../features/chat/api.ts";
 
-import type { ConversationSummary } from "../api.ts";
+import type { ConversationSummary } from "../features/chat/api.ts";
 import type { MouseEvent } from "react";
 
 const EMPTY_CONVERSATIONS: ConversationSummary[] = [];
