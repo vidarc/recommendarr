@@ -36,6 +36,10 @@
 - refactor: create chat feature API with injectEndpoints
 - refactor: create arr feature API with injectEndpoints
 - refactor: split api.ts into feature-scoped API files with injectEndpoints
+- feat: add manual Plex token entry for local servers and testing
+- feat: add Docker Compose mock services for Plex, Radarr, and Sonarr e2e testing
+- test: add e2e tests for Plex connection, AI configuration, and navigation
+- test: migrate arr integration e2e tests from browser mocks to server-level mock services
 
 ## v0.1.0 (2026-03-23)
 
