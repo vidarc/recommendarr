@@ -7,7 +7,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("admin login flow", () => {
 	let adminUsername = "";
 
-	test.beforeAll((_fixtures, testInfo) => {
+	test.beforeAll(({}, testInfo) => {
 		adminUsername = `admin-${testInfo.project.name}`;
 	});
 

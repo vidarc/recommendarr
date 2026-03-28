@@ -5,7 +5,7 @@ const password = "navtest1234";
 test.describe("navigation", () => {
 	let username = "";
 
-	test.beforeAll((_fixtures, testInfo) => {
+	test.beforeAll(({}, testInfo) => {
 		username = `nav-e2e-${testInfo.project.name}`;
 	});
 

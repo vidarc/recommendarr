@@ -103,6 +103,7 @@ export default defineConfig({
 				rules: {
 					"import/no-nodejs-modules": "off",
 					"vitest/require-hook": "off",
+					"no-empty-pattern": "off",
 					"no-magic-numbers": "off",
 					"new-cap": "off",
 				},

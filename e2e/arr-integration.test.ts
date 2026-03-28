@@ -15,7 +15,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("arr integration settings flow", () => {
 	let adminUsername = "";
 
-	test.beforeAll((_fixtures, testInfo) => {
+	test.beforeAll(({}, testInfo) => {
 		adminUsername = `arr-e2e-${testInfo.project.name}`;
 	});
 

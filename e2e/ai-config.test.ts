@@ -10,7 +10,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("AI configuration settings flow", () => {
 	let username = "";
 
-	test.beforeAll((_fixtures, testInfo) => {
+	test.beforeAll(({}, testInfo) => {
 		username = `ai-e2e-${testInfo.project.name}`;
 	});
 

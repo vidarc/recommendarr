@@ -10,7 +10,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("plex connection settings flow", () => {
 	let username = "";
 
-	test.beforeAll((_fixtures, testInfo) => {
+	test.beforeAll(({}, testInfo) => {
 		username = `plex-e2e-${testInfo.project.name}`;
 	});
 
