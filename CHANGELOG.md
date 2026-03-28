@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1 (2026-03-28)
+
+- chore(deps): Bump brace-expansion (#18)
+- claude memory updates
+
 ## v0.2.0 (2026-03-28)
 
 - css fix
