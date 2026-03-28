@@ -37,6 +37,14 @@ const authCheckResponseSchema = z.object({
 	claimed: z.boolean(),
 });
 
+const MIN_LENGTH = 1;
+
+const manualAuthBodySchema = z.object({
+	authToken: z.string().min(MIN_LENGTH),
+	serverUrl: z.string().url(),
+	serverName: z.string().min(MIN_LENGTH),
+});
+
 const serverSchema = z.object({
 	name: z.string(),
 	address: z.string(),
@@ -146,6 +154,64 @@ const plexRoutes = (app: FastifyInstance) => {
 		},
 	);
 
+	typedApp.post(
+		"/api/plex/auth/manual",
+		{
+			schema: {
+				body: manualAuthBodySchema,
+				response: {
+					[StatusCodes.OK]: successResponseSchema,
+					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
+				},
+			},
+		},
+		async (request, reply) => {
+			if (!request.user) {
+				return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Authentication required" });
+			}
+
+			const { authToken, serverUrl, serverName } = request.body;
+			const now = new Date().toISOString();
+			const encryptedToken = encrypt(authToken);
+
+			const existing = app.db
+				.select()
+				.from(plexConnections)
+				.where(eq(plexConnections.userId, request.user.id))
+				.get();
+
+			if (existing) {
+				app.db
+					.update(plexConnections)
+					.set({
+						authToken: encryptedToken,
+						serverUrl,
+						serverName,
+						machineIdentifier: `manual-${randomUUID()}`,
+						updatedAt: now,
+					})
+					.where(eq(plexConnections.userId, request.user.id))
+					.run();
+			} else {
+				app.db
+					.insert(plexConnections)
+					.values({
+						id: randomUUID(),
+						userId: request.user.id,
+						authToken: encryptedToken,
+						serverUrl,
+						serverName,
+						machineIdentifier: `manual-${randomUUID()}`,
+						createdAt: now,
+						updatedAt: now,
+					})
+					.run();
+			}
+
+			return reply.code(StatusCodes.OK).send({ success: true });
+		},
+	);
+
 	typedApp.get(
 		"/api/plex/servers",
 		{
@@ -170,6 +236,22 @@ const plexRoutes = (app: FastifyInstance) => {
 
 			if (!connection) {
 				return reply.code(StatusCodes.NOT_FOUND).send({ error: "No Plex connection found" });
+			}
+
+			if (connection.serverUrl && connection.serverName) {
+				return reply.code(StatusCodes.OK).send({
+					servers: [
+						{
+							name: connection.serverName,
+							address: connection.serverUrl,
+							port: 32_400,
+							scheme: "http",
+							uri: connection.serverUrl,
+							clientIdentifier: connection.machineIdentifier ?? "manual",
+							owned: true,
+						},
+					],
+				});
 			}
 
 			const authToken = decrypt(connection.authToken);
