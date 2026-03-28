@@ -1,9 +1,10 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import {
 	useDisconnectPlexMutation,
 	useGetPlexServersQuery,
+	useManualPlexAuthMutation,
 	useSelectPlexServerMutation,
 } from "../../features/plex/api.ts";
 import { usePlexAuth } from "../../hooks/use-plex-auth.ts";
@@ -20,6 +21,7 @@ import {
 	selectStyle,
 	statusText,
 } from "./settings-styles.ts";
+import { SettingsField } from "./SettingsField.tsx";
 
 import type { PlexServer } from "../../features/plex/api.ts";
 
@@ -49,6 +51,29 @@ const statusDot = css`
 const connectedLabel = css`
 	color: ${colors.text};
 	font-weight: 500;
+`;
+
+const collapsibleHeader = css`
+	display: flex;
+	align-items: center;
+	gap: ${spacing.sm};
+	background: none;
+	border: none;
+	color: ${colors.textMuted};
+	cursor: pointer;
+	font-size: 0.9rem;
+	padding: ${spacing.sm} 0;
+	width: 100%;
+	text-align: left;
+	transition: color 0.2s ease;
+
+	&:hover {
+		color: ${colors.text};
+	}
+`;
+
+const collapsibleContent = css`
+	padding-top: ${spacing.sm};
 `;
 
 /* ── Sub-components ────────────────────────────────────────── */
@@ -102,6 +127,109 @@ const ServerSelect = ({ servers, onSelect, isLoading }: ServerSelectProps) => {
 	);
 };
 
+interface ManualPlexFormProps {
+	authToken: string;
+	serverUrl: string;
+	serverName: string;
+	isLoading: boolean;
+	hasError: boolean;
+	onAuthTokenChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onServerUrlChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onServerNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onConnect: () => void;
+}
+
+const ManualPlexForm = ({
+	authToken,
+	serverUrl,
+	serverName,
+	isLoading,
+	hasError,
+	onAuthTokenChange,
+	onServerUrlChange,
+	onServerNameChange,
+	onConnect,
+}: ManualPlexFormProps) => (
+	<div className={collapsibleContent}>
+		<SettingsField
+			id="plexAuthToken"
+			label="Auth Token"
+			type="password"
+			value={authToken}
+			onChange={onAuthTokenChange}
+		/>
+		<SettingsField
+			id="plexServerUrl"
+			label="Server URL"
+			value={serverUrl}
+			onChange={onServerUrlChange}
+			placeholder="http://192.168.1.100:32400"
+		/>
+		<SettingsField
+			id="plexServerName"
+			label="Server Name"
+			value={serverName}
+			onChange={onServerNameChange}
+			placeholder="My Plex Server"
+		/>
+		<div className={buttonRow}>
+			<button type="button" className={primaryButton} onClick={onConnect} disabled={isLoading}>
+				{isLoading ? "Connecting..." : "Connect"}
+			</button>
+		</div>
+		{hasError && <p className={errorText}>Failed to connect</p>}
+	</div>
+);
+
+const ManualPlexConnection = () => {
+	const [showManual, setShowManual] = useState(false);
+	const [authToken, setAuthToken] = useState("");
+	const [serverUrl, setServerUrl] = useState("");
+	const [serverName, setServerName] = useState("");
+	const [manualAuth, { isLoading, error }] = useManualPlexAuthMutation();
+
+	const toggleManual = useCallback(() => {
+		setShowManual((prev) => !prev);
+	}, []);
+
+	const handleAuthTokenChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+		setAuthToken(event.target.value);
+	}, []);
+
+	const handleServerUrlChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+		setServerUrl(event.target.value);
+	}, []);
+
+	const handleServerNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+		setServerName(event.target.value);
+	}, []);
+
+	const handleConnect = useCallback(async () => {
+		await manualAuth({ authToken, serverUrl, serverName });
+	}, [manualAuth, authToken, serverUrl, serverName]);
+
+	return (
+		<>
+			<button type="button" className={collapsibleHeader} onClick={toggleManual}>
+				{showManual ? "Hide" : "Show"} Manual Connection
+			</button>
+			{showManual && (
+				<ManualPlexForm
+					authToken={authToken}
+					serverUrl={serverUrl}
+					serverName={serverName}
+					isLoading={isLoading}
+					hasError={error !== undefined}
+					onAuthTokenChange={handleAuthTokenChange}
+					onServerUrlChange={handleServerUrlChange}
+					onServerNameChange={handleServerNameChange}
+					onConnect={handleConnect}
+				/>
+			)}
+		</>
+	);
+};
+
 const PlexNotConnected = () => {
 	const { connect, isStarting, polling, error } = usePlexAuth();
 
@@ -120,6 +248,7 @@ const PlexNotConnected = () => {
 				</button>
 			</div>
 			{error && <p className={errorText}>{error}</p>}
+			<ManualPlexConnection />
 		</div>
 	);
 };
