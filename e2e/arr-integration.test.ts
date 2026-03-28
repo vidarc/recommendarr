@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 
 // NOTE: The add-to-arr modal flow (opening the modal, selecting quality profile/root folder,
 // And submitting) is covered by unit tests in
@@ -6,38 +6,13 @@ import { expect, test } from "@playwright/test";
 // Testing it via E2E would require AI chat to generate recommendations first,
 // Which involves complex Plex + AI mocking out of scope for this test suite.
 
-const adminPassword = "arradmin1234";
 const radarrUrl = "http://mock-services:7878";
 const radarrApiKey = "testradarrapikey1234";
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("arr integration settings flow", () => {
-	let adminUsername = "";
-
-	test.beforeAll(({}, testInfo) => {
-		adminUsername = `arr-e2e-${testInfo.project.name}`;
-	});
-
-	test("register user for arr integration tests", async ({ page }) => {
-		await page.goto("/register");
-
-		await page.getByLabel("Username").fill(adminUsername);
-		await page.getByLabel("Password", { exact: true }).fill(adminPassword);
-		await page.getByLabel("Confirm Password").fill(adminPassword);
-		await page.getByRole("button", { name: /register/i }).click();
-
-		await expect(page).toHaveURL("/");
-	});
-
-	test("navigate to Settings > Integrations tab", async ({ page }) => {
-		await page.goto("/login");
-		await page.getByLabel("Username").fill(adminUsername);
-		await page.getByLabel("Password").fill(adminPassword);
-		await page.getByRole("button", { name: /log in/i }).click();
-
-		await expect(page).toHaveURL("/");
-
+	test("navigate to Settings > Integrations tab", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
 		await page.getByRole("button", { name: "Integrations" }).click();
 
@@ -45,13 +20,7 @@ test.describe("arr integration settings flow", () => {
 		await expect(page.getByRole("heading", { level: 3, name: "Sonarr" })).toBeVisible();
 	});
 
-	test("fill in Radarr URL and API Key and save", async ({ page }) => {
-		await page.goto("/login");
-		await page.getByLabel("Username").fill(adminUsername);
-		await page.getByLabel("Password").fill(adminPassword);
-		await page.getByRole("button", { name: /log in/i }).click();
-
-		await expect(page).toHaveURL("/");
+	test("fill in Radarr URL and API Key and save", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
 		await page.getByRole("button", { name: "Integrations" }).click();
 
@@ -66,13 +35,7 @@ test.describe("arr integration settings flow", () => {
 		await expect(page.getByRole("button", { name: "Remove" }).first()).toBeVisible();
 	});
 
-	test("test Radarr connection shows success message", async ({ page }) => {
-		await page.goto("/login");
-		await page.getByLabel("Username").fill(adminUsername);
-		await page.getByLabel("Password").fill(adminPassword);
-		await page.getByRole("button", { name: /log in/i }).click();
-
-		await expect(page).toHaveURL("/");
+	test("test Radarr connection shows success message", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
 		await page.getByRole("button", { name: "Integrations" }).click();
 
@@ -84,13 +47,9 @@ test.describe("arr integration settings flow", () => {
 		await expect(page.getByText("5.3.6")).toBeVisible();
 	});
 
-	test("remove Radarr connection hides Test Connection button", async ({ page }) => {
-		await page.goto("/login");
-		await page.getByLabel("Username").fill(adminUsername);
-		await page.getByLabel("Password").fill(adminPassword);
-		await page.getByRole("button", { name: /log in/i }).click();
-
-		await expect(page).toHaveURL("/");
+	test("remove Radarr connection hides Test Connection button", async ({
+		authenticatedPage: page,
+	}) => {
 		await page.goto("/settings");
 		await page.getByRole("button", { name: "Integrations" }).click();
 
