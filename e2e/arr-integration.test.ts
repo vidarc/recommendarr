@@ -6,14 +6,19 @@ import { expect, test } from "@playwright/test";
 // Testing it via E2E would require AI chat to generate recommendations first,
 // Which involves complex Plex + AI mocking out of scope for this test suite.
 
-const adminUsername = "arr-e2e-admin";
 const adminPassword = "arradmin1234";
-const radarrUrl = "http://radarr.local:7878";
+const radarrUrl = "http://mock-services:7878";
 const radarrApiKey = "testradarrapikey1234";
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("arr integration settings flow", () => {
+	let adminUsername = "";
+
+	test.beforeAll((_fixtures, testInfo) => {
+		adminUsername = `arr-e2e-${testInfo.project.name}`;
+	});
+
 	test("register user for arr integration tests", async ({ page }) => {
 		await page.goto("/register");
 
@@ -62,26 +67,6 @@ test.describe("arr integration settings flow", () => {
 	});
 
 	test("test Radarr connection shows success message", async ({ page }) => {
-		// Intercept the app's POST /api/arr/test endpoint and return a successful mock response.
-		// The real endpoint would proxy the request to the Radarr instance server-side,
-		// But since no Radarr instance is running in tests we mock the app API response.
-		await page.route("/api/arr/test", async (route) => {
-			const rawBody: unknown = route.request().postDataJSON();
-			const isRadarr =
-				typeof rawBody === "object" &&
-				rawBody !== null &&
-				"serviceType" in rawBody &&
-				(rawBody as Record<string, unknown>)["serviceType"] === "radarr";
-
-			await (isRadarr
-				? route.fulfill({
-						status: 200,
-						contentType: "application/json",
-						body: JSON.stringify({ success: true, version: "5.3.6" }),
-					})
-				: route.continue());
-		});
-
 		await page.goto("/login");
 		await page.getByLabel("Username").fill(adminUsername);
 		await page.getByLabel("Password").fill(adminPassword);
@@ -91,7 +76,8 @@ test.describe("arr integration settings flow", () => {
 		await page.goto("/settings");
 		await page.getByRole("button", { name: "Integrations" }).click();
 
-		// The connection was saved in the previous test, so Test Connection should be visible
+		// The connection was saved in the previous test, so Test Connection should be visible.
+		// This now exercises the full server path: auth → DB → decrypt → arr-client → mock Radarr.
 		await page.getByRole("button", { name: "Test Connection" }).first().click();
 
 		await expect(page.getByText(/Connection successful/)).toBeVisible();
