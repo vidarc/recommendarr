@@ -16,6 +16,8 @@ import {
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
+const DEFAULT_PLEX_PORT = 32_400;
+
 const errorResponseSchema = z.object({
 	error: z.string(),
 });
@@ -37,12 +39,12 @@ const authCheckResponseSchema = z.object({
 	claimed: z.boolean(),
 });
 
-const MIN_LENGTH = 1;
+const NON_EMPTY = 1;
 
 const manualAuthBodySchema = z.object({
-	authToken: z.string().min(MIN_LENGTH),
+	authToken: z.string().min(NON_EMPTY),
 	serverUrl: z.string().url(),
-	serverName: z.string().min(MIN_LENGTH),
+	serverName: z.string().min(NON_EMPTY),
 });
 
 const serverSchema = z.object({
@@ -239,13 +241,14 @@ const plexRoutes = (app: FastifyInstance) => {
 			}
 
 			if (connection.serverUrl && connection.serverName) {
+				const parsed = new URL(connection.serverUrl);
 				return reply.code(StatusCodes.OK).send({
 					servers: [
 						{
 							name: connection.serverName,
 							address: connection.serverUrl,
-							port: 32_400,
-							scheme: "http",
+							port: Number(parsed.port) || DEFAULT_PLEX_PORT,
+							scheme: parsed.protocol.replace(":", ""),
 							uri: connection.serverUrl,
 							clientIdentifier: connection.machineIdentifier ?? "manual",
 							owned: true,
