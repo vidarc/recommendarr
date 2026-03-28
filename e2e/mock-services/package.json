@@ -1,0 +1,13 @@
+{
+	"name": "recommendarr-mock-services",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"dependencies": {
+		"fastify": "5.8.4"
+	},
+	"devDependencies": {
+		"@types/node": "22.15.3",
+		"typescript": "5.8.3"
+	}
+}

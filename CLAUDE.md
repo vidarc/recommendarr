@@ -120,6 +120,7 @@ Fastify uses `fastify-type-provider-zod` for request/response validation and typ
 - `GET /api/plex/auth/check` — checks if a Plex PIN has been claimed, stores encrypted auth token
 - `GET /api/plex/servers` — returns available Plex servers for the user
 - `POST /api/plex/servers/select` — saves the selected Plex server
+- `POST /api/plex/auth/manual` — stores a manually-provided Plex auth token and server URL
 - `DELETE /api/plex/connection` — removes the user's Plex connection
 - `GET /api/plex/libraries` — returns libraries on the selected Plex server
 - `GET /api/ai/config` — returns the user's AI configuration (API key masked)

@@ -1,0 +1,12 @@
+FROM node:24-slim
+
+WORKDIR /app
+
+COPY package.json ./
+COPY tsconfig.json ./
+COPY mock-server.ts ./
+
+RUN npm install
+RUN ./node_modules/.bin/tsc
+
+CMD ["node", "dist/mock-server.js"]

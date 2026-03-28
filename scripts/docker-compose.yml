@@ -1,6 +1,26 @@
 services:
+  mock-services:
+    build:
+      context: ../e2e/mock-services
+      dockerfile: Dockerfile.mock
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:7878/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 2s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
   recommendarr:
     image: recommendarr:e2e
+    depends_on:
+      mock-services:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:

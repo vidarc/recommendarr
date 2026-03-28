@@ -98,6 +98,16 @@ export default defineConfig({
 				files: ["src/server/**"],
 				rules: { "import/no-nodejs-modules": "off" },
 			},
+			{
+				files: ["e2e/**"],
+				rules: {
+					"import/no-nodejs-modules": "off",
+					"vitest/require-hook": "off",
+					"no-empty-pattern": "off",
+					"no-magic-numbers": "off",
+					"new-cap": "off",
+				},
+			},
 		],
 	},
 

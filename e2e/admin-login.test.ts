@@ -1,11 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-const adminUsername = "admin";
 const adminPassword = "admin1234";
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("admin login flow", () => {
+	let adminUsername = "";
+
+	test.beforeAll(({}, testInfo) => {
+		adminUsername = `admin-${testInfo.project.name}`;
+	});
+
 	test("fresh app redirects to register page", async ({ page }) => {
 		// A fresh database has no users, so visiting / should redirect to /register
 		await page.goto("/");

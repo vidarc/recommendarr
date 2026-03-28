@@ -29,6 +29,12 @@ interface SelectPlexServerBody {
 	machineIdentifier: string;
 }
 
+interface ManualPlexAuthBody {
+	authToken: string;
+	serverUrl: string;
+	serverName: string;
+}
+
 interface PlexLibrary {
 	key: string;
 	title: string;
@@ -69,6 +75,14 @@ const plexApi = api.injectEndpoints({
 			}),
 			invalidatesTags: ["PlexConnection"],
 		}),
+		manualPlexAuth: builder.mutation<{ success: boolean }, ManualPlexAuthBody>({
+			query: (body) => ({
+				url: "api/plex/auth/manual",
+				method: "POST",
+				body,
+			}),
+			invalidatesTags: ["PlexConnection"],
+		}),
 		getPlexLibraries: builder.query<PlexLibrariesResponse, void>({
 			query: () => "api/plex/libraries",
 			providesTags: ["PlexConnection"],
@@ -83,6 +97,7 @@ const {
 	useSelectPlexServerMutation,
 	useDisconnectPlexMutation,
 	useGetPlexLibrariesQuery,
+	useManualPlexAuthMutation,
 } = plexApi;
 
 export {
@@ -90,6 +105,7 @@ export {
 	useGetPlexLibrariesQuery,
 	useGetPlexServersQuery,
 	useLazyCheckPlexAuthQuery,
+	useManualPlexAuthMutation,
 	useSelectPlexServerMutation,
 	useStartPlexAuthMutation,
 };

@@ -16,6 +16,8 @@ import {
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
+const DEFAULT_PLEX_PORT = 32_400;
+
 const errorResponseSchema = z.object({
 	error: z.string(),
 });
@@ -35,6 +37,14 @@ const authCheckQuerySchema = z.object({
 
 const authCheckResponseSchema = z.object({
 	claimed: z.boolean(),
+});
+
+const NON_EMPTY = 1;
+
+const manualAuthBodySchema = z.object({
+	authToken: z.string().min(NON_EMPTY),
+	serverUrl: z.string().url(),
+	serverName: z.string().min(NON_EMPTY),
 });
 
 const serverSchema = z.object({
@@ -146,6 +156,64 @@ const plexRoutes = (app: FastifyInstance) => {
 		},
 	);
 
+	typedApp.post(
+		"/api/plex/auth/manual",
+		{
+			schema: {
+				body: manualAuthBodySchema,
+				response: {
+					[StatusCodes.OK]: successResponseSchema,
+					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
+				},
+			},
+		},
+		async (request, reply) => {
+			if (!request.user) {
+				return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Authentication required" });
+			}
+
+			const { authToken, serverUrl, serverName } = request.body;
+			const now = new Date().toISOString();
+			const encryptedToken = encrypt(authToken);
+
+			const existing = app.db
+				.select()
+				.from(plexConnections)
+				.where(eq(plexConnections.userId, request.user.id))
+				.get();
+
+			if (existing) {
+				app.db
+					.update(plexConnections)
+					.set({
+						authToken: encryptedToken,
+						serverUrl,
+						serverName,
+						machineIdentifier: `manual-${randomUUID()}`,
+						updatedAt: now,
+					})
+					.where(eq(plexConnections.userId, request.user.id))
+					.run();
+			} else {
+				app.db
+					.insert(plexConnections)
+					.values({
+						id: randomUUID(),
+						userId: request.user.id,
+						authToken: encryptedToken,
+						serverUrl,
+						serverName,
+						machineIdentifier: `manual-${randomUUID()}`,
+						createdAt: now,
+						updatedAt: now,
+					})
+					.run();
+			}
+
+			return reply.code(StatusCodes.OK).send({ success: true });
+		},
+	);
+
 	typedApp.get(
 		"/api/plex/servers",
 		{
@@ -170,6 +238,23 @@ const plexRoutes = (app: FastifyInstance) => {
 
 			if (!connection) {
 				return reply.code(StatusCodes.NOT_FOUND).send({ error: "No Plex connection found" });
+			}
+
+			if (connection.serverUrl && connection.serverName) {
+				const parsed = new URL(connection.serverUrl);
+				return reply.code(StatusCodes.OK).send({
+					servers: [
+						{
+							name: connection.serverName,
+							address: connection.serverUrl,
+							port: Number(parsed.port) || DEFAULT_PLEX_PORT,
+							scheme: parsed.protocol.replace(":", ""),
+							uri: connection.serverUrl,
+							clientIdentifier: connection.machineIdentifier ?? "manual",
+							owned: true,
+						},
+					],
+				});
 			}
 
 			const authToken = decrypt(connection.authToken);
