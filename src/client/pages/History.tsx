@@ -5,7 +5,7 @@ import { useConversations } from "../hooks/use-conversations.ts";
 import { colors, radii, spacing } from "../theme.ts";
 import { formatRelativeDate } from "../utils/format-date.ts";
 
-import type { ConversationSummary } from "../api.ts";
+import type { ConversationSummary } from "../features/chat/api.ts";
 import type { KeyboardEvent, MouseEvent } from "react";
 
 const NO_CONVERSATIONS = 0;

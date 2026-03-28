@@ -3,7 +3,8 @@ import { useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation } from "wouter";
 
-import { api, useLogoutMutation } from "../api.ts";
+import { api } from "../api.ts";
+import { useLogoutMutation } from "../features/auth/api.ts";
 import { colors, spacing } from "../theme.ts";
 
 import type { ReactNode } from "react";

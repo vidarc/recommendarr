@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import { api, useLoginMutation } from "../api.ts";
+import { api } from "../api.ts";
 import {
 	errorMessage,
 	formCard,
@@ -11,6 +11,7 @@ import {
 } from "../components/auth-styles.ts";
 import { LoginFooter } from "../components/AuthFooter.tsx";
 import { FormField } from "../components/FormField.tsx";
+import { useLoginMutation } from "../features/auth/api.ts";
 
 export const Login = () => {
 	const [username, setUsername] = useState("");

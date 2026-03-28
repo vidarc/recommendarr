@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
 
-import { useSendChatMessageMutation } from "../api.ts";
+import { useSendChatMessageMutation } from "../features/chat/api.ts";
 
-import type { ChatMessageResponse } from "../api.ts";
 import type { MediaType } from "../components/ChatControls.tsx";
+import type { ChatMessageResponse } from "../shared/types.ts";
 
 const DEFAULT_RESULT_COUNT = 10;
 

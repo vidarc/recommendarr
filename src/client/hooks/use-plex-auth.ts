@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useLazyCheckPlexAuthQuery, useStartPlexAuthMutation } from "../api.ts";
+import { useLazyCheckPlexAuthQuery, useStartPlexAuthMutation } from "../features/plex/api.ts";
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLLS = 150;

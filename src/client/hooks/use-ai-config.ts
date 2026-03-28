@@ -5,7 +5,7 @@ import {
 	useGetAiConfigQuery,
 	useTestAiConnectionMutation,
 	useUpdateAiConfigMutation,
-} from "../api.ts";
+} from "../features/ai/api.ts";
 
 const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_MAX_TOKENS = 4096;

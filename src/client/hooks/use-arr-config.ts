@@ -5,7 +5,7 @@ import {
 	useGetArrConfigQuery,
 	useTestArrConnectionMutation,
 	useUpdateArrConfigMutation,
-} from "../api.ts";
+} from "../features/arr/api.ts";
 
 type ServiceType = "radarr" | "sonarr";
 

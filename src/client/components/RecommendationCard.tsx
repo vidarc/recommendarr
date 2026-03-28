@@ -1,11 +1,11 @@
 import { css } from "@linaria/atomic";
 import { useCallback, useState } from "react";
 
-import { useGetArrConfigQuery } from "../api.ts";
+import { useGetArrConfigQuery } from "../features/arr/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 import { AddToArrModal } from "./AddToArrModal.tsx";
 
-import type { Recommendation } from "../api.ts";
+import type { Recommendation } from "../shared/types.ts";
 
 const card = css`
 	background: ${colors.bgLight};

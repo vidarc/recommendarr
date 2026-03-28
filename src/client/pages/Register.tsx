@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import { api, useRegisterMutation } from "../api.ts";
+import { api } from "../api.ts";
 import {
 	errorMessage,
 	formCard,
@@ -11,6 +11,7 @@ import {
 } from "../components/auth-styles.ts";
 import { RegisterFooter } from "../components/AuthFooter.tsx";
 import { FormField } from "../components/FormField.tsx";
+import { useRegisterMutation } from "../features/auth/api.ts";
 
 const minPasswordLength = 8;
 

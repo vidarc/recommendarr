@@ -5,7 +5,7 @@ import {
 	useDisconnectPlexMutation,
 	useGetPlexServersQuery,
 	useSelectPlexServerMutation,
-} from "../../api.ts";
+} from "../../features/plex/api.ts";
 import { usePlexAuth } from "../../hooks/use-plex-auth.ts";
 import { colors, spacing } from "../../theme.ts";
 import {
@@ -21,7 +21,7 @@ import {
 	statusText,
 } from "./settings-styles.ts";
 
-import type { PlexServer } from "../../api.ts";
+import type { PlexServer } from "../../features/plex/api.ts";
 
 const NO_SERVERS = 0;
 

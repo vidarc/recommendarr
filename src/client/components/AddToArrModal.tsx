@@ -1,10 +1,15 @@
 import { css } from "@linaria/atomic";
 import { useCallback, useEffect, useState } from "react";
 
-import { useAddToArrMutation, useArrLookupMutation, useLazyGetArrOptionsQuery } from "../api.ts";
+import {
+	useAddToArrMutation,
+	useArrLookupMutation,
+	useLazyGetArrOptionsQuery,
+} from "../features/arr/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 
-import type { ArrLookupResult, ArrOptions, Recommendation } from "../api.ts";
+import type { ArrLookupResult, ArrOptions } from "../features/arr/api.ts";
+import type { Recommendation } from "../shared/types.ts";
 
 interface AddToArrModalProps {
 	recommendation: Recommendation;

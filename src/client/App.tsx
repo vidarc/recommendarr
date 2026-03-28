@@ -2,8 +2,8 @@ import { css } from "@linaria/atomic";
 import { Suspense, lazy } from "react";
 import { Redirect, Route, Switch } from "wouter";
 
-import { useGetMeQuery, useGetSetupStatusQuery } from "./api.ts";
 import { AppLayout } from "./components/AppLayout.tsx";
+import { useGetMeQuery, useGetSetupStatusQuery } from "./features/auth/api.ts";
 import { globals } from "./global-styles.ts";
 import { colors } from "./theme.ts";
 
