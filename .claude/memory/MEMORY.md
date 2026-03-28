@@ -11,6 +11,7 @@
 
 - [feedback_testing.md](feedback_testing.md) — Testing preferences: use onTestFinished for cleanup, msw for HTTP mocks, avoid mocking hooks
 - [feedback_react19_event_types.md](feedback_react19_event_types.md) — Use specific event types (SubmitEvent, ChangeEvent, etc.) instead of deprecated FormEvent in React 19
+- [feedback_e2e_patterns.md](feedback_e2e_patterns.md) — E2E patterns: shared auth fixture, WebKit quirks, serial test design, mock-services vs page.route
 
 ## Decisions
 
