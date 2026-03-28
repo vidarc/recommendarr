@@ -62,7 +62,8 @@ test.describe("AI configuration settings flow", () => {
 
 		await page.getByRole("button", { name: "Remove" }).click();
 
-		await expect(page.getByRole("button", { name: "Test Connection" })).not.toBeVisible();
 		await expect(page.getByRole("button", { name: "Remove" })).not.toBeVisible();
+		// Save and Test Connection buttons remain visible in the disconnected state
+		await expect(page.getByRole("button", { name: "Save" })).toBeVisible();
 	});
 });

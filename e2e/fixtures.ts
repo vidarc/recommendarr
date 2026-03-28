@@ -16,9 +16,14 @@ const registerAndLogin = async (page: Page, username: string, password: string) 
 		await page.getByLabel("Password", { exact: true }).fill(password);
 		await page.getByLabel("Confirm Password").fill(password);
 		await page.getByRole("button", { name: /register/i }).click();
-		await expect(page).toHaveURL("/");
-		registeredUsers.add(username);
-		return;
+
+		try {
+			await expect(page).toHaveURL("/");
+			registeredUsers.add(username);
+			return;
+		} catch {
+			// User may already exist from a prior attempt — fall through to login.
+		}
 	}
 
 	await page.goto("/login");
@@ -26,6 +31,7 @@ const registerAndLogin = async (page: Page, username: string, password: string) 
 	await page.getByLabel("Password").fill(password);
 	await page.getByRole("button", { name: /log in/i }).click();
 	await expect(page).toHaveURL("/");
+	registeredUsers.add(username);
 };
 
 interface AuthFixtures {
