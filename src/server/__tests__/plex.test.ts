@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -33,6 +34,7 @@ const HEX_KEY_LENGTH = 64;
 const MOCK_PIN_ID = 12_345;
 const MOCK_PENDING_PIN_ID = 99_999;
 const ONE_SERVER = 1;
+const ONE_CONNECTION = 1;
 const TWO_ITEMS = 2;
 const THREE_LIBRARIES = 3;
 const FIRST = 0;
@@ -470,6 +472,83 @@ describe("GET /api/plex/servers", () => {
 		});
 
 		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
+	});
+
+	test("returns stored server when serverUrl is set (skips Plex API)", async () => {
+		const app = await setupDb();
+		const { sessionId, userId } = await getSessionCookie(app);
+
+		// Manually insert a connection with serverUrl set (simulates manual auth)
+		const now = new Date().toISOString();
+		app.db
+			.insert(plexConnections)
+			.values({
+				id: randomUUID(),
+				userId,
+				authToken: encrypt("fake-token"),
+				serverUrl: "http://my-plex:32400",
+				serverName: "My Manual Server",
+				machineIdentifier: "manual-abc",
+				createdAt: now,
+				updatedAt: now,
+			})
+			.run();
+
+		const response = await app.inject({
+			method: "GET",
+			url: "/api/plex/servers",
+			cookies: { session: sessionId },
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		const body = response.json();
+		expect(body.servers).toHaveLength(ONE_SERVER);
+		expect(body.servers[FIRST].name).toBe("My Manual Server");
+		expect(body.servers[FIRST].uri).toBe("http://my-plex:32400");
+		expect(body.servers[FIRST].owned).toBe(true);
+	});
+});
+
+describe("POST /api/plex/auth/manual", () => {
+	test("stores connection and returns success", async () => {
+		const app = await setupDb();
+		const { sessionId } = await getSessionCookie(app);
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/plex/auth/manual",
+			payload: {
+				authToken: "manual-test-token-123",
+				serverUrl: "http://192.168.1.100:32400",
+				serverName: "My Local Server",
+			},
+			cookies: { session: sessionId },
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		expect(response.json()).toStrictEqual({ success: true });
+
+		const connections = app.db.select().from(plexConnections).all();
+
+		expect(connections).toHaveLength(ONE_CONNECTION);
+		expect(connections[FIRST]?.serverUrl).toBe("http://192.168.1.100:32400");
+		expect(connections[FIRST]?.serverName).toBe("My Local Server");
+	});
+
+	test("returns 401 without session", async () => {
+		const app = await setupDb();
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/plex/auth/manual",
+			payload: {
+				authToken: "token",
+				serverUrl: "http://192.168.1.100:32400",
+				serverName: "Server",
+			},
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
 	});
 });
 
