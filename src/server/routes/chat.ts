@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
@@ -20,6 +20,9 @@ const MAX_RESULT_COUNT = 25;
 const DEFAULT_RESULT_COUNT = 5;
 const MAX_TITLE_WORDS = 6;
 const NO_PRIOR_MESSAGES = 0;
+const MAX_TITLE_MESSAGE_LENGTH = 200;
+const EMPTY_ARRAY_LENGTH = 0;
+const STRING_START = 0;
 
 const errorResponseSchema = z.object({
 	error: z.string(),
@@ -250,7 +253,13 @@ const chatRoutes = (app: FastifyInstance) => {
 						[
 							{
 								role: "system",
-								content: `Generate a short title (${String(MAX_TITLE_WORDS)} words max) for a conversation about media recommendations. The user asked: "${message}". Return ONLY the title, no quotes or punctuation.`,
+								content: `Generate a short title (${String(MAX_TITLE_WORDS)} words max) for a conversation about media recommendations. Return ONLY the title, no quotes or punctuation.`,
+							},
+							{
+								role: "user",
+								content: message
+									.slice(STRING_START, MAX_TITLE_MESSAGE_LENGTH)
+									.replaceAll(/[^\w\s.,!?'"-]/gu, ""),
 							},
 						],
 					);
@@ -339,12 +348,25 @@ const chatRoutes = (app: FastifyInstance) => {
 				.where(eq(messages.conversationId, conversation.id))
 				.all();
 
+			const messageIds = conversationMessages.map((msg) => msg.id);
+			const allRecs =
+				messageIds.length > EMPTY_ARRAY_LENGTH
+					? app.db
+							.select()
+							.from(recommendations)
+							.where(inArray(recommendations.messageId, messageIds))
+							.all()
+					: [];
+
+			const recsByMessageId = new Map<string, typeof allRecs>();
+			for (const rec of allRecs) {
+				const existing = recsByMessageId.get(rec.messageId) ?? [];
+				existing.push(rec);
+				recsByMessageId.set(rec.messageId, existing);
+			}
+
 			const messagesWithRecs = conversationMessages.map((msg) => {
-				const msgRecs = app.db
-					.select()
-					.from(recommendations)
-					.where(eq(recommendations.messageId, msg.id))
-					.all();
+				const msgRecs = recsByMessageId.get(msg.id) ?? [];
 
 				return {
 					id: msg.id,
@@ -401,18 +423,20 @@ const chatRoutes = (app: FastifyInstance) => {
 			}
 
 			// Cascade delete: recommendations -> messages -> conversation
-			const conversationMessages = app.db
-				.select()
-				.from(messages)
-				.where(eq(messages.conversationId, conversation.id))
-				.all();
+			app.sqlite.transaction(() => {
+				const conversationMessages = app.db
+					.select()
+					.from(messages)
+					.where(eq(messages.conversationId, conversation.id))
+					.all();
 
-			for (const msg of conversationMessages) {
-				app.db.delete(recommendations).where(eq(recommendations.messageId, msg.id)).run();
-			}
+				for (const msg of conversationMessages) {
+					app.db.delete(recommendations).where(eq(recommendations.messageId, msg.id)).run();
+				}
 
-			app.db.delete(messages).where(eq(messages.conversationId, conversation.id)).run();
-			app.db.delete(conversations).where(eq(conversations.id, conversation.id)).run();
+				app.db.delete(messages).where(eq(messages.conversationId, conversation.id)).run();
+				app.db.delete(conversations).where(eq(conversations.id, conversation.id)).run();
+			})();
 
 			return reply.code(StatusCodes.OK).send({ success: true });
 		},

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 
-import { decrypt, encrypt } from "../services/encryption.ts";
+import { decrypt, encrypt, resetKeyCache } from "../services/encryption.ts";
 
 describe("encryption service", () => {
 	const HEX_KEY_LENGTH = 64;
@@ -8,6 +8,7 @@ describe("encryption service", () => {
 
 	afterEach(() => {
 		vi.unstubAllEnvs();
+		resetKeyCache();
 	});
 
 	test("encrypt returns a string different from input", () => {

@@ -13,6 +13,8 @@ import { RegisterFooter } from "../components/AuthFooter.tsx";
 import { FormField } from "../components/FormField.tsx";
 import { useRegisterMutation } from "../features/auth/api.ts";
 
+import type { ChangeEvent, SubmitEvent } from "react";
+
 const minPasswordLength = 8;
 
 export const Register = () => {
@@ -24,7 +26,7 @@ export const Register = () => {
 	const dispatch = useDispatch();
 
 	const handleSubmit = useCallback(
-		async (event: React.FormEvent<HTMLFormElement>) => {
+		async (event: SubmitEvent<HTMLFormElement>) => {
 			event.preventDefault();
 			setValidationError("");
 
@@ -41,15 +43,15 @@ export const Register = () => {
 		[username, password, confirmPassword, register, dispatch],
 	);
 
-	const handleUsernameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleUsernameChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setUsername(event.target.value);
 	}, []);
 
-	const handlePasswordChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handlePasswordChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setPassword(event.target.value);
 	}, []);
 
-	const handleConfirmPasswordChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleConfirmPasswordChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setConfirmPassword(event.target.value);
 	}, []);
 

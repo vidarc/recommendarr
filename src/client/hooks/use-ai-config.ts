@@ -7,6 +7,8 @@ import {
 	useUpdateAiConfigMutation,
 } from "../features/ai/api.ts";
 
+import type { ChangeEvent } from "react";
+
 const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_MAX_TOKENS = 4096;
 
@@ -70,23 +72,23 @@ export const useAiConfig = () => {
 		setMaxTokens(String(DEFAULT_MAX_TOKENS));
 	}, [deleteConfig]);
 
-	const handleEndpointChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleEndpointChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setEndpointUrl(event.target.value);
 	}, []);
 
-	const handleApiKeyChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleApiKeyChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setApiKey(event.target.value);
 	}, []);
 
-	const handleModelChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleModelChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setModelName(event.target.value);
 	}, []);
 
-	const handleTemperatureChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleTemperatureChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setTemperature(Number(event.target.value));
 	}, []);
 
-	const handleMaxTokensChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleMaxTokensChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setMaxTokens(event.target.value);
 	}, []);
 

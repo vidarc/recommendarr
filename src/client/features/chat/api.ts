@@ -48,22 +48,28 @@ const chatApi = api.injectEndpoints({
 				method: "POST",
 				body,
 			}),
-			invalidatesTags: ["Conversations"],
+			invalidatesTags: (_result, _error, arg) => [
+				{ type: "Conversations", id: "LIST" },
+				...(arg.conversationId ? [{ type: "Conversations" as const, id: arg.conversationId }] : []),
+			],
 		}),
 		getConversations: builder.query<ConversationsResponse, void>({
 			query: () => "api/conversations",
-			providesTags: ["Conversations"],
+			providesTags: [{ type: "Conversations", id: "LIST" }],
 		}),
 		getConversation: builder.query<ConversationDetail, string>({
 			query: (id) => `api/conversations/${id}`,
-			providesTags: ["Conversations"],
+			providesTags: (_result, _error, id) => [{ type: "Conversations", id }],
 		}),
 		deleteConversation: builder.mutation<DeleteConversationResponse, string>({
 			query: (id) => ({
 				url: `api/conversations/${id}`,
 				method: "DELETE",
 			}),
-			invalidatesTags: ["Conversations"],
+			invalidatesTags: (_result, _error, id) => [
+				{ type: "Conversations", id: "LIST" },
+				{ type: "Conversations", id },
+			],
 		}),
 	}),
 });

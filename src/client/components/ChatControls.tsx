@@ -4,6 +4,8 @@ import { useCallback } from "react";
 import { useGetPlexLibrariesQuery } from "../features/plex/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 
+import type { ChangeEvent } from "react";
+
 const controlsBar = css`
 	display: flex;
 	align-items: center;
@@ -158,7 +160,7 @@ const LibraryScopeSelect = ({ value, onChange }: LibraryScopeSelectProps) => {
 	const libraries = data?.libraries ?? [];
 
 	const handleChange = useCallback(
-		(event: React.ChangeEvent<HTMLSelectElement>) => {
+		(event: ChangeEvent<HTMLSelectElement>) => {
 			onChange(event.target.value);
 		},
 		[onChange],
@@ -194,7 +196,7 @@ const ChatControls = ({
 	onResultCountChange,
 }: ChatControlsProps) => {
 	const handleResultCountChange = useCallback(
-		(event: React.ChangeEvent<HTMLInputElement>) => {
+		(event: ChangeEvent<HTMLInputElement>) => {
 			onResultCountChange(Number(event.target.value));
 		},
 		[onResultCountChange],

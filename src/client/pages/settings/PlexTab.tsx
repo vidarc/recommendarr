@@ -24,6 +24,7 @@ import {
 import { SettingsField } from "./SettingsField.tsx";
 
 import type { PlexServer } from "../../features/plex/api.ts";
+import type { ChangeEvent } from "react";
 
 const NO_SERVERS = 0;
 
@@ -93,7 +94,7 @@ interface ServerSelectProps {
 
 const ServerSelect = ({ servers, onSelect, isLoading }: ServerSelectProps) => {
 	const handleChange = useCallback(
-		(event: React.ChangeEvent<HTMLSelectElement>) => {
+		(event: ChangeEvent<HTMLSelectElement>) => {
 			const server = servers.find((item) => item.clientIdentifier === event.target.value);
 			if (server) {
 				onSelect(server);
@@ -133,9 +134,9 @@ interface ManualPlexFormProps {
 	serverName: string;
 	isLoading: boolean;
 	hasError: boolean;
-	onAuthTokenChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-	onServerUrlChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-	onServerNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onAuthTokenChange: (event: ChangeEvent<HTMLInputElement>) => void;
+	onServerUrlChange: (event: ChangeEvent<HTMLInputElement>) => void;
+	onServerNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
 	onConnect: () => void;
 }
 
@@ -192,15 +193,15 @@ const ManualPlexConnection = () => {
 		setShowManual((prev) => !prev);
 	}, []);
 
-	const handleAuthTokenChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleAuthTokenChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setAuthToken(event.target.value);
 	}, []);
 
-	const handleServerUrlChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleServerUrlChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setServerUrl(event.target.value);
 	}, []);
 
-	const handleServerNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleServerNameChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setServerName(event.target.value);
 	}, []);
 

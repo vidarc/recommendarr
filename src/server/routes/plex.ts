@@ -62,7 +62,7 @@ const serversResponseSchema = z.object({
 });
 
 const selectServerBodySchema = z.object({
-	serverUrl: z.string(),
+	serverUrl: z.string().url(),
 	serverName: z.string(),
 	machineIdentifier: z.string(),
 });

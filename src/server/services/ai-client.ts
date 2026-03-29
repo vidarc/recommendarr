@@ -52,7 +52,7 @@ const testConnection = async (
 		await chatCompletion(config, [{ role: "user", content: "Hello" }]);
 		return { success: true };
 	} catch (error) {
-		request.log.error(error, "AI Test conncetion call failed");
+		request.log.error(error, "AI Test connection call failed");
 		return { success: false };
 	}
 };

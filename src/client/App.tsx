@@ -7,10 +7,6 @@ import { useGetMeQuery, useGetSetupStatusQuery } from "./features/auth/api.ts";
 import { globals } from "./global-styles.ts";
 import { colors } from "./theme.ts";
 
-import "sanitize.css";
-import "sanitize.css/typography.css";
-import "sanitize.css/forms.css";
-
 const History = lazy(async () => {
 	const mod = await import("./pages/History.tsx");
 	return { default: mod.History };

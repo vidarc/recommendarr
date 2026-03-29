@@ -8,10 +8,19 @@ import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 
 const DEFAULT_SESSION_DURATION_DAYS = 7;
 const MS_PER_DAY = 86_400_000;
+const MIN_DURATION_DAYS = 0;
 
 const getSessionDurationMs = (): number => {
 	const envDays = process.env["SESSION_DURATION_DAYS"];
-	const days = envDays ? Number(envDays) : DEFAULT_SESSION_DURATION_DAYS;
+	if (!envDays) {
+		return DEFAULT_SESSION_DURATION_DAYS * MS_PER_DAY;
+	}
+	const days = Number(envDays);
+	if (!Number.isFinite(days) || days <= MIN_DURATION_DAYS) {
+		throw new Error(
+			`Invalid SESSION_DURATION_DAYS value: "${envDays}". Must be a positive number.`,
+		);
+	}
 	return days * MS_PER_DAY;
 };
 
