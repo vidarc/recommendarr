@@ -3,6 +3,8 @@ import { useCallback, useState } from "react";
 
 import { colors, radii, spacing } from "../theme.ts";
 
+import type { ChangeEvent, KeyboardEvent } from "react";
+
 const inputWrapper = css`
 	border-top: 1px solid ${colors.border};
 	background: ${colors.surface};
@@ -153,7 +155,7 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
 	}, [text, onSend]);
 
 	const handleKeyDown = useCallback(
-		(event: React.KeyboardEvent) => {
+		(event: KeyboardEvent) => {
 			if (event.key === "Enter" && !event.shiftKey) {
 				event.preventDefault();
 				handleSubmit();
@@ -162,7 +164,7 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
 		[handleSubmit],
 	);
 
-	const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
 		setText(event.target.value);
 	}, []);
 
@@ -193,8 +195,8 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
 interface MessageInputRowProps {
 	text: string;
 	isLoading: boolean;
-	onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-	onKeyDown: (event: React.KeyboardEvent) => void;
+	onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+	onKeyDown: (event: KeyboardEvent) => void;
 	onSubmit: () => void;
 }
 

@@ -1,4 +1,5 @@
 import { css } from "@linaria/atomic";
+import { Link } from "wouter";
 
 import { colors, spacing } from "../theme.ts";
 
@@ -11,13 +12,13 @@ const footerText = css`
 
 const LoginFooter = () => (
 	<p className={footerText}>
-		Don't have an account? <a href="/register">Register</a>
+		Don't have an account? <Link href="/register">Register</Link>
 	</p>
 );
 
 const RegisterFooter = () => (
 	<p className={footerText}>
-		Already have an account? <a href="/login">Log in</a>
+		Already have an account? <Link href="/login">Log in</Link>
 	</p>
 );
 

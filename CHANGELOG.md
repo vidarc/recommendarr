@@ -2,6 +2,22 @@
 
 ## v0.2.1 (2026-03-28)
 
+- fix: gate registration after first user is created
+- fix: mitigate prompt injection in AI title generation
+- fix: SSRF validation on Plex server URL selection
+- fix: session duration validation for invalid env var values
+- fix: cascade delete conversations in a transaction
+- fix: N+1 query when loading conversation recommendations
+- fix: auth middleware handles URLs with query strings
+- fix: modal focus management and ARIA roles for accessibility
+- fix: per-service loading state in arr integrations tab
+- fix: use wouter Link in auth footer instead of plain anchors
+- fix: optimistic chat message reconciliation
+- fix: Plex auth polling cancellation on unmount
+- fix: granular RTK Query cache tags for conversations
+- fix: various test isolation and reliability improvements
+- chore: resolve migrations path absolutely for Docker compatibility
+- chore: memoize encryption key after first read
 - chore(deps): Bump brace-expansion (#18)
 - claude memory updates
 

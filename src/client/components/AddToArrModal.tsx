@@ -1,5 +1,5 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
 	useAddToArrMutation,
@@ -10,6 +10,7 @@ import { colors, radii, spacing } from "../theme.ts";
 
 import type { ArrLookupResult, ArrOptions } from "../features/arr/api.ts";
 import type { Recommendation } from "../shared/types.ts";
+import type { ChangeEvent, KeyboardEvent, MouseEvent } from "react";
 
 interface AddToArrModalProps {
 	recommendation: Recommendation;
@@ -21,7 +22,6 @@ interface AddToArrModalProps {
 /* ── Constants ──────────────────────────────────────────────── */
 
 const DISABLED_TAB_INDEX = -1;
-const ENABLED_TAB_INDEX = 0;
 const EMPTY_LENGTH = 0;
 
 /* ── Styles ─────────────────────────────────────────────────── */
@@ -102,6 +102,17 @@ const emptyText = css`
 	color: ${colors.textMuted};
 	text-align: center;
 	padding: ${spacing.xl} 0;
+`;
+
+const resultButtonReset = css`
+	all: unset;
+	display: block;
+	width: 100%;
+	cursor: pointer;
+
+	&:disabled {
+		cursor: default;
+	}
 `;
 
 const resultsList = css`
@@ -256,7 +267,9 @@ interface ModalHeaderProps {
 
 const ModalHeader = ({ title, onClose }: ModalHeaderProps) => (
 	<div className={headerStyle}>
-		<span className={headerTitle}>{title}</span>
+		<span id="arr-modal-title" className={headerTitle}>
+			{title}
+		</span>
 		<button type="button" className={closeButton} onClick={onClose} aria-label="Close modal">
 			✕
 		</button>
@@ -277,7 +290,7 @@ const LookupResultItem = ({ result, isSelected, onSelect }: LookupResultItemProp
 	}, [result, onSelect]);
 
 	const handleKeyDown = useCallback(
-		(event: React.KeyboardEvent<HTMLLIElement>) => {
+		(event: KeyboardEvent<HTMLButtonElement>) => {
 			if (event.key === "Enter" || event.key === " ") {
 				if (!result.existsInLibrary) {
 					onSelect(result);
@@ -296,15 +309,17 @@ const LookupResultItem = ({ result, isSelected, onSelect }: LookupResultItemProp
 		.join(" ");
 
 	return (
-		<li
-			className={classNames}
-			onClick={handleClick}
-			onKeyDown={handleKeyDown}
-			role="option"
-			aria-selected={isSelected}
-			tabIndex={result.existsInLibrary ? DISABLED_TAB_INDEX : ENABLED_TAB_INDEX}
-		>
-			<LookupResultContent result={result} />
+		<li className={classNames}>
+			<button
+				type="button"
+				onClick={handleClick}
+				onKeyDown={handleKeyDown}
+				disabled={result.existsInLibrary}
+				aria-pressed={isSelected}
+				className={resultButtonReset}
+			>
+				<LookupResultContent result={result} />
+			</button>
 		</li>
 	);
 };
@@ -327,10 +342,10 @@ interface LookupResultsListProps {
 }
 
 const LookupResultsList = ({ results, selectedResult, onSelect }: LookupResultsListProps) => (
-	<ul className={resultsList} role="listbox" aria-label="Search results">
+	<ul className={resultsList} aria-label="Search results">
 		{results.map((result) => (
 			<LookupResultItem
-				key={result.tmdbId ?? result.tvdbId ?? result.title}
+				key={`${String(result.tmdbId ?? result.tvdbId ?? "")}-${result.title}-${String(result.year)}`}
 				result={result}
 				isSelected={selectedResult?.tmdbId === result.tmdbId}
 				onSelect={onSelect}
@@ -348,7 +363,7 @@ interface RootFolderSelectProps {
 
 const RootFolderSelect = ({ options, value, disabled, onChange }: RootFolderSelectProps) => {
 	const handleChange = useCallback(
-		(event: React.ChangeEvent<HTMLSelectElement>) => {
+		(event: ChangeEvent<HTMLSelectElement>) => {
 			onChange(event.currentTarget.value);
 		},
 		[onChange],
@@ -386,7 +401,7 @@ const QualityProfileSelect = ({
 	onChange,
 }: QualityProfileSelectProps) => {
 	const handleChange = useCallback(
-		(event: React.ChangeEvent<HTMLSelectElement>) => {
+		(event: ChangeEvent<HTMLSelectElement>) => {
 			onChange(event.currentTarget.value);
 		},
 		[onChange],
@@ -476,8 +491,14 @@ interface ModalOverlayProps {
 }
 
 const ModalOverlay = ({ onClose, children }: ModalOverlayProps) => {
+	const cardRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		cardRef.current?.focus();
+	}, []);
+
 	const handleOverlayClick = useCallback(
-		(event: React.MouseEvent<HTMLDivElement>) => {
+		(event: MouseEvent<HTMLDivElement>) => {
 			if (event.target === event.currentTarget) {
 				onClose();
 			}
@@ -486,7 +507,7 @@ const ModalOverlay = ({ onClose, children }: ModalOverlayProps) => {
 	);
 
 	const handleOverlayKeyDown = useCallback(
-		(event: React.KeyboardEvent<HTMLDivElement>) => {
+		(event: KeyboardEvent<HTMLDivElement>) => {
 			if (event.key === "Escape") {
 				onClose();
 			}
@@ -501,8 +522,11 @@ const ModalOverlay = ({ onClose, children }: ModalOverlayProps) => {
 			onKeyDown={handleOverlayKeyDown}
 			role="dialog"
 			aria-modal="true"
+			aria-labelledby="arr-modal-title"
 		>
-			<div className={cardStyle}>{children}</div>
+			<div className={cardStyle} ref={cardRef} tabIndex={DISABLED_TAB_INDEX}>
+				{children}
+			</div>
 		</div>
 	);
 };
@@ -673,7 +697,7 @@ const AddToArrModal = ({ recommendation, serviceType, isOpen, onClose }: AddToAr
 	}, [isOpen, serviceType, recommendation.title, recommendation.year, arrLookup, resetState]);
 
 	useEffect(() => {
-		const handleKeyDown = (event: KeyboardEvent) => {
+		const handleKeyDown = (event: globalThis.KeyboardEvent) => {
 			if (event.key === "Escape") {
 				handleClose();
 			}

@@ -11,6 +11,8 @@ import {
 } from "./settings-styles.ts";
 import { SettingsField } from "./SettingsField.tsx";
 
+import type { ChangeEvent } from "react";
+
 interface ServiceButtonsProps {
 	isConnected: boolean;
 	isSaving: boolean;
@@ -59,8 +61,8 @@ interface ServiceSectionProps {
 	isTesting: boolean;
 	isDeleting: boolean;
 	testResult: string;
-	onUrlChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-	onApiKeyChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onUrlChange: (event: ChangeEvent<HTMLInputElement>) => void;
+	onApiKeyChange: (event: ChangeEvent<HTMLInputElement>) => void;
 	onSave: () => void;
 	onTest: () => void;
 	onRemove: () => void;
@@ -133,9 +135,9 @@ const IntegrationsTab = () => {
 				url={config.radarr.url}
 				apiKey={config.radarr.apiKey}
 				isConnected={config.isConnected(RADARR_RESULT_KEY)}
-				isSaving={config.isSaving}
-				isTesting={config.isTesting}
-				isDeleting={config.isDeleting}
+				isSaving={config.isSavingRadarr}
+				isTesting={config.isTestingRadarr}
+				isDeleting={config.isDeletingRadarr}
 				testResult={config.testResult[RADARR_RESULT_KEY] ?? ""}
 				onUrlChange={config.handleRadarrUrlChange}
 				onApiKeyChange={config.handleRadarrApiKeyChange}
@@ -151,9 +153,9 @@ const IntegrationsTab = () => {
 				url={config.sonarr.url}
 				apiKey={config.sonarr.apiKey}
 				isConnected={config.isConnected(SONARR_RESULT_KEY)}
-				isSaving={config.isSaving}
-				isTesting={config.isTesting}
-				isDeleting={config.isDeleting}
+				isSaving={config.isSavingSonarr}
+				isTesting={config.isTestingSonarr}
+				isDeleting={config.isDeletingSonarr}
 				testResult={config.testResult[SONARR_RESULT_KEY] ?? ""}
 				onUrlChange={config.handleSonarrUrlChange}
 				onApiKeyChange={config.handleSonarrApiKeyChange}

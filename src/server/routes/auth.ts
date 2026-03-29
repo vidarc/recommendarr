@@ -66,6 +66,7 @@ const authRoutes = (app: FastifyInstance) => {
 				body: credentialsSchema,
 				response: {
 					[StatusCodes.CREATED]: userResponseSchema,
+					[StatusCodes.FORBIDDEN]: errorResponseSchema,
 					[StatusCodes.CONFLICT]: errorResponseSchema,
 				},
 			},
@@ -73,12 +74,17 @@ const authRoutes = (app: FastifyInstance) => {
 		async (request, reply) => {
 			const { username, password } = request.body;
 
+			const allUsers = app.db.select().from(users).all();
+
+			if (allUsers.length > noUsers) {
+				return reply.code(StatusCodes.FORBIDDEN).send({ error: "Registration is disabled" });
+			}
+
 			const existing = app.db.select().from(users).where(eq(users.username, username)).get();
 			if (existing) {
 				return reply.code(StatusCodes.CONFLICT).send({ error: "Username already taken" });
 			}
 
-			const allUsers = app.db.select().from(users).all();
 			const isAdmin = allUsers.length === noUsers;
 
 			const id = randomUUID();

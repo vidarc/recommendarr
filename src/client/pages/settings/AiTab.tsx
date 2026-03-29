@@ -17,6 +17,8 @@ import {
 } from "./settings-styles.ts";
 import { SettingsField } from "./SettingsField.tsx";
 
+import type { ChangeEvent } from "react";
+
 const TEMP_STEP = 0.1;
 const TEMP_MIN = 0;
 const TEMP_MAX = 2;
@@ -66,7 +68,7 @@ const rangeValue = css`
 
 interface TemperatureSliderProps {
 	temperature: number;
-	onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 const TemperatureSlider = ({ temperature, onChange }: TemperatureSliderProps) => (
@@ -88,8 +90,8 @@ const TemperatureSlider = ({ temperature, onChange }: TemperatureSliderProps) =>
 interface AdvancedAiFieldsProps {
 	temperature: number;
 	maxTokens: string;
-	onTemperatureChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-	onMaxTokensChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onTemperatureChange: (event: ChangeEvent<HTMLInputElement>) => void;
+	onMaxTokensChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 const AdvancedAiFields = ({

@@ -1,11 +1,13 @@
 import { fieldGroup, inputStyle, labelStyle } from "./settings-styles.ts";
 
+import type { ChangeEvent } from "react";
+
 interface SettingsFieldProps {
 	id: string;
 	label: string;
 	type?: string;
 	value: string;
-	onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 	disabled?: boolean;
 	placeholder?: string;
 }

@@ -12,9 +12,11 @@ export const usePlexAuth = () => {
 	const [polling, setPolling] = useState(false);
 	const [error, setError] = useState("");
 	const pollRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+	const cancelledRef = useRef(false);
 
 	useEffect(
 		() => () => {
+			cancelledRef.current = true;
 			if (pollRef.current) {
 				clearTimeout(pollRef.current);
 			}
@@ -24,6 +26,7 @@ export const usePlexAuth = () => {
 
 	const connect = useCallback(async () => {
 		setError("");
+		cancelledRef.current = false;
 		const result = await startAuth();
 		if ("error" in result) {
 			setError("Failed to start Plex authentication");
@@ -36,6 +39,9 @@ export const usePlexAuth = () => {
 
 		let polls = 0;
 		const poll = async () => {
+			if (cancelledRef.current) {
+				return;
+			}
 			if (polls >= MAX_POLLS) {
 				setPolling(false);
 				setError("Authentication timed out. Please try again.");
@@ -43,6 +49,9 @@ export const usePlexAuth = () => {
 			}
 			polls += POLL_INCREMENT;
 			const check = await triggerCheck(pinId);
+			if (cancelledRef.current) {
+				return;
+			}
 			if (check.data?.claimed) {
 				setPolling(false);
 				return;
