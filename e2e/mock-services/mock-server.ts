@@ -125,6 +125,8 @@ const createPlexMock = async () => {
 
 	plex.get("/library/sections/:id/allLeaves", async () => plexWatchHistory);
 
+	plex.get("/library/all", async () => plexWatchHistory);
+
 	await plex.listen({ port: PLEX_PORT, host: "0.0.0.0" });
 	console.log(`Mock Plex server listening on port ${String(PLEX_PORT)}`);
 };

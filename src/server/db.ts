@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -50,7 +50,7 @@ const dbPlugin = async (app: FastifyInstance) => {
 		},
 	});
 
-	migrate(db, { migrationsFolder: "./drizzle" });
+	migrate(db, { migrationsFolder: resolve(import.meta.dirname, "../../drizzle") });
 
 	purgeExpiredSessions(db);
 

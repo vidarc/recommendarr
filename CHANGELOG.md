@@ -2,6 +2,8 @@
 
 ## v0.2.1 (2026-03-28)
 
+- chore: resolve migrations path absolutely for Docker compatibility
+- chore: memoize encryption key after first read
 - chore(deps): Bump brace-expansion (#18)
 - claude memory updates
 

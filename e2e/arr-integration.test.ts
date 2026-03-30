@@ -14,7 +14,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("arr integration settings flow", () => {
 	test("navigate to Settings > Integrations tab", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "Integrations" }).click();
+		await page.getByRole("tab", { name: "Integrations" }).click();
 
 		await expect(page.getByRole("heading", { level: 3, name: "Radarr" })).toBeVisible();
 		await expect(page.getByRole("heading", { level: 3, name: "Sonarr" })).toBeVisible();
@@ -22,7 +22,7 @@ test.describe("arr integration settings flow", () => {
 
 	test("fill in Radarr URL and API Key and save", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "Integrations" }).click();
+		await page.getByRole("tab", { name: "Integrations" }).click();
 
 		await page.getByLabel("Radarr URL").fill(radarrUrl);
 		await page.getByLabel("Radarr API Key").fill(radarrApiKey);
@@ -37,7 +37,7 @@ test.describe("arr integration settings flow", () => {
 
 	test("test Radarr connection shows success message", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "Integrations" }).click();
+		await page.getByRole("tab", { name: "Integrations" }).click();
 
 		// The connection was saved in the previous test, so Test Connection should be visible.
 		// This now exercises the full server path: auth → DB → decrypt → arr-client → mock Radarr.
@@ -51,7 +51,7 @@ test.describe("arr integration settings flow", () => {
 		authenticatedPage: page,
 	}) => {
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "Integrations" }).click();
+		await page.getByRole("tab", { name: "Integrations" }).click();
 
 		await page.getByRole("button", { name: "Remove" }).first().click();
 

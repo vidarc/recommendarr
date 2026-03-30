@@ -76,6 +76,8 @@ const TabButton = ({ id, label, isActive, onClick }: TabButtonProps) => {
 	return (
 		<button
 			type="button"
+			role="tab"
+			aria-selected={isActive}
 			className={`${tabButtonBase} ${isActive ? tabButtonActive : ""}`}
 			onClick={handleClick}
 		>
@@ -91,7 +93,7 @@ const SettingsTabBar = ({
 	activeTab: SettingsTab;
 	onTabChange: (tab: SettingsTab) => void;
 }) => (
-	<div className={tabBar}>
+	<div className={tabBar} role="tablist">
 		{TABS.map((tab) => (
 			<TabButton
 				key={tab.id}
@@ -115,12 +117,14 @@ const tabLoadingFallback = css`
 const tabFallback = <p className={tabLoadingFallback}>Loading...</p>;
 
 const TabContent = ({ tab }: { tab: SettingsTab }) => (
-	<Suspense fallback={tabFallback}>
-		{tab === "plex" && <PlexTab />}
-		{tab === "ai" && <AiTab />}
-		{tab === "account" && <AccountTab />}
-		{tab === "integrations" && <IntegrationsTab />}
-	</Suspense>
+	<div role="tabpanel">
+		<Suspense fallback={tabFallback}>
+			{tab === "plex" && <PlexTab />}
+			{tab === "ai" && <AiTab />}
+			{tab === "account" && <AccountTab />}
+			{tab === "integrations" && <IntegrationsTab />}
+		</Suspense>
+	</div>
 );
 
 /* ── Main Settings ─────────────────────────────────────────── */

@@ -2,6 +2,8 @@ import { css } from "@linaria/atomic";
 
 import { colors, radii, spacing } from "../theme.ts";
 
+import type { ChangeEvent } from "react";
+
 const fieldGroup = css`
 	margin-bottom: ${spacing.md};
 `;
@@ -49,7 +51,7 @@ export const FormField = ({
 	label: string;
 	type?: string;
 	value: string;
-	onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 	required?: boolean;
 	minLength?: number;
 }) => (

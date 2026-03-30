@@ -21,7 +21,8 @@ const authMiddleware = (app: FastifyInstance) => {
 			return;
 		}
 
-		if (publicRoutes.has(request.url)) {
+		const { pathname } = new URL(request.url, "http://localhost");
+		if (publicRoutes.has(pathname)) {
 			return;
 		}
 

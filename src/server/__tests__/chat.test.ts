@@ -64,18 +64,13 @@ const mockPlexWatchHistory = {
 	},
 };
 
-let aiCallCount = 0;
-
 const handlers = [
-	http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, () => {
-		aiCallCount++;
-		// First call returns recommendations, subsequent calls return title
-		const content = aiCallCount === FIRST_AI_CALL ? mockAiResponse : mockTitleResponse;
-		return HttpResponse.json({
+	http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, () =>
+		HttpResponse.json({
 			id: "chatcmpl-test",
-			choices: [{ message: { role: "assistant", content } }],
-		});
-	}),
+			choices: [{ message: { role: "assistant", content: mockAiResponse } }],
+		}),
+	),
 	http.get(`${MOCK_PLEX_SERVER}/library/all*`, () => HttpResponse.json(mockPlexWatchHistory)),
 	http.get(`${MOCK_PLEX_SERVER}/library/sections/*/allLeaves*`, () =>
 		HttpResponse.json(mockPlexWatchHistory),
@@ -90,7 +85,6 @@ beforeAll(() => {
 
 afterEach(() => {
 	mswServer.resetHandlers();
-	aiCallCount = FIRST_INDEX;
 });
 
 afterAll(() => {
@@ -208,8 +202,19 @@ describe("POST /api/chat", () => {
 		const firstBody = firstResponse.json();
 		const { conversationId } = firstBody;
 
-		// Reset counter for second call
-		aiCallCount = FIRST_INDEX;
+		// Override handler for the follow-up: use a local counter so the
+		// First call (recommendations) and second call (title) are distinct
+		let localCallCount = 0;
+		mswServer.use(
+			http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, () => {
+				localCallCount++;
+				const content = localCallCount === FIRST_AI_CALL ? mockAiResponse : mockTitleResponse;
+				return HttpResponse.json({
+					id: "chatcmpl-test",
+					choices: [{ message: { role: "assistant", content } }],
+				});
+			}),
+		);
 
 		// Send follow-up message
 		const secondResponse = await app.inject({

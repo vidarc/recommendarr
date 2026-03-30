@@ -41,7 +41,10 @@ export const useChat = () => {
 
 			if ("data" in result && result.data) {
 				setConversationId(result.data.conversationId);
-				setMessages((prev) => [...prev, result.data.message]);
+				setMessages((prev) => [
+					...prev.filter((msg) => !msg.id.startsWith("temp-")),
+					result.data.message,
+				]);
 			}
 		},
 		[sendChatMessage, mediaType, resultCount, conversationId, libraryId],

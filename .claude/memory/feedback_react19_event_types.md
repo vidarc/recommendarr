@@ -1,11 +1,16 @@
 ---
-name: React 19 event types
-description: Use specific event types (SubmitEvent, ChangeEvent, etc.) instead of deprecated FormEvent in React 19
+name: feedback_react19_event_types
+description: Use React's own SubmitEvent/ChangeEvent/KeyboardEvent types imported from "react", not global DOM types, for React event handlers
 type: feedback
 ---
 
-Use `React.SubmitEvent<HTMLFormElement>` for form submit handlers, not `React.FormEvent` or `React.SyntheticEvent`. `React.FormEvent` is fully deprecated in React 19 and doesn't exist.
+For React synthetic event handlers (onSubmit, onChange, onKeyDown, onClick), import event types from `"react"`:
 
-**Why:** React 19 removed `FormEvent` in favor of more specific event types: `ChangeEvent`, `InputEvent`, `SubmitEvent`, `SyntheticEvent`.
+- `onSubmit` → `SubmitEvent<HTMLFormElement>` from `"react"`
+- `onChange` → `ChangeEvent<HTMLInputElement>` (or HTMLSelectElement, HTMLTextAreaElement) from `"react"`
+- `onKeyDown` → `KeyboardEvent` from `"react"`
+- `onClick` → `MouseEvent` from `"react"`
 
-**How to apply:** Match the event type to the handler — `onSubmit` → `SubmitEvent`, `onChange` → `ChangeEvent`, etc. Don't fall back to `SyntheticEvent` when a more specific type exists.
+**Why:** React 19 deprecated `React.FormEvent` but still uses its own synthetic event wrappers. The native DOM `SubmitEvent` (global) is NOT compatible with React's `onSubmit` prop type — it needs `React.SubmitEvent<HTMLFormElement>`. Similarly, for `document.addEventListener` handlers, use `globalThis.KeyboardEvent` to avoid conflicts with the React import.
+
+**How to apply:** Always import event types from `"react"` as type imports. For native DOM event listeners (document.addEventListener), use `globalThis.KeyboardEvent` etc. to disambiguate from the React types.

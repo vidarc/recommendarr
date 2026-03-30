@@ -49,7 +49,6 @@ yarn vp fmt          # Format only
   - `components/` — Reusable UI primitives (FormField, AuthFooter, AppLayout, ChatControls, ChatInput, ChatMessage, RecommendationCard)
   - `features/` — Feature-scoped state (auth/auth-slice)
   - Root: entry points, store, api, theme, global styles
-- `src/shared` — Shared types and utilities (planned, not yet created)
 - `docs/` — Architecture decisions, API docs, environment variable reference
 - Tests: `__tests__/` folders colocated with source (e.g., `src/client/pages/__tests__/Login.test.tsx`)
 
@@ -72,8 +71,18 @@ yarn vp fmt          # Format only
 
 ## Environment & Ports
 
-- Always read .env file before assuming ports or connection strings. Default app port is 8080, not 3000.
+- Always read .env file before assuming ports or connection strings. The code defaults to port 3000, but `.env` overrides it to 8080 for local dev.
 - For local dev: `yarn dev`. For Docker: check docker-compose.yml.
+
+## Project Conventions
+
+- When modifying tsconfig files, preserve `extends` fields unless explicitly asked to remove them
+
+## Debugging Approach
+
+- When fixing browser-specific issues (especially WebKit), investigate ALL related CSP/security directives, not just the obvious ones
+- When tracing UI bugs (e.g., HTML nesting warnings), search the actual rendered component tree, not just test files
+- Scope fixes to what was requested — don't expand to fix pre-existing issues without asking first
 
 ## Git & Commits
 
@@ -109,7 +118,7 @@ Fastify uses `fastify-type-provider-zod` for request/response validation and typ
 **Current routes:**
 
 - `GET /ping` — health check, returns `{ "status": "ok" }` (also used by Docker health check)
-- `GET /health` — returns `{ "status": "ok", "uptimeSeconds": number }` — uptime is measured from when `buildServer()` is called
+- `GET /health` — returns `{ "status": "ok", "uptime": number }` — uptime in seconds via `process.uptime()`
 - `GET /api/auth/setup-status` — returns `{ "needsSetup": boolean }` indicating if any users exist
 - `POST /api/auth/register` — creates a new user; first user becomes admin, sets session cookie
 - `POST /api/auth/login` — authenticates a user by username/password, sets session cookie
@@ -205,7 +214,7 @@ The project uses ESM (`"type": "module"` in package.json). Use `.ts` extensions 
 
 ## Documentation
 
-Documentation is stored in the `docs` folder. This should be kept up to date with information about all major architechural decisions. It should also list APIs and their requirements and responses. The main file in the documentation should have a list of all the environment variables one can use to customize this service (for example being able to overwrite the PORT).
+Documentation is stored in the `docs` folder. This should be kept up to date with information about all major architectural decisions. It should also list APIs and their requirements and responses. The main file in the documentation should have a list of all the environment variables one can use to customize this service (for example being able to overwrite the PORT).
 
 - When adding new routes or endpoints, update route documentation (e.g., README or docs file) to include the new route, method, and description.
 - Keep CLAUDE.md architecture overview in sync with structural changes.
@@ -216,13 +225,13 @@ Memory files live in `.claude/memory/` so they are version-controlled and shared
 
 **Update memory files AS YOU GO, not at the end.** When you learn something new, update immediately.
 
-Each memory file uses frontmatter (`name`, `description`, `type`) so Claude Code can find and use them. Types: `user`, `feedback`, `project`, `decision`, `reference`.
+Each memory file uses frontmatter (`name`, `description`, `type`) so Claude Code can find and use them. Types: `user`, `feedback`, `project`, `reference`.
 
 | Trigger                             | Action                                                      |
 | ----------------------------------- | ----------------------------------------------------------- |
 | User shares a fact about themselves | → Create/update a `user` type file in `.claude/memory/`     |
 | User states a preference            | → Create/update a `feedback` type file in `.claude/memory/` |
-| A decision is made                  | → Create/update a `project` or `decision` file              |
+| A decision is made                  | → Create/update a `project` file                            |
 | Completing substantive work         | → Update `.claude/memory/project_status.md`                 |
 
 Create any other memory files that make sense.

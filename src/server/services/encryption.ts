@@ -4,7 +4,12 @@ const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 const HEX_KEY_LENGTH = 64;
 
+let cachedKey: Buffer | undefined = undefined;
+
 const getKey = (): Buffer => {
+	if (cachedKey) {
+		return cachedKey;
+	}
 	const keyHex = process.env["ENCRYPTION_KEY"];
 	if (!keyHex) {
 		throw new Error(
@@ -15,7 +20,8 @@ const getKey = (): Buffer => {
 	if (keyHex.length !== HEX_KEY_LENGTH) {
 		throw new Error(`ENCRYPTION_KEY must be a ${HEX_KEY_LENGTH}-character hex string (32 bytes)`);
 	}
-	return Buffer.from(keyHex, "hex");
+	cachedKey = Buffer.from(keyHex, "hex");
+	return cachedKey;
 };
 
 const encrypt = (plaintext: string): string => {
@@ -47,4 +53,8 @@ const decrypt = (ciphertext: string): string => {
 	return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
 };
 
-export { decrypt, encrypt, getKey };
+const resetKeyCache = () => {
+	cachedKey = undefined;
+};
+
+export { decrypt, encrypt, getKey, resetKeyCache };

@@ -8,7 +8,7 @@ import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
 import { buildServer } from "../app.ts";
 import { settings } from "../schema.ts";
 
-const expectedTableCount = 3;
+const expectedTableCount = 9;
 const firstIndex = 0;
 const HEX_KEY_LENGTH = 64;
 const testDbDir = join(tmpdir(), "recommendarr-test-db");
@@ -36,7 +36,7 @@ describe("database plugin", () => {
 
 		const rows = app.sqlite
 			.prepare(
-				"SELECT name FROM sqlite_master WHERE type='table' AND name IN ('sessions', 'settings', 'users')",
+				"SELECT name FROM sqlite_master WHERE type='table' AND name IN ('settings', 'users', 'sessions', 'plex_connections', 'ai_configs', 'conversations', 'messages', 'recommendations', 'arr_connections')",
 			)
 			.all();
 		expect(rows).toHaveLength(expectedTableCount);
@@ -57,9 +57,18 @@ describe("database plugin", () => {
 	});
 
 	test("does not overwrite existing app_version on restart", async () => {
-		vi.stubEnv("DATABASE_PATH", testDbPath);
+		const restartDbPath = join(testDbDir, "restart.db");
+		vi.stubEnv("DATABASE_PATH", restartDbPath);
 		vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
 		const firstApp = await buildServer({ skipSSR: true });
+
+		onTestFinished(async () => {
+			await firstApp.close().catch(() => {});
+			vi.unstubAllEnvs();
+			if (existsSync(testDbDir)) {
+				rmSync(testDbDir, { recursive: true });
+			}
+		});
 
 		firstApp.db
 			.update(settings)
@@ -72,10 +81,6 @@ describe("database plugin", () => {
 
 		onTestFinished(async () => {
 			await secondApp.close();
-			vi.unstubAllEnvs();
-			if (existsSync(testDbDir)) {
-				rmSync(testDbDir, { recursive: true });
-			}
 		});
 
 		const rows = secondApp.db.select().from(settings).where(eq(settings.key, "app_version")).all();

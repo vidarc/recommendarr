@@ -4,73 +4,35 @@ import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
 
 import { SettingsField } from "../SettingsField.tsx";
 
+import type { ChangeEvent } from "react";
+
 const renderField = (
 	overrides: {
 		id?: string;
 		label?: string;
 		type?: string;
 		value?: string;
-		onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+		onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
 		disabled?: boolean;
 		placeholder?: string;
 	} = {},
 ) => {
 	const onChange = overrides.onChange ?? vi.fn();
-	const id = overrides.id ?? "test-field";
-	const label = overrides.label ?? "Test Label";
-	const value = overrides.value ?? "";
 
 	onTestFinished(cleanup);
 
-	if (
-		overrides.type !== undefined &&
-		overrides.disabled !== undefined &&
-		overrides.placeholder !== undefined
-	) {
-		render(
-			<SettingsField
-				id={id}
-				label={label}
-				value={value}
-				onChange={onChange}
-				type={overrides.type}
-				disabled={overrides.disabled}
-				placeholder={overrides.placeholder}
-			/>,
-		);
-	} else if (overrides.type !== undefined) {
-		render(
-			<SettingsField
-				id={id}
-				label={label}
-				value={value}
-				onChange={onChange}
-				type={overrides.type}
-			/>,
-		);
-	} else if (overrides.disabled !== undefined) {
-		render(
-			<SettingsField
-				id={id}
-				label={label}
-				value={value}
-				onChange={onChange}
-				disabled={overrides.disabled}
-			/>,
-		);
-	} else if (overrides.placeholder !== undefined) {
-		render(
-			<SettingsField
-				id={id}
-				label={label}
-				value={value}
-				onChange={onChange}
-				placeholder={overrides.placeholder}
-			/>,
-		);
-	} else {
-		render(<SettingsField id={id} label={label} value={value} onChange={onChange} />);
-	}
+	const props = {
+		id: overrides.id ?? "test-field",
+		label: overrides.label ?? "Test Label",
+		value: overrides.value ?? "",
+		onChange,
+		...(overrides.type !== undefined ? { type: overrides.type } : {}),
+		...(overrides.disabled !== undefined ? { disabled: overrides.disabled } : {}),
+		...(overrides.placeholder !== undefined ? { placeholder: overrides.placeholder } : {}),
+	};
+
+	// eslint-disable-next-line react/jsx-props-no-spreading -- test helper
+	render(<SettingsField {...props} />);
 
 	return { onChange };
 };

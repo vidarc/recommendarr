@@ -109,7 +109,7 @@ describe("AddToArrModal", () => {
 	test("displays lookup results after loading", async () => {
 		renderModal();
 
-		const results = await screen.findByRole("listbox");
+		const results = await screen.findByRole("list", { name: /search results/i });
 		expect(within(results).getByText("Die Hard")).toBeInTheDocument();
 		expect(within(results).getByText("Die Hard 2")).toBeInTheDocument();
 	});
@@ -117,7 +117,7 @@ describe("AddToArrModal", () => {
 	test("shows Already in library badge for existing items", async () => {
 		renderModal();
 
-		await screen.findByRole("listbox");
+		await screen.findByRole("list", { name: /search results/i });
 		expect(screen.getByText("Already in library")).toBeInTheDocument();
 	});
 
@@ -125,10 +125,10 @@ describe("AddToArrModal", () => {
 		renderModal();
 		const user = userEvent.setup();
 
-		await screen.findByRole("listbox");
+		await screen.findByRole("list", { name: /search results/i });
 
-		const resultItem = screen.getByRole("option", { name: /Die Hard.*1988/i });
-		await user.click(resultItem);
+		const resultButton = screen.getByRole("button", { name: /Die Hard.*1988/i });
+		await user.click(resultButton);
 
 		expect(await screen.findByLabelText(/root folder/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/quality profile/i)).toBeInTheDocument();
@@ -138,10 +138,10 @@ describe("AddToArrModal", () => {
 		renderModal();
 		const user = userEvent.setup();
 
-		await screen.findByRole("listbox");
+		await screen.findByRole("list", { name: /search results/i });
 
-		const dieHard2 = screen.getByRole("option", { name: /Die Hard 2/i });
-		await user.click(dieHard2);
+		const dieHard2Button = screen.getByRole("button", { name: /Die Hard 2/i });
+		await user.click(dieHard2Button);
 
 		expect(screen.queryByLabelText(/root folder/i)).not.toBeInTheDocument();
 	});
@@ -175,8 +175,8 @@ describe("AddToArrModal", () => {
 		renderModal({ onClose: handleClose });
 		const user = userEvent.setup();
 
-		await screen.findByRole("listbox");
-		await user.click(screen.getByRole("option", { name: /Die Hard.*1988/i }));
+		await screen.findByRole("list", { name: /search results/i });
+		await user.click(screen.getByRole("button", { name: /Die Hard.*1988/i }));
 
 		const rootFolderSelect = await screen.findByLabelText(/root folder/i);
 		await user.selectOptions(rootFolderSelect, "/movies");
@@ -206,8 +206,8 @@ describe("AddToArrModal", () => {
 		renderModal({ onClose: handleClose });
 		const user = userEvent.setup();
 
-		await screen.findByRole("listbox");
-		await user.click(screen.getByRole("option", { name: /Die Hard.*1988/i }));
+		await screen.findByRole("list", { name: /search results/i });
+		await user.click(screen.getByRole("button", { name: /Die Hard.*1988/i }));
 
 		const rootFolderSelect = await screen.findByLabelText(/root folder/i);
 		await user.selectOptions(rootFolderSelect, "/movies");
