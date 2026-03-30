@@ -9,14 +9,14 @@ test.describe.configure({ mode: "serial" });
 test.describe("AI configuration settings flow", () => {
 	test("navigate to Settings > AI Configuration tab", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "AI Configuration" }).click();
+		await page.getByRole("tab", { name: "AI Configuration" }).click();
 
 		await expect(page.getByRole("heading", { level: 3, name: "AI Configuration" })).toBeVisible();
 	});
 
 	test("fill in AI config and save", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "AI Configuration" }).click();
+		await page.getByRole("tab", { name: "AI Configuration" }).click();
 
 		await page.getByLabel("Endpoint URL").fill(testEndpoint);
 		await page.getByLabel("API Key").fill(testApiKey);
@@ -30,7 +30,7 @@ test.describe("AI configuration settings flow", () => {
 
 	test("advanced settings are accessible", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "AI Configuration" }).click();
+		await page.getByRole("tab", { name: "AI Configuration" }).click();
 
 		await page.getByText("Show Advanced Settings").click();
 
@@ -49,7 +49,7 @@ test.describe("AI configuration settings flow", () => {
 		});
 
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "AI Configuration" }).click();
+		await page.getByRole("tab", { name: "AI Configuration" }).click();
 
 		await page.getByRole("button", { name: "Test Connection" }).click();
 
@@ -58,7 +58,7 @@ test.describe("AI configuration settings flow", () => {
 
 	test("remove AI config clears fields", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "AI Configuration" }).click();
+		await page.getByRole("tab", { name: "AI Configuration" }).click();
 
 		await page.getByRole("button", { name: "Remove" }).click();
 
