@@ -1,0 +1,50 @@
+version: 2
+
+updates:
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      docker-major:
+        update-types:
+          - major
+      docker-minor:
+        update-types:
+          - minor
+      docker-patch:
+        update-types:
+          - patch
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    versioning-strategy: increase
+    groups:
+      production-patch:
+        dependency-type: production
+        update-types:
+          - patch
+      production-minor:
+        dependency-type: production
+        update-types:
+          - minor
+      production-major:
+        dependency-type: production
+        update-types:
+          - major
+      dev-patch:
+        dependency-type: development
+        update-types:
+          - patch
+      dev-minor:
+        dependency-type: development
+        update-types:
+          - minor
+      dev-major:
+        dependency-type: development
+        update-types:
+          - major
