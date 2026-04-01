@@ -2530,9 +2530,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"drizzle-kit@npm:1.0.0-beta.19":
-  version: 1.0.0-beta.19
-  resolution: "drizzle-kit@npm:1.0.0-beta.19"
+"drizzle-kit@npm:1.0.0-beta.20":
+  version: 1.0.0-beta.20
+  resolution: "drizzle-kit@npm:1.0.0-beta.20"
   dependencies:
     "@drizzle-team/brocli": "npm:^0.11.0"
     "@js-temporal/polyfill": "npm:^0.5.1"
@@ -2541,7 +2541,7 @@ __metadata:
     jiti: "npm:^2.6.1"
   bin:
     drizzle-kit: bin.cjs
-  checksum: 10c0/3eebeeb00949064a20230efae578b3429f160473c3bfdd92f15fff4a6634d5bbd420a0651a3df8ecf795276e699a3e3e78cabf1bb7185151504cd1b136a7ce73
+  checksum: 10c0/2ed1c8bb43e7a89b2e7946c72e9f61a08376f44b88e6b8d4bb62d5a7e1210c7f87f6f7ea4f953eedfaa8ba297b81197f3ca1cbbb01f7aa15e0ce6b702b692a5d
   languageName: node
   linkType: hard
 
@@ -4569,7 +4569,7 @@ __metadata:
     babel-plugin-react-compiler: "npm:1.0.0"
     better-sqlite3: "npm:12.8.0"
     close-with-grace: "npm:2.5.0"
-    drizzle-kit: "npm:1.0.0-beta.19"
+    drizzle-kit: "npm:1.0.0-beta.20"
     drizzle-orm: "npm:1.0.0-beta.19"
     fastify: "npm:5.8.4"
     fastify-type-provider-zod: "npm:6.1.0"
