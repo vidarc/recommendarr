@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:24.14.0-bookworm-slim AS builder
+FROM node:24.14.1-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN yarn vp build && \
 RUN yarn workspaces focus --production
 
 # Stage 2: Production
-FROM node:24.14.0-bookworm-slim AS runner
+FROM node:24.14.1-bookworm-slim AS runner
 
 WORKDIR /app
 

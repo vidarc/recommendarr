@@ -7,15 +7,14 @@ updates:
       interval: weekly
       day: monday
     groups:
-      docker-major:
-        update-types:
-          - major
-      docker-minor:
+      docker:
         update-types:
           - minor
-      docker-patch:
-        update-types:
           - patch
+    ignore:
+      - dependency-name: node
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: npm
     directory: /
@@ -25,26 +24,32 @@ updates:
     versioning-strategy: increase
     groups:
       production-patch:
+        applies-to: version-updates
         dependency-type: production
         update-types:
           - patch
       production-minor:
+        applies-to: version-updates
         dependency-type: production
         update-types:
           - minor
       production-major:
+        applies-to: version-updates
         dependency-type: production
         update-types:
           - major
       dev-patch:
+        applies-to: version-updates
         dependency-type: development
         update-types:
           - patch
       dev-minor:
+        applies-to: version-updates
         dependency-type: development
         update-types:
           - minor
       dev-major:
+        applies-to: version-updates
         dependency-type: development
         update-types:
           - major
