@@ -2545,9 +2545,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"drizzle-orm@npm:1.0.0-beta.19":
-  version: 1.0.0-beta.19
-  resolution: "drizzle-orm@npm:1.0.0-beta.19"
+"drizzle-orm@npm:1.0.0-beta.20":
+  version: 1.0.0-beta.20
+  resolution: "drizzle-orm@npm:1.0.0-beta.20"
   peerDependencies:
     "@aws-sdk/client-rds-data": ">=3"
     "@cloudflare/workers-types": ">=4"
@@ -2660,7 +2660,7 @@ __metadata:
       optional: true
     zod:
       optional: true
-  checksum: 10c0/09ab1094a7c9969cfbf5a58738236d4423c9e92b75688b5e427b4363427edabfe2fce6ed16e4eb37693d6c53250a7b8e8a59fe94db339e555b68c53601eb37aa
+  checksum: 10c0/3b41bd3d43fd202b6da28635eea1cfccd8f05e0e2ce01f9eb356a4a9a073cc6cef6253944b1caea6f5f121ed8a7e118cd77db55fac4932e826f85bd04baf1366
   languageName: node
   linkType: hard
 
@@ -4570,7 +4570,7 @@ __metadata:
     better-sqlite3: "npm:12.8.0"
     close-with-grace: "npm:2.5.0"
     drizzle-kit: "npm:1.0.0-beta.20"
-    drizzle-orm: "npm:1.0.0-beta.19"
+    drizzle-orm: "npm:1.0.0-beta.20"
     fastify: "npm:5.8.4"
     fastify-type-provider-zod: "npm:6.1.0"
     happy-dom: "npm:20.8.9"
