@@ -115,6 +115,46 @@ const arrConnections = sqliteTable(
 const selectArrConnectionSchema = createSelectSchema(arrConnections);
 const insertArrConnectionSchema = createInsertSchema(arrConnections);
 
+const libraryItems = sqliteTable(
+	"library_items",
+	{
+		id: text("id").primaryKey(),
+		userId: text("user_id").notNull(),
+		title: text("title").notNull(),
+		year: integer("year"),
+		mediaType: text("media_type").notNull(),
+		source: text("source").notNull(),
+		plexRatingKey: text("plex_rating_key"),
+		externalId: text("external_id"),
+		genres: text("genres"),
+		syncedAt: text("synced_at").notNull(),
+	},
+	(table) => [
+		uniqueIndex("library_user_source_title_year_idx").on(
+			table.userId,
+			table.source,
+			table.title,
+			table.year,
+		),
+	],
+);
+
+const selectLibraryItemSchema = createSelectSchema(libraryItems);
+const insertLibraryItemSchema = createInsertSchema(libraryItems);
+
+const userSettings = sqliteTable("user_settings", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull().unique(),
+	librarySyncInterval: text("library_sync_interval").notNull().default("manual"),
+	librarySyncLast: text("library_sync_last"),
+	excludeLibraryDefault: integer("exclude_library_default", { mode: "boolean" })
+		.notNull()
+		.default(true),
+});
+
+const selectUserSettingsSchema = createSelectSchema(userSettings);
+const insertUserSettingsSchema = createInsertSchema(userSettings);
+
 export {
 	aiConfigs,
 	arrConnections,
@@ -122,25 +162,31 @@ export {
 	insertAiConfigSchema,
 	insertArrConnectionSchema,
 	insertConversationSchema,
+	insertLibraryItemSchema,
 	insertMessageSchema,
 	insertPlexConnectionSchema,
 	insertRecommendationSchema,
 	insertSessionSchema,
 	insertSettingSchema,
 	insertUserSchema,
+	insertUserSettingsSchema,
+	libraryItems,
 	messages,
 	plexConnections,
 	recommendations,
 	selectAiConfigSchema,
 	selectArrConnectionSchema,
 	selectConversationSchema,
+	selectLibraryItemSchema,
 	selectMessageSchema,
 	selectPlexConnectionSchema,
 	selectRecommendationSchema,
 	selectSessionSchema,
 	selectSettingSchema,
 	selectUserSchema,
+	selectUserSettingsSchema,
 	sessions,
 	settings,
+	userSettings,
 	users,
 };

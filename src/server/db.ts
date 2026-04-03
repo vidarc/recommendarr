@@ -10,11 +10,13 @@ import {
 	aiConfigs,
 	arrConnections,
 	conversations,
+	libraryItems,
 	messages,
 	plexConnections,
 	recommendations,
 	sessions,
 	settings,
+	userSettings,
 	users,
 } from "./schema.ts";
 import { hashPassword } from "./services/auth-utils.ts";
@@ -41,11 +43,13 @@ const dbPlugin = async (app: FastifyInstance) => {
 			aiConfigs,
 			arrConnections,
 			conversations,
+			libraryItems,
 			messages,
 			plexConnections,
 			recommendations,
 			sessions,
 			settings,
+			userSettings,
 			users,
 		},
 	});
