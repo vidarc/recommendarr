@@ -29,6 +29,20 @@ interface LookupResult {
 	arrId: number;
 }
 
+interface ArrLibraryMovie {
+	title: string;
+	year: number;
+	tmdbId: number;
+	genres: string;
+}
+
+interface ArrLibrarySeries {
+	title: string;
+	year: number;
+	tvdbId: number;
+	genres: string;
+}
+
 interface AddMediaParams {
 	tmdbId?: number;
 	tvdbId?: number;
@@ -75,6 +89,24 @@ const lookupItemSchema = z.array(
 );
 
 const addMediaResponseSchema = z.object({ id: z.number() });
+
+const libraryMovieSchema = z.array(
+	z.object({
+		title: z.string(),
+		year: z.number(),
+		tmdbId: z.number(),
+		genres: z.array(z.string()),
+	}),
+);
+
+const librarySeriesSchema = z.array(
+	z.object({
+		title: z.string(),
+		year: z.number(),
+		tvdbId: z.number(),
+		genres: z.array(z.string()),
+	}),
+);
 
 const mergeHeaders = (
 	apiKey: string,
@@ -247,12 +279,50 @@ const addMedia = async ({
 	}
 };
 
-export { addMedia, getQualityProfiles, getRootFolders, lookupMedia, testConnection };
+const getAllMovies = async (url: string, apiKey: string): Promise<ArrLibraryMovie[]> => {
+	const response = await arrFetch({ url, apiKey, path: "/movie" });
+	if (!response.ok) {
+		throw new Error(`Failed to get movies: ${response.status.toString()}`);
+	}
+	const items = libraryMovieSchema.parse(await response.json());
+	return items.map((item) => ({
+		title: item.title,
+		year: item.year,
+		tmdbId: item.tmdbId,
+		genres: item.genres.join(", "),
+	}));
+};
+
+const getAllSeries = async (url: string, apiKey: string): Promise<ArrLibrarySeries[]> => {
+	const response = await arrFetch({ url, apiKey, path: "/series" });
+	if (!response.ok) {
+		throw new Error(`Failed to get series: ${response.status.toString()}`);
+	}
+	const items = librarySeriesSchema.parse(await response.json());
+	return items.map((item) => ({
+		title: item.title,
+		year: item.year,
+		tvdbId: item.tvdbId,
+		genres: item.genres.join(", "),
+	}));
+};
+
+export {
+	addMedia,
+	getAllMovies,
+	getAllSeries,
+	getQualityProfiles,
+	getRootFolders,
+	lookupMedia,
+	testConnection,
+};
 export type {
 	AddMediaOptions,
 	AddMediaParams,
 	AddMediaResult,
 	ArrFetchOptions,
+	ArrLibraryMovie,
+	ArrLibrarySeries,
 	LookupOptions,
 	LookupResult,
 	QualityProfile,
