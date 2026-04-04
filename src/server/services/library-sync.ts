@@ -1,12 +1,13 @@
 import { randomUUID } from "node:crypto";
 
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
-import { libraryItems, recommendations, userSettings } from "../schema.ts";
+import { conversations, libraryItems, messages, recommendations, userSettings } from "../schema.ts";
 import { getAllMovies, getAllSeries } from "./arr-client.ts";
 import { decrypt } from "./encryption.ts";
 import { getLibraryContents, getPlexLibraries } from "./plex-api.ts";
 
+import type { Database as SqliteDatabase } from "better-sqlite3";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 
 interface PlexConnectionRow {
@@ -55,6 +56,7 @@ const SLICE_FROM_START = 0;
 interface SyncLibraryOptions {
 	userId: string;
 	db: BetterSQLite3Database<Record<string, unknown>>;
+	sqlite: SqliteDatabase;
 	plexConnection: PlexConnectionRow;
 	arrConns: ArrConnectionRow[];
 }
@@ -62,6 +64,7 @@ interface SyncLibraryOptions {
 const syncLibrary = async ({
 	userId,
 	db,
+	sqlite,
 	plexConnection,
 	arrConns,
 }: SyncLibraryOptions): Promise<void> => {
@@ -144,31 +147,32 @@ const syncLibrary = async ({
 		}
 	}
 
-	// Replace all existing items then insert fresh set
-	db.delete(libraryItems).where(eq(libraryItems.userId, userId)).run();
+	// Replace all existing items and update sync timestamp in a single transaction
+	sqlite.transaction(() => {
+		db.delete(libraryItems).where(eq(libraryItems.userId, userId)).run();
 
-	if (newItems.length > EMPTY_LENGTH) {
-		db.insert(libraryItems).values(newItems).run();
-	}
+		if (newItems.length > EMPTY_LENGTH) {
+			db.insert(libraryItems).values(newItems).run();
+		}
 
-	// Upsert userSettings with librarySyncLast
-	const existing = db.select().from(userSettings).where(eq(userSettings.userId, userId)).get();
+		const existing = db.select().from(userSettings).where(eq(userSettings.userId, userId)).get();
 
-	if (existing) {
-		db.update(userSettings)
-			.set({ librarySyncLast: now })
-			.where(eq(userSettings.userId, userId))
-			.run();
-	} else {
-		db.insert(userSettings)
-			.values({
-				id: randomUUID(),
-				userId,
-				librarySyncInterval: "manual",
-				librarySyncLast: now,
-			})
-			.run();
-	}
+		if (existing) {
+			db.update(userSettings)
+				.set({ librarySyncLast: now })
+				.where(eq(userSettings.userId, userId))
+				.run();
+		} else {
+			db.insert(userSettings)
+				.values({
+					id: randomUUID(),
+					userId,
+					librarySyncInterval: "manual",
+					librarySyncLast: now,
+				})
+				.run();
+		}
+	})();
 };
 
 const buildExclusionContext = async (
@@ -215,13 +219,36 @@ const buildExclusionContext = async (
 			mediaType: item.mediaType,
 		}));
 
-	// Fetch all past recommendation titles
-	const pastRecs = db.select().from(recommendations).all();
+	// Fetch past recommendation titles scoped to this user via conversations -> messages -> recommendations
+	const userConversationIds = db
+		.select({ id: conversations.id })
+		.from(conversations)
+		.where(eq(conversations.userId, userId))
+		.all()
+		.map((conv) => conv.id);
 
-	const pastRecommendations = pastRecs.map((rec) => ({
-		title: rec.title,
-		...(rec.year !== null && rec.year !== undefined && { year: rec.year }),
-	}));
+	let pastRecommendations: { title: string; year?: number }[] = [];
+	if (userConversationIds.length > EMPTY_LENGTH) {
+		const userMessageIds = db
+			.select({ id: messages.id })
+			.from(messages)
+			.where(inArray(messages.conversationId, userConversationIds))
+			.all()
+			.map((msg) => msg.id);
+
+		if (userMessageIds.length > EMPTY_LENGTH) {
+			const pastRecs = db
+				.select({ title: recommendations.title, year: recommendations.year })
+				.from(recommendations)
+				.where(inArray(recommendations.messageId, userMessageIds))
+				.all();
+
+			pastRecommendations = pastRecs.map((rec) => ({
+				title: rec.title,
+				...(rec.year !== null && rec.year !== undefined && { year: rec.year }),
+			}));
+		}
+	}
 
 	return {
 		titles,

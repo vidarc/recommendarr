@@ -23,7 +23,7 @@ import {
 	parseRecommendations,
 } from "../services/response-parser.ts";
 
-import type { ExclusionContext } from "../services/prompt-builder.ts";
+import type { ExclusionContext } from "../services/library-sync.ts";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
@@ -37,7 +37,6 @@ const MAX_TITLE_MESSAGE_LENGTH = 200;
 const EMPTY_ARRAY_LENGTH = 0;
 const STRING_START = 0;
 const NO_FILTERED_ITEMS = 0;
-const SKIP_SYSTEM_MESSAGE = 1;
 
 const VALID_MEDIA_TYPES = ["movie", "show", "either"] as const;
 type MediaType = (typeof VALID_MEDIA_TYPES)[number];
@@ -193,13 +192,24 @@ const chatRoutes = (app: FastifyInstance) => {
 				(VALID_MEDIA_TYPES as readonly string[]).includes(value);
 			const resolvedMediaType: MediaType = isValidMediaType(mediaType) ? mediaType : "either";
 			if (shouldExclude) {
+				// Trigger background sync if stale — don't block the chat response
 				if ((await shouldAutoSync(userId, app.db)) && plexConnection?.serverUrl) {
 					const arrConns = app.db
 						.select()
 						.from(arrConnectionsTable)
 						.where(eq(arrConnectionsTable.userId, userId))
 						.all();
-					await syncLibrary({ userId, db: app.db, plexConnection, arrConns });
+					/* eslint-disable promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- intentional fire-and-forget with error handling */
+					void syncLibrary({
+						userId,
+						db: app.db,
+						sqlite: app.sqlite,
+						plexConnection,
+						arrConns,
+					}).catch((error: unknown) => {
+						request.log.error({ error }, "background library sync failed");
+					});
+					/* eslint-enable promise/prefer-await-to-then, promise/prefer-await-to-callbacks */
 				}
 				exclusionContext = await buildExclusionContext(userId, app.db, {
 					mediaType: resolvedMediaType,
@@ -271,8 +281,7 @@ const chatRoutes = (app: FastifyInstance) => {
 								maxTokens: aiConfig.maxTokens,
 							},
 							[
-								{ role: "system", content: systemPrompt },
-								...aiMessages.slice(SKIP_SYSTEM_MESSAGE),
+								...aiMessages,
 								{
 									role: "user",
 									content: `${String(filterResult.filtered.length)} of your recommendations were items the user already owns: ${filteredTitles}. Please provide ${String(filterResult.filtered.length)} replacement recommendations. Do not suggest: ${allExcluded}`,

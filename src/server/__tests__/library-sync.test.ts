@@ -19,6 +19,7 @@ import {
 import { buildServer } from "../app.ts";
 import {
 	arrConnections,
+	conversations,
 	libraryItems,
 	messages,
 	plexConnections,
@@ -248,7 +249,13 @@ describe("syncLibrary", () => {
 			.where(eq(arrConnections.userId, userId))
 			.all();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns,
+		});
 
 		const items = app.db.select().from(libraryItems).where(eq(libraryItems.userId, userId)).all();
 
@@ -282,8 +289,20 @@ describe("syncLibrary", () => {
 			.all();
 
 		// Sync twice
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns });
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns,
+		});
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns,
+		});
 
 		const items = app.db.select().from(libraryItems).where(eq(libraryItems.userId, userId)).all();
 
@@ -303,7 +322,13 @@ describe("syncLibrary", () => {
 			.where(eq(plexConnections.userId, userId))
 			.get();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns: [] });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns: [],
+		});
 
 		const items = app.db.select().from(libraryItems).where(eq(libraryItems.userId, userId)).all();
 
@@ -324,7 +349,13 @@ describe("syncLibrary", () => {
 			.get();
 
 		const before = new Date();
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns: [] });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns: [],
+		});
 
 		const settings = app.db
 			.select()
@@ -351,7 +382,13 @@ describe("syncLibrary", () => {
 			.where(eq(plexConnections.userId, userId))
 			.get();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns: [] });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns: [],
+		});
 
 		const matrix = app.db
 			.select()
@@ -385,7 +422,13 @@ describe("syncLibrary", () => {
 			.where(eq(arrConnections.userId, userId))
 			.all();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns,
+		});
 
 		const interstellar = app.db
 			.select()
@@ -420,7 +463,13 @@ describe("buildExclusionContext", () => {
 			.where(eq(arrConnections.userId, userId))
 			.all();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns,
+		});
 
 		const context = await buildExclusionContext(userId, app.db, { mediaType: "either" });
 
@@ -450,7 +499,13 @@ describe("buildExclusionContext", () => {
 			.where(eq(arrConnections.userId, userId))
 			.all();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns,
+		});
 
 		const context = await buildExclusionContext(userId, app.db, { mediaType: "movie" });
 
@@ -475,7 +530,13 @@ describe("buildExclusionContext", () => {
 			.where(eq(arrConnections.userId, userId))
 			.all();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns,
+		});
 
 		const context = await buildExclusionContext(userId, app.db, { mediaType: "show" });
 
@@ -500,7 +561,13 @@ describe("buildExclusionContext", () => {
 			.where(eq(arrConnections.userId, userId))
 			.all();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns,
+		});
 
 		const context = await buildExclusionContext(userId, app.db, { mediaType: "either" });
 
@@ -527,7 +594,13 @@ describe("buildExclusionContext", () => {
 			.where(eq(arrConnections.userId, userId))
 			.all();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns,
+		});
 
 		const context = await buildExclusionContext(userId, app.db, { mediaType: "either" });
 
@@ -546,11 +619,27 @@ describe("buildExclusionContext", () => {
 			.where(eq(plexConnections.userId, userId))
 			.get();
 
-		await syncLibrary({ userId, db: app.db, plexConnection: plexConn!, arrConns: [] });
+		await syncLibrary({
+			userId,
+			db: app.db,
+			sqlite: app.sqlite,
+			plexConnection: plexConn!,
+			arrConns: [],
+		});
 
-		// Insert a message + recommendation (no conversation needed, messages table has no FK constraint enforced)
+		// Insert a conversation, message, and recommendation for this user
 		const now = new Date().toISOString();
 		const REC_YEAR = 2020;
+		app.db
+			.insert(conversations)
+			.values({
+				id: "conv-1",
+				userId,
+				mediaType: "movie",
+				createdAt: now,
+			})
+			.run();
+
 		app.db
 			.insert(messages)
 			.values({

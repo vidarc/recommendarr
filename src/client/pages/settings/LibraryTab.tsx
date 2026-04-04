@@ -44,7 +44,7 @@ const INTERVAL_OPTIONS = [
 	{ value: "6h", label: "Every 6 hours" },
 	{ value: "12h", label: "Every 12 hours" },
 	{ value: "24h", label: "Every 24 hours" },
-	{ value: "weekly", label: "Weekly" },
+	{ value: "7d", label: "Weekly" },
 ];
 
 /* ── Sub-components ────────────────────────────────────────── */

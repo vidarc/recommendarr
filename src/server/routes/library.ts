@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
@@ -76,6 +76,7 @@ const libraryRoutes = (app: FastifyInstance) => {
 			await syncLibrary({
 				userId: request.user.id,
 				db: app.db,
+				sqlite: app.sqlite,
 				plexConnection,
 				arrConns,
 			});
@@ -115,20 +116,21 @@ const libraryRoutes = (app: FastifyInstance) => {
 				.where(eq(userSettings.userId, request.user.id))
 				.get();
 
-			const items = app.db
-				.select()
+			const counts = app.db
+				.select({ mediaType: libraryItems.mediaType, total: count() })
 				.from(libraryItems)
 				.where(eq(libraryItems.userId, request.user.id))
+				.groupBy(libraryItems.mediaType)
 				.all();
 
-			const itemCount = items.length;
-			const movieCount = items.filter((item) => item.mediaType === "movie").length;
-			const showCount = items.filter((item) => item.mediaType === "show").length;
+			const ZERO_COUNT = 0;
+			const movieCount = counts.find((row) => row.mediaType === "movie")?.total ?? ZERO_COUNT;
+			const showCount = counts.find((row) => row.mediaType === "show")?.total ?? ZERO_COUNT;
 
 			return reply.code(StatusCodes.OK).send({
 				lastSynced: settings?.librarySyncLast ?? undefined,
 				interval: settings?.librarySyncInterval ?? "manual",
-				itemCount,
+				itemCount: movieCount + showCount,
 				movieCount,
 				showCount,
 				excludeDefault: settings?.excludeLibraryDefault ?? true,

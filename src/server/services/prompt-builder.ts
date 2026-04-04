@@ -1,13 +1,9 @@
+import type { ExclusionContext } from "./library-sync.ts";
+
 interface WatchHistoryItem {
 	title: string;
 	year: number | undefined;
 	type: string;
-}
-
-interface ExclusionContext {
-	titles: { title: string; year?: number; mediaType: string }[];
-	summary: { movieCount: number; showCount: number; topGenres: string[] };
-	pastRecommendations: { title: string; year?: number }[];
 }
 
 interface BuildSystemPromptOptions {
@@ -108,4 +104,4 @@ Include conversational text before and/or after the JSON block explaining your r
 
 export { buildSystemPrompt };
 
-export type { BuildSystemPromptOptions, ExclusionContext, WatchHistoryItem };
+export type { BuildSystemPromptOptions, WatchHistoryItem };

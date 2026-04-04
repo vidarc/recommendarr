@@ -15,19 +15,19 @@ export const useLibrarySettings = () => {
 	const [syncLibrary, { isLoading: isSyncing }] = useSyncLibraryMutation();
 	const [updateSettings, { isLoading: isSaving }] = useUpdateLibrarySettingsMutation();
 
-	const [interval, setInterval] = useState(DEFAULT_INTERVAL);
+	const [interval, setSyncInterval] = useState(DEFAULT_INTERVAL);
 	const [excludeDefault, setExcludeDefault] = useState(false);
 	const [syncResult, setSyncResult] = useState("");
 
 	useEffect(() => {
 		if (status) {
-			setInterval(status.interval);
+			setSyncInterval(status.interval);
 			setExcludeDefault(status.excludeDefault);
 		}
 	}, [status]);
 
 	const handleIntervalChange = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
-		setInterval(event.target.value);
+		setSyncInterval(event.target.value);
 	}, []);
 
 	const handleExcludeToggle = useCallback((event: ChangeEvent<HTMLInputElement>) => {
