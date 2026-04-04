@@ -48,3 +48,5 @@ const { useGetLibraryStatusQuery, useSyncLibraryMutation, useUpdateLibrarySettin
 	libraryApi;
 
 export { useGetLibraryStatusQuery, useSyncLibraryMutation, useUpdateLibrarySettingsMutation };
+
+export type { LibrarySettingsBody, LibraryStatus, SyncResponse };
