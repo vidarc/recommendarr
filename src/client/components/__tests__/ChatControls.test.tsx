@@ -51,6 +51,7 @@ const renderControls = () => {
 	const onMediaTypeChange = vi.fn();
 	const onLibraryIdChange = vi.fn();
 	const onResultCountChange = vi.fn();
+	const onExcludeLibraryChange = vi.fn();
 
 	onTestFinished(() => {
 		cleanup();
@@ -66,11 +67,13 @@ const renderControls = () => {
 				onLibraryIdChange={onLibraryIdChange}
 				resultCount={defaultResultCount}
 				onResultCountChange={onResultCountChange}
+				excludeLibrary
+				onExcludeLibraryChange={onExcludeLibraryChange}
 			/>
 		</Provider>,
 	);
 
-	return { onMediaTypeChange, onLibraryIdChange, onResultCountChange };
+	return { onMediaTypeChange, onLibraryIdChange, onResultCountChange, onExcludeLibraryChange };
 };
 
 describe("ChatControls", () => {

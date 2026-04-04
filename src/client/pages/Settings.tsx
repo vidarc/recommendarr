@@ -20,12 +20,17 @@ const IntegrationsTab = lazy(async () => {
 	const mod = await import("./settings/IntegrationsTab.tsx");
 	return { default: mod.IntegrationsTab };
 });
+const LibraryTab = lazy(async () => {
+	const mod = await import("./settings/LibraryTab.tsx");
+	return { default: mod.LibraryTab };
+});
 
-type SettingsTab = "account" | "ai" | "integrations" | "plex";
+type SettingsTab = "account" | "ai" | "integrations" | "library" | "plex";
 
 const TABS: { id: SettingsTab; label: string }[] = [
 	{ id: "plex", label: "Plex Connection" },
 	{ id: "ai", label: "AI Configuration" },
+	{ id: "library", label: "Library" },
 	{ id: "account", label: "Account" },
 	{ id: "integrations", label: "Integrations" },
 ];
@@ -123,6 +128,7 @@ const TabContent = ({ tab }: { tab: SettingsTab }) => (
 			{tab === "ai" && <AiTab />}
 			{tab === "account" && <AccountTab />}
 			{tab === "integrations" && <IntegrationsTab />}
+			{tab === "library" && <LibraryTab />}
 		</Suspense>
 	</div>
 );
