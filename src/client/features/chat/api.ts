@@ -8,6 +8,7 @@ interface SendChatMessageBody {
 	resultCount: number;
 	conversationId?: string | undefined;
 	libraryIds?: string[] | undefined;
+	excludeLibrary?: boolean | undefined;
 }
 
 interface SendChatMessageResponse {
