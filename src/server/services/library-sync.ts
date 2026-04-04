@@ -22,7 +22,7 @@ interface ArrConnectionRow {
 
 interface ExclusionTitle {
 	title: string;
-	year: number | undefined;
+	year?: number;
 	mediaType: string;
 }
 
@@ -35,7 +35,7 @@ interface ExclusionSummary {
 interface ExclusionContext {
 	titles: ExclusionTitle[];
 	summary: ExclusionSummary;
-	pastRecommendations: { title: string; year: number | undefined }[];
+	pastRecommendations: { title: string; year?: number }[];
 }
 
 const INTERVAL_MS: Record<string, number> = {
@@ -211,7 +211,7 @@ const buildExclusionContext = async (
 		.slice(SLICE_FROM_START, MAX_EXCLUSION_TITLES)
 		.map((item) => ({
 			title: item.title,
-			year: item.year ?? undefined,
+			...(item.year !== null && item.year !== undefined && { year: item.year }),
 			mediaType: item.mediaType,
 		}));
 
@@ -220,7 +220,7 @@ const buildExclusionContext = async (
 
 	const pastRecommendations = pastRecs.map((rec) => ({
 		title: rec.title,
-		year: rec.year ?? undefined,
+		...(rec.year !== null && rec.year !== undefined && { year: rec.year }),
 	}));
 
 	return {
