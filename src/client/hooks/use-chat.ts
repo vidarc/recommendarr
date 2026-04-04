@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 
 import { useSendChatMessageMutation } from "../features/chat/api.ts";
+import { useGetLibraryStatusQuery } from "../features/library/api.ts";
 
 import type { MediaType } from "../components/ChatControls.tsx";
 import type { ChatMessageResponse } from "../shared/types.ts";
@@ -13,7 +14,10 @@ export const useChat = () => {
 	const [mediaType, handleMediaTypeChange] = useState<MediaType>("any");
 	const [libraryId, handleLibraryIdChange] = useState("");
 	const [resultCount, handleResultCountChange] = useState(DEFAULT_RESULT_COUNT);
+	const [excludeLibrary, setExcludeLibrary] = useState<boolean | undefined>(undefined);
 	const [sendChatMessage, { isLoading }] = useSendChatMessageMutation();
+	const { data: libraryStatus } = useGetLibraryStatusQuery();
+	const resolvedExclude = excludeLibrary ?? libraryStatus?.excludeDefault ?? true;
 
 	const handleNewConversation = useCallback(() => {
 		setMessages([]);
@@ -37,6 +41,7 @@ export const useChat = () => {
 				resultCount,
 				conversationId,
 				libraryIds: libraryId ? [libraryId] : undefined,
+				excludeLibrary: resolvedExclude,
 			});
 
 			if ("data" in result && result.data) {
@@ -47,8 +52,12 @@ export const useChat = () => {
 				]);
 			}
 		},
-		[sendChatMessage, mediaType, resultCount, conversationId, libraryId],
+		[sendChatMessage, mediaType, resultCount, conversationId, libraryId, resolvedExclude],
 	);
+
+	const handleExcludeLibraryChange = useCallback((value: boolean) => {
+		setExcludeLibrary(value);
+	}, []);
 
 	return {
 		messages,
@@ -59,6 +68,8 @@ export const useChat = () => {
 		handleLibraryIdChange,
 		resultCount,
 		handleResultCountChange,
+		excludeLibrary: resolvedExclude,
+		handleExcludeLibraryChange,
 		handleNewConversation,
 		handleSend,
 	};
