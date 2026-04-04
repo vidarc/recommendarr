@@ -24,6 +24,65 @@ const requireArrApiKey = (request: FastifyRequest, reply: FastifyReply) => {
 
 // ── Mock data ───────────────────────────────────────────────
 
+const plexMovieLibrary = {
+	MediaContainer: {
+		totalSize: 3,
+		Metadata: [
+			{
+				title: "The Shawshank Redemption",
+				type: "movie",
+				year: 1994,
+				ratingKey: "1001",
+				Genre: [{ tag: "Drama" }],
+			},
+			{
+				title: "The Dark Knight",
+				type: "movie",
+				year: 2008,
+				ratingKey: "1002",
+				Genre: [{ tag: "Action" }, { tag: "Drama" }],
+			},
+			{
+				title: "Inception",
+				type: "movie",
+				year: 2010,
+				ratingKey: "1003",
+				Genre: [{ tag: "Sci-Fi" }, { tag: "Action" }],
+			},
+		],
+	},
+};
+
+const plexShowLibrary = {
+	MediaContainer: {
+		totalSize: 2,
+		Metadata: [
+			{
+				title: "Breaking Bad",
+				type: "show",
+				year: 2008,
+				ratingKey: "2001",
+				Genre: [{ tag: "Drama" }, { tag: "Crime" }],
+			},
+			{
+				title: "The Office",
+				type: "show",
+				year: 2005,
+				ratingKey: "2002",
+				Genre: [{ tag: "Comedy" }],
+			},
+		],
+	},
+};
+
+const radarrLibraryMovies = [
+	{ title: "Interstellar", year: 2014, tmdbId: 157_336, genres: ["Sci-Fi", "Drama"] },
+];
+
+const sonarrLibrarySeries = [
+	{ title: "Stranger Things", year: 2016, tvdbId: 305_288, genres: ["Sci-Fi", "Horror"] },
+];
+
 const plexLibraries = {
 	MediaContainer: {
 		Directory: [
@@ -125,6 +184,17 @@ const createPlexMock = async () => {
 
 	plex.get("/library/sections/:id/allLeaves", async () => plexWatchHistory);
 
+	plex.get<{ Params: { id: string } }>("/library/sections/:id/all", async (request) => {
+		const { id } = request.params;
+		if (id === "1") {
+			return plexMovieLibrary;
+		}
+		if (id === "2") {
+			return plexShowLibrary;
+		}
+		return { MediaContainer: { totalSize: 0, Metadata: [] } };
+	});
+
 	plex.get("/library/all", async () => plexWatchHistory);
 
 	await plex.listen({ port: PLEX_PORT, host: "0.0.0.0" });
@@ -152,6 +222,7 @@ const createRadarrMock = async () => {
 		{ id: 1, path: "/movies", freeSpace: 100_000_000_000 },
 	]);
 	radarr.get("/api/v3/qualityprofile", async () => [{ id: 1, name: "HD-1080p" }]);
+	radarr.get("/api/v3/movie", async () => radarrLibraryMovies);
 	radarr.get("/api/v3/movie/lookup", async () => radarrMovieLookup);
 	radarr.post("/api/v3/movie", async () => ({ id: 1 }));
 
@@ -180,6 +251,7 @@ const createSonarrMock = async () => {
 		{ id: 1, path: "/tv", freeSpace: 100_000_000_000 },
 	]);
 	sonarr.get("/api/v3/qualityprofile", async () => [{ id: 1, name: "HD-1080p" }]);
+	sonarr.get("/api/v3/series", async () => sonarrLibrarySeries);
 	sonarr.get("/api/v3/series/lookup", async () => sonarrSeriesLookup);
 	sonarr.post("/api/v3/series", async () => ({ id: 1 }));
 
