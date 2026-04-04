@@ -1112,6 +1112,108 @@ On failure:
 
 ---
 
+## Library
+
+All library endpoints require authentication via `session` cookie.
+
+### `POST /api/library/sync`
+
+Triggers a manual sync of the user's Plex library contents into the local database. Returns item counts after the sync completes.
+
+**Request**
+
+No parameters or body required.
+
+**Response `200 OK`**
+
+```json
+{
+	"movies": 150,
+	"series": 42
+}
+```
+
+| Field    | Type     | Description                      |
+| -------- | -------- | -------------------------------- |
+| `movies` | `number` | Total movie items after sync     |
+| `series` | `number` | Total TV series items after sync |
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+### `GET /api/library/status`
+
+Returns the current library sync status including the last synced time, sync interval, item counts, and the exclude-library default setting.
+
+**Request**
+
+No parameters or body required.
+
+**Response `200 OK`**
+
+```json
+{
+	"lastSyncedAt": "2024-01-15T10:30:00.000Z",
+	"intervalHours": 24,
+	"movies": 150,
+	"series": 42,
+	"excludeByDefault": false
+}
+```
+
+| Field              | Type      | Description                                                        |
+| ------------------ | --------- | ------------------------------------------------------------------ |
+| `lastSyncedAt`     | `string`  | Optional. ISO 8601 timestamp of last sync, or null if never        |
+| `intervalHours`    | `number`  | Sync interval in hours                                             |
+| `movies`           | `number`  | Total movie items in library                                       |
+| `series`           | `number`  | Total TV series items in library                                   |
+| `excludeByDefault` | `boolean` | Whether library items are excluded from recommendations by default |
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+### `PUT /api/library/settings`
+
+Updates the library sync interval and/or the exclude-library default setting.
+
+**Request**
+
+```json
+{
+	"intervalHours": 24,
+	"excludeByDefault": true
+}
+```
+
+| Field              | Type      | Description                                                       |
+| ------------------ | --------- | ----------------------------------------------------------------- |
+| `intervalHours`    | `number`  | Optional. Sync interval in hours (positive integer)               |
+| `excludeByDefault` | `boolean` | Optional. Whether to exclude owned library items from suggestions |
+
+**Response `200 OK`**
+
+```json
+{ "success": true }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
 ## SSR
 
 ### `GET /*` (catch-all)

@@ -105,7 +105,7 @@ The app uses SQLite via `better-sqlite3` + Drizzle ORM. The `dbPlugin` in `src/s
 
 - Opens/creates a database at `DATABASE_PATH` env var (default: `./data/recommendarr.db`)
 - Enables WAL mode for better concurrency
-- Runs migrations (tables: `settings`, `users`, `sessions`, `plex_connections`, `ai_configs`, `conversations`, `messages`, `recommendations`, `arr_connections`)
+- Runs migrations (tables: `settings`, `users`, `sessions`, `plex_connections`, `ai_configs`, `conversations`, `messages`, `recommendations`, `arr_connections`, `library_items`, `user_settings`)
 - Decorates Fastify with `app.db` (Drizzle instance) and `app.sqlite` (raw better-sqlite3 instance) for route access
 - Closes the database on server shutdown
 
@@ -147,6 +147,9 @@ Fastify uses `fastify-type-provider-zod` for request/response validation and typ
 - `GET /api/arr/options/:serviceType` — returns root folders and quality profiles for an arr service
 - `POST /api/arr/lookup` — searches an arr service for media
 - `POST /api/arr/add` — adds media to an arr service, updates recommendation
+- `POST /api/library/sync` — triggers manual library sync, returns item counts
+- `GET /api/library/status` — returns last synced time, interval, item counts, and exclude default
+- `PUT /api/library/settings` — updates sync interval and exclude-library default
 - `GET /*` — SSR catch-all (registered last so API routes take priority)
 
 ### SSR
