@@ -93,4 +93,67 @@ describe("prompt builder", () => {
 		expect(prompt).toContain("do NOT recommend");
 		expect(prompt).not.toContain("already been recommended");
 	});
+
+	test("includes feedback context when provided", () => {
+		const prompt = buildSystemPrompt({
+			watchHistory: [],
+			mediaType: "movie",
+			resultCount: 5,
+			feedbackContext: [
+				{ title: "The Matrix", year: 1999, mediaType: "movie", feedback: "liked" },
+				{ title: "Twilight", year: 2008, mediaType: "movie", feedback: "disliked" },
+				{ title: "Inception", year: 2010, mediaType: "movie", feedback: "liked" },
+			],
+		});
+		expect(prompt).toContain("The Matrix (1999)");
+		expect(prompt).toContain("Inception (2010)");
+		expect(prompt).toContain("Twilight (2008)");
+		expect(prompt).toContain("Liked:");
+		expect(prompt).toContain("Disliked:");
+		expect(prompt).toContain("feedback");
+	});
+
+	test("omits feedback section when feedbackContext is empty", () => {
+		const prompt = buildSystemPrompt({
+			watchHistory: [],
+			mediaType: "movie",
+			resultCount: 5,
+			feedbackContext: [],
+		});
+		expect(prompt).not.toContain("Liked:");
+		expect(prompt).not.toContain("Disliked:");
+	});
+
+	test("omits feedback section when feedbackContext is undefined", () => {
+		const prompt = buildSystemPrompt({
+			watchHistory: [],
+			mediaType: "movie",
+			resultCount: 5,
+		});
+		expect(prompt).not.toContain("Liked:");
+	});
+
+	test("handles feedback context with only liked items", () => {
+		const prompt = buildSystemPrompt({
+			watchHistory: [],
+			mediaType: "movie",
+			resultCount: 5,
+			feedbackContext: [{ title: "The Matrix", year: 1999, mediaType: "movie", feedback: "liked" }],
+		});
+		expect(prompt).toContain("Liked:");
+		expect(prompt).not.toContain("Disliked:");
+	});
+
+	test("handles feedback context with only disliked items", () => {
+		const prompt = buildSystemPrompt({
+			watchHistory: [],
+			mediaType: "movie",
+			resultCount: 5,
+			feedbackContext: [
+				{ title: "Twilight", year: 2008, mediaType: "movie", feedback: "disliked" },
+			],
+		});
+		expect(prompt).not.toContain("Liked:");
+		expect(prompt).toContain("Disliked:");
+	});
 });
