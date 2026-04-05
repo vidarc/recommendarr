@@ -12,6 +12,7 @@ import { apiRoutes } from "./routes/api.ts";
 import { arrRoutes } from "./routes/arr.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { chatRoutes } from "./routes/chat.ts";
+import { feedbackRoutes } from "./routes/feedback.ts";
 import { healthRoutes } from "./routes/health.ts";
 import { libraryRoutes } from "./routes/library.ts";
 import { plexRoutes } from "./routes/plex.ts";
@@ -64,6 +65,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 		plexRoutes(app);
 		arrRoutes(app);
 		libraryRoutes(app);
+		feedbackRoutes(app);
 	}
 
 	if (!options.skipSSR) {
