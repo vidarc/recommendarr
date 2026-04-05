@@ -56,6 +56,59 @@ const parseRecommendations = (response: string): ParsedResponse => {
 	}
 };
 
-export { parseRecommendations };
+interface FilterInput {
+	libraryTitles: { title: string; year?: number; mediaType: string }[];
+	pastRecommendations: { title: string; year?: number }[];
+}
 
-export type { ParsedRecommendation, ParsedResponse };
+interface FilterResult {
+	kept: ParsedRecommendation[];
+	filtered: ParsedRecommendation[];
+}
+
+interface TitleMatchInput {
+	titleA: string;
+	titleB: string;
+	yearA: number | undefined;
+	yearB: number | undefined;
+}
+
+const titlesMatch = ({ titleA, titleB, yearA, yearB }: TitleMatchInput): boolean => {
+	const titleMatch = titleA.trim().toLowerCase() === titleB.trim().toLowerCase();
+	if (!titleMatch) {
+		return false;
+	}
+	if (yearA === undefined || yearB === undefined) {
+		return true;
+	}
+	return yearA === yearB;
+};
+
+const filterExcludedRecommendations = (
+	recs: ParsedRecommendation[],
+	filter: FilterInput,
+): FilterResult => {
+	const kept: ParsedRecommendation[] = [];
+	const filtered: ParsedRecommendation[] = [];
+
+	for (const rec of recs) {
+		const matchesLibrary = filter.libraryTitles.some((lib) =>
+			titlesMatch({ titleA: rec.title, titleB: lib.title, yearA: rec.year, yearB: lib.year }),
+		);
+		const matchesPast = filter.pastRecommendations.some((past) =>
+			titlesMatch({ titleA: rec.title, titleB: past.title, yearA: rec.year, yearB: past.year }),
+		);
+
+		if (matchesLibrary || matchesPast) {
+			filtered.push(rec);
+		} else {
+			kept.push(rec);
+		}
+	}
+
+	return { kept, filtered };
+};
+
+export { filterExcludedRecommendations, parseRecommendations };
+
+export type { FilterInput, FilterResult, ParsedRecommendation, ParsedResponse };

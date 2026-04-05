@@ -158,6 +158,8 @@ const Recommendations = () => {
 				onLibraryIdChange={chat.handleLibraryIdChange}
 				resultCount={chat.resultCount}
 				onResultCountChange={chat.handleResultCountChange}
+				excludeLibrary={chat.excludeLibrary}
+				onExcludeLibraryChange={chat.handleExcludeLibraryChange}
 			/>
 			<MessageThread messages={chat.messages} isLoading={chat.isLoading} />
 			<ChatInput onSend={chat.handleSend} isLoading={chat.isLoading} />

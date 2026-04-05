@@ -50,6 +50,23 @@ interface WatchHistoryOptions {
 	limit?: number;
 }
 
+interface LibraryContentsOptions {
+	serverUrl: string;
+	authToken: string;
+	libraryId: string;
+	pageSize?: number;
+}
+
+interface PlexLibraryItem {
+	title: string;
+	type: string;
+	year: number | undefined;
+	ratingKey: string;
+	genres: string;
+}
+
+const DEFAULT_PAGE_SIZE = 200;
+
 const plexHeaders = (authToken?: string): Record<string, string> => {
 	const headers: Record<string, string> = {
 		Accept: "application/json",
@@ -109,6 +126,23 @@ const plexWatchHistoryResponseSchema = z.object({
 					parentIndex: z.number().optional(),
 					index: z.number().optional(),
 					viewedAt: z.number(),
+				}),
+			)
+			.optional(),
+	}),
+});
+
+const plexLibraryContentsResponseSchema = z.object({
+	MediaContainer: z.object({
+		totalSize: z.number(),
+		Metadata: z
+			.array(
+				z.object({
+					title: z.string(),
+					type: z.string(),
+					year: z.number().optional(),
+					ratingKey: z.string(),
+					Genre: z.array(z.object({ tag: z.string() })).optional(),
 				}),
 			)
 			.optional(),
@@ -243,10 +277,71 @@ const getWatchHistory = async (options: WatchHistoryOptions): Promise<PlexWatche
 	}));
 };
 
-export { checkPlexPin, createPlexPin, getPlexLibraries, getPlexServers, getWatchHistory };
+const EMPTY_LENGTH = 0;
+
+const getLibraryContents = async (options: LibraryContentsOptions): Promise<PlexLibraryItem[]> => {
+	const { serverUrl, authToken, libraryId, pageSize = DEFAULT_PAGE_SIZE } = options;
+
+	const items: PlexLibraryItem[] = [];
+	let start = 0;
+	let totalSize = Infinity;
+
+	while (start < totalSize) {
+		const params = new URLSearchParams({
+			"X-Plex-Container-Start": start.toString(),
+			"X-Plex-Container-Size": pageSize.toString(),
+		});
+		const url = `${serverUrl}/library/sections/${libraryId}/all?${params.toString()}`;
+
+		// eslint-disable-next-line no-await-in-loop -- pagination requires sequential requests; each page depends on the previous response
+		const response = await fetch(url, {
+			method: "GET",
+			headers: plexHeaders(authToken),
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to get library contents: ${response.status.toString()}`);
+		}
+
+		// eslint-disable-next-line no-await-in-loop -- sequential await required for pagination
+		const data = plexLibraryContentsResponseSchema.parse(await response.json());
+		const { totalSize: responseTotal, Metadata } = data.MediaContainer;
+		totalSize = responseTotal;
+
+		const metadata = Metadata ?? [];
+		if (metadata.length === EMPTY_LENGTH) {
+			break;
+		}
+
+		for (const item of metadata) {
+			items.push({
+				title: item.title,
+				type: item.type,
+				year: item.year,
+				ratingKey: item.ratingKey,
+				genres: (item.Genre ?? []).map((genre) => genre.tag).join(","),
+			});
+		}
+
+		start += metadata.length;
+	}
+
+	return items;
+};
+
+export {
+	checkPlexPin,
+	createPlexPin,
+	getLibraryContents,
+	getPlexLibraries,
+	getPlexServers,
+	getWatchHistory,
+};
 
 export type {
+	LibraryContentsOptions,
 	PlexLibrary,
+	PlexLibraryItem,
 	PlexPin,
 	PlexPinCheck,
 	PlexServer,

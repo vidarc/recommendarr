@@ -4,13 +4,26 @@ import { eq, inArray } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { aiConfigs, conversations, messages, plexConnections, recommendations } from "../schema.ts";
+import {
+	aiConfigs,
+	arrConnections as arrConnectionsTable,
+	conversations,
+	messages,
+	plexConnections,
+	recommendations,
+	userSettings,
+} from "../schema.ts";
 import { chatCompletion } from "../services/ai-client.ts";
 import { decrypt } from "../services/encryption.ts";
+import { buildExclusionContext, shouldAutoSync, syncLibrary } from "../services/library-sync.ts";
 import { getWatchHistory } from "../services/plex-api.ts";
 import { buildSystemPrompt } from "../services/prompt-builder.ts";
-import { parseRecommendations } from "../services/response-parser.ts";
+import {
+	filterExcludedRecommendations,
+	parseRecommendations,
+} from "../services/response-parser.ts";
 
+import type { ExclusionContext } from "../services/library-sync.ts";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
@@ -23,6 +36,10 @@ const NO_PRIOR_MESSAGES = 0;
 const MAX_TITLE_MESSAGE_LENGTH = 200;
 const EMPTY_ARRAY_LENGTH = 0;
 const STRING_START = 0;
+const NO_FILTERED_ITEMS = 0;
+
+const VALID_MEDIA_TYPES = ["movie", "show", "either"] as const;
+type MediaType = (typeof VALID_MEDIA_TYPES)[number];
 
 const errorResponseSchema = z.object({
 	error: z.string(),
@@ -53,6 +70,7 @@ const chatRequestSchema = z.object({
 		.default(DEFAULT_RESULT_COUNT),
 	conversationId: z.string().optional(),
 	libraryIds: z.array(z.string()).optional(),
+	excludeLibrary: z.boolean().optional(),
 });
 
 const chatResponseSchema = z.object({
@@ -109,7 +127,8 @@ const chatRoutes = (app: FastifyInstance) => {
 				return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Authentication required" });
 			}
 
-			const { message, mediaType, resultCount, conversationId, libraryIds } = request.body;
+			const { message, mediaType, resultCount, conversationId, libraryIds, excludeLibrary } =
+				request.body;
 			const userId = request.user.id;
 
 			// Get AI config
@@ -159,11 +178,50 @@ const chatRoutes = (app: FastifyInstance) => {
 				? await getWatchHistoryItems(plexConnection, libraryIds)
 				: [];
 
+			// Resolve exclusion toggle
+			const userSetting = app.db
+				.select()
+				.from(userSettings)
+				.where(eq(userSettings.userId, userId))
+				.get();
+			const shouldExclude = excludeLibrary ?? userSetting?.excludeLibraryDefault ?? true;
+
+			// Build exclusion context if enabled
+			let exclusionContext: ExclusionContext | undefined = undefined;
+			const isValidMediaType = (value: string): value is MediaType =>
+				(VALID_MEDIA_TYPES as readonly string[]).includes(value);
+			const resolvedMediaType: MediaType = isValidMediaType(mediaType) ? mediaType : "either";
+			if (shouldExclude) {
+				// Trigger background sync if stale — don't block the chat response
+				if ((await shouldAutoSync(userId, app.db)) && plexConnection?.serverUrl) {
+					const arrConns = app.db
+						.select()
+						.from(arrConnectionsTable)
+						.where(eq(arrConnectionsTable.userId, userId))
+						.all();
+					/* eslint-disable promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- intentional fire-and-forget with error handling */
+					void syncLibrary({
+						userId,
+						db: app.db,
+						sqlite: app.sqlite,
+						plexConnection,
+						arrConns,
+					}).catch((error: unknown) => {
+						request.log.error({ error }, "background library sync failed");
+					});
+					/* eslint-enable promise/prefer-await-to-then, promise/prefer-await-to-callbacks */
+				}
+				exclusionContext = await buildExclusionContext(userId, app.db, {
+					mediaType: resolvedMediaType,
+				});
+			}
+
 			// Build system prompt
 			const systemPrompt = buildSystemPrompt({
 				watchHistory,
 				mediaType,
 				resultCount,
+				...(exclusionContext !== undefined && { exclusionContext }),
 			});
 
 			// Fetch conversation history
@@ -196,7 +254,62 @@ const chatRoutes = (app: FastifyInstance) => {
 			);
 
 			// Parse response
-			const parsed = parseRecommendations(aiResponse);
+			let parsed = parseRecommendations(aiResponse);
+
+			// Post-filter: remove library-owned items and past recommendations if exclusion enabled
+			if (shouldExclude && exclusionContext) {
+				const filterResult = filterExcludedRecommendations(parsed.recommendations, {
+					libraryTitles: exclusionContext.titles,
+					pastRecommendations: exclusionContext.pastRecommendations,
+				});
+
+				if (filterResult.filtered.length > NO_FILTERED_ITEMS) {
+					// Backfill request: ask AI for replacements
+					const filteredTitles = filterResult.filtered.map((rec) => rec.title).join(", ");
+					const allExcluded = [
+						...exclusionContext.titles.map((item) => item.title),
+						...filterResult.kept.map((item) => item.title),
+					].join(", ");
+
+					try {
+						const backfillResponse = await chatCompletion(
+							{
+								endpointUrl: aiConfig.endpointUrl,
+								apiKey: decryptedKey,
+								modelName: aiConfig.modelName,
+								temperature: aiConfig.temperature,
+								maxTokens: aiConfig.maxTokens,
+							},
+							[
+								...aiMessages,
+								{
+									role: "user",
+									content: `${String(filterResult.filtered.length)} of your recommendations were items the user already owns: ${filteredTitles}. Please provide ${String(filterResult.filtered.length)} replacement recommendations. Do not suggest: ${allExcluded}`,
+								},
+							],
+						);
+						const backfillParsed = parseRecommendations(backfillResponse);
+						const backfillFiltered = filterExcludedRecommendations(backfillParsed.recommendations, {
+							libraryTitles: exclusionContext.titles,
+							pastRecommendations: exclusionContext.pastRecommendations,
+						});
+						parsed = {
+							conversationalText: parsed.conversationalText,
+							recommendations: [...filterResult.kept, ...backfillFiltered.kept],
+						};
+					} catch {
+						parsed = {
+							conversationalText: parsed.conversationalText,
+							recommendations: filterResult.kept,
+						};
+					}
+				} else {
+					parsed = {
+						conversationalText: parsed.conversationalText,
+						recommendations: filterResult.kept,
+					};
+				}
+			}
 
 			// Save assistant message
 			const assistantMessageId = randomUUID();

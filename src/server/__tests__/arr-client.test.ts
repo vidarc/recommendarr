@@ -4,6 +4,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, test } from "vite-plu
 
 import {
 	addMedia,
+	getAllMovies,
+	getAllSeries,
 	getQualityProfiles,
 	getRootFolders,
 	lookupMedia,
@@ -264,6 +266,133 @@ describe("lookupMedia", () => {
 		});
 
 		expect(results).toStrictEqual([]);
+	});
+});
+
+const INCEPTION_TMDB_ID = 27_205;
+const BREAKING_BAD_TVDB_ID = 81_189;
+
+const mockLibraryMovies = [
+	{
+		id: 1,
+		title: "Inception",
+		year: INCEPTION_YEAR,
+		tmdbId: INCEPTION_TMDB_ID,
+		genres: ["Action", "Sci-Fi", "Thriller"],
+	},
+	{
+		id: 2,
+		title: "Interstellar",
+		year: 2014,
+		tmdbId: 157_336,
+		genres: ["Adventure", "Drama", "Sci-Fi"],
+	},
+];
+
+const mockLibrarySeries = [
+	{
+		id: 1,
+		title: "Breaking Bad",
+		year: 2008,
+		tvdbId: BREAKING_BAD_TVDB_ID,
+		genres: ["Crime", "Drama", "Thriller"],
+	},
+	{
+		id: 2,
+		title: "Better Call Saul",
+		year: 2015,
+		tvdbId: 273_181,
+		genres: ["Crime", "Drama"],
+	},
+];
+
+describe("getAllMovies", () => {
+	test("returns ArrLibraryMovie[] with genres joined as comma-separated string", async () => {
+		mswServer.use(
+			http.get(`${MOCK_RADARR_URL}/api/v3/movie`, () => HttpResponse.json(mockLibraryMovies)),
+		);
+
+		const movies = await getAllMovies(MOCK_RADARR_URL, MOCK_API_KEY);
+
+		expect(movies).toHaveLength(TWO_ITEMS);
+		expect(movies[FIRST]).toStrictEqual({
+			title: "Inception",
+			year: INCEPTION_YEAR,
+			tmdbId: INCEPTION_TMDB_ID,
+			genres: "Action, Sci-Fi, Thriller",
+		});
+		expect(movies[SECOND]).toStrictEqual({
+			title: "Interstellar",
+			year: 2014,
+			tmdbId: 157_336,
+			genres: "Adventure, Drama, Sci-Fi",
+		});
+	});
+
+	test("returns empty array for empty library", async () => {
+		mswServer.use(http.get(`${MOCK_RADARR_URL}/api/v3/movie`, () => HttpResponse.json([])));
+
+		const movies = await getAllMovies(MOCK_RADARR_URL, MOCK_API_KEY);
+
+		expect(movies).toStrictEqual([]);
+	});
+
+	test("throws on failed request (401)", async () => {
+		mswServer.use(
+			http.get(
+				`${MOCK_RADARR_URL}/api/v3/movie`,
+				() => new HttpResponse(undefined, { status: 401 }),
+			),
+		);
+
+		await expect(getAllMovies(MOCK_RADARR_URL, MOCK_API_KEY)).rejects.toThrow(
+			"Failed to get movies",
+		);
+	});
+});
+
+describe("getAllSeries", () => {
+	test("returns ArrLibrarySeries[] with genres joined as comma-separated string", async () => {
+		mswServer.use(
+			http.get(`${MOCK_SONARR_URL}/api/v3/series`, () => HttpResponse.json(mockLibrarySeries)),
+		);
+
+		const series = await getAllSeries(MOCK_SONARR_URL, MOCK_API_KEY);
+
+		expect(series).toHaveLength(TWO_ITEMS);
+		expect(series[FIRST]).toStrictEqual({
+			title: "Breaking Bad",
+			year: 2008,
+			tvdbId: BREAKING_BAD_TVDB_ID,
+			genres: "Crime, Drama, Thriller",
+		});
+		expect(series[SECOND]).toStrictEqual({
+			title: "Better Call Saul",
+			year: 2015,
+			tvdbId: 273_181,
+			genres: "Crime, Drama",
+		});
+	});
+
+	test("returns empty array for empty library", async () => {
+		mswServer.use(http.get(`${MOCK_SONARR_URL}/api/v3/series`, () => HttpResponse.json([])));
+
+		const result = await getAllSeries(MOCK_SONARR_URL, MOCK_API_KEY);
+
+		expect(result).toStrictEqual([]);
+	});
+
+	test("throws on failed request (401)", async () => {
+		mswServer.use(
+			http.get(
+				`${MOCK_SONARR_URL}/api/v3/series`,
+				() => new HttpResponse(undefined, { status: 401 }),
+			),
+		);
+
+		await expect(getAllSeries(MOCK_SONARR_URL, MOCK_API_KEY)).rejects.toThrow(
+			"Failed to get series",
+		);
 	});
 });
 

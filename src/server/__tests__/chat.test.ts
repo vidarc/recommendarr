@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -18,7 +19,15 @@ import {
 } from "vite-plus/test";
 
 import { buildServer } from "../app.ts";
-import { aiConfigs, conversations, messages, plexConnections, users } from "../schema.ts";
+import {
+	aiConfigs,
+	conversations,
+	libraryItems,
+	messages,
+	plexConnections,
+	userSettings,
+	users,
+} from "../schema.ts";
 import { encrypt } from "../services/encryption.ts";
 import { createSession } from "../services/session.ts";
 
@@ -478,5 +487,154 @@ describe("DELETE /api/conversations/:id", () => {
 		});
 
 		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
+	});
+});
+
+describe("POST /api/chat with library exclusion", () => {
+	test("sends exclusion context when excludeLibrary is true", async () => {
+		const app = await setupDb();
+		const { sessionId, userId } = await getSessionCookie(app);
+		setupAiAndPlex(app, userId);
+
+		// Seed a library item
+		const now = new Date().toISOString();
+		app.db
+			.insert(libraryItems)
+			.values({
+				id: randomUUID(),
+				userId,
+				title: "Inception",
+				year: 2010,
+				mediaType: "movie",
+				source: "plex",
+				syncedAt: now,
+			})
+			.run();
+
+		// Seed user settings with excludeLibraryDefault true
+		app.db
+			.insert(userSettings)
+			.values({
+				id: randomUUID(),
+				userId,
+				librarySyncInterval: "manual",
+				excludeLibraryDefault: true,
+			})
+			.run();
+
+		// Intercept the AI call to capture the system prompt
+		let capturedSystemPrompt = "";
+		mswServer.use(
+			http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, async ({ request }) => {
+				const body: unknown = await request.json();
+				if (
+					body !== null &&
+					typeof body === "object" &&
+					"messages" in body &&
+					Array.isArray(body.messages)
+				) {
+					const systemMsg: unknown = body.messages.find(
+						(msg: unknown) =>
+							msg !== null && typeof msg === "object" && "role" in msg && msg.role === "system",
+					);
+					if (
+						systemMsg !== null &&
+						typeof systemMsg === "object" &&
+						"content" in systemMsg &&
+						typeof systemMsg.content === "string"
+					) {
+						capturedSystemPrompt = systemMsg.content;
+					}
+				}
+				return HttpResponse.json({
+					id: "chatcmpl-test",
+					choices: [{ message: { role: "assistant", content: mockAiResponse } }],
+				});
+			}),
+		);
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/chat",
+			cookies: { session: sessionId },
+			payload: {
+				message: "Recommend me some sci-fi movies",
+				mediaType: "movie",
+				resultCount: 5,
+				excludeLibrary: true,
+			},
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		expect(capturedSystemPrompt).toContain("do NOT recommend");
+		expect(capturedSystemPrompt).toContain("Inception");
+	});
+
+	test("skips exclusion when excludeLibrary is false", async () => {
+		const app = await setupDb();
+		const { sessionId, userId } = await getSessionCookie(app);
+		setupAiAndPlex(app, userId);
+
+		// Seed a library item
+		const now = new Date().toISOString();
+		app.db
+			.insert(libraryItems)
+			.values({
+				id: randomUUID(),
+				userId,
+				title: "Inception",
+				year: 2010,
+				mediaType: "movie",
+				source: "plex",
+				syncedAt: now,
+			})
+			.run();
+
+		// Intercept the AI call to capture the system prompt
+		let capturedSystemPrompt = "";
+		mswServer.use(
+			http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, async ({ request }) => {
+				const body: unknown = await request.json();
+				if (
+					body !== null &&
+					typeof body === "object" &&
+					"messages" in body &&
+					Array.isArray(body.messages)
+				) {
+					const systemMsg: unknown = body.messages.find(
+						(msg: unknown) =>
+							msg !== null && typeof msg === "object" && "role" in msg && msg.role === "system",
+					);
+					if (
+						systemMsg !== null &&
+						typeof systemMsg === "object" &&
+						"content" in systemMsg &&
+						typeof systemMsg.content === "string"
+					) {
+						capturedSystemPrompt = systemMsg.content;
+					}
+				}
+				return HttpResponse.json({
+					id: "chatcmpl-test",
+					choices: [{ message: { role: "assistant", content: mockAiResponse } }],
+				});
+			}),
+		);
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/chat",
+			cookies: { session: sessionId },
+			payload: {
+				message: "Recommend me some sci-fi movies",
+				mediaType: "movie",
+				resultCount: 5,
+				excludeLibrary: false,
+			},
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		expect(capturedSystemPrompt).not.toContain("do NOT recommend");
+		expect(capturedSystemPrompt).not.toContain("Inception");
 	});
 });

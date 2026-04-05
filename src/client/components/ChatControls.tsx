@@ -100,6 +100,17 @@ const controlGroup = css`
 	gap: ${spacing.xs};
 `;
 
+const checkboxStyle = css`
+	accent-color: ${colors.accent};
+	cursor: pointer;
+`;
+
+const checkboxLabel = css`
+	font-size: 0.85rem;
+	color: ${colors.textMuted};
+	cursor: pointer;
+`;
+
 const MEDIA_TYPES = [
 	{ value: "movie", label: "Movies" },
 	{ value: "tv", label: "TV Shows" },
@@ -178,6 +189,27 @@ const LibraryScopeSelect = ({ value, onChange }: LibraryScopeSelectProps) => {
 	);
 };
 
+interface ExcludeLibraryCheckboxProps {
+	checked: boolean;
+	onChange: (value: boolean) => void;
+}
+
+const ExcludeLibraryCheckbox = ({ checked, onChange }: ExcludeLibraryCheckboxProps) => {
+	const handleChange = useCallback(
+		(event: ChangeEvent<HTMLInputElement>) => {
+			onChange(event.target.checked);
+		},
+		[onChange],
+	);
+
+	return (
+		<label className={checkboxLabel}>
+			<input type="checkbox" className={checkboxStyle} checked={checked} onChange={handleChange} />{" "}
+			On
+		</label>
+	);
+};
+
 interface ChatControlsProps {
 	mediaType: MediaType;
 	onMediaTypeChange: (value: MediaType) => void;
@@ -185,6 +217,8 @@ interface ChatControlsProps {
 	onLibraryIdChange: (value: string) => void;
 	resultCount: number;
 	onResultCountChange: (value: number) => void;
+	excludeLibrary: boolean;
+	onExcludeLibraryChange: (value: boolean) => void;
 }
 
 const ChatControls = ({
@@ -194,6 +228,8 @@ const ChatControls = ({
 	onLibraryIdChange,
 	resultCount,
 	onResultCountChange,
+	excludeLibrary,
+	onExcludeLibraryChange,
 }: ChatControlsProps) => {
 	const handleResultCountChange = useCallback(
 		(event: ChangeEvent<HTMLInputElement>) => {
@@ -222,6 +258,10 @@ const ChatControls = ({
 					onChange={handleResultCountChange}
 					className={numberInput}
 				/>
+			</div>
+			<div className={controlGroup}>
+				<span className={controlLabel}>Exclude Library</span>
+				<ExcludeLibraryCheckbox checked={excludeLibrary} onChange={onExcludeLibraryChange} />
 			</div>
 		</div>
 	);
