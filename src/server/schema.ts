@@ -93,6 +93,7 @@ const recommendations = sqliteTable("recommendations", {
 	synopsis: text("synopsis"),
 	tmdbId: integer("tmdb_id"),
 	addedToArr: integer("added_to_arr", { mode: "boolean" }).notNull().default(false),
+	feedback: text("feedback"),
 });
 
 const selectRecommendationSchema = createSelectSchema(recommendations);
