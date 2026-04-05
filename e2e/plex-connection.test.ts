@@ -13,6 +13,13 @@ test.describe("plex connection settings flow", () => {
 		await page.goto("/settings");
 
 		await expect(page.getByRole("heading", { level: 3, name: "Plex Connection" })).toBeVisible();
+
+		// Clean up any leftover Plex connection from a previous failed serial run
+		const disconnectButton = page.getByRole("button", { name: "Disconnect" });
+		if (await disconnectButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+			await disconnectButton.click();
+		}
+
 		await expect(page.getByRole("button", { name: "Connect Plex" })).toBeVisible();
 		await expect(page.getByText("Show Manual Connection")).toBeVisible();
 	});

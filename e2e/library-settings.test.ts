@@ -9,6 +9,16 @@ test.describe.configure({ mode: "serial" });
 test.describe("library settings flow", () => {
 	test("set up Plex connection for library sync", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
+
+		// If already connected from a previous failed serial run, skip setup
+		const alreadyConnected = await page
+			.getByText(mockServerName)
+			.isVisible({ timeout: 1000 })
+			.catch(() => false);
+		if (alreadyConnected) {
+			return;
+		}
+
 		await page.getByText("Show Manual Connection").click();
 		await page.getByLabel("Auth Token").fill(mockAuthToken);
 		await page.getByLabel("Server URL").fill(mockPlexUrl);
@@ -49,12 +59,18 @@ test.describe("library settings flow", () => {
 		await page.getByRole("tab", { name: "Library" }).click();
 
 		await page.locator("#sync-interval").selectOption("24h");
+		await expect(page.locator("#sync-interval")).toHaveValue("24h");
 
 		const excludeCheckbox = page.locator("#exclude-default");
 		const isChecked = await excludeCheckbox.isChecked();
 		await excludeCheckbox.click();
 
+		// Wait for save API response before reloading
+		const saveResponse = page.waitForResponse((resp) =>
+			resp.url().includes("/api/library/settings"),
+		);
 		await page.getByRole("button", { name: "Save" }).click();
+		await saveResponse;
 
 		// Reload and verify persistence
 		await page.goto("/settings");

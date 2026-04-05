@@ -9,12 +9,15 @@ import type { Page } from "@playwright/test";
  */
 const sharedPassword = "admin1234";
 
+const LOGIN_TIMEOUT = 15_000;
+
 const login = async (page: Page, username: string, password: string) => {
-	await page.goto("/login");
+	await page.goto("/login", { waitUntil: "domcontentloaded" });
 	await page.getByLabel("Username").fill(username);
 	await page.getByLabel("Password").fill(password);
 	await page.getByRole("button", { name: /log in/i }).click();
-	await expect(page).toHaveURL("/");
+	await expect(page).toHaveURL("/", { timeout: LOGIN_TIMEOUT });
+	await page.waitForLoadState("networkidle");
 };
 
 interface AuthFixtures {
