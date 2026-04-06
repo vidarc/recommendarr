@@ -6,6 +6,7 @@ interface Recommendation {
 	synopsis?: string;
 	tmdbId?: number;
 	addedToArr: boolean;
+	feedback?: "liked" | "disliked" | null;
 }
 
 interface ChatMessageResponse {

@@ -72,6 +72,37 @@ const chatApi = api.injectEndpoints({
 				{ type: "Conversations", id },
 			],
 		}),
+		updateFeedback: builder.mutation<
+			{ id: string; feedback: "liked" | "disliked" | null },
+			{ recommendationId: string; conversationId: string; feedback: "liked" | "disliked" | null }
+		>({
+			query: ({ recommendationId, feedback }) => ({
+				url: `api/recommendations/${recommendationId}/feedback`,
+				method: "PATCH",
+				body: { feedback },
+			}),
+			onQueryStarted: async (
+				{ recommendationId, conversationId, feedback },
+				{ dispatch, queryFulfilled },
+			) => {
+				const patchResult = dispatch(
+					chatApi.util.updateQueryData("getConversation", conversationId, (draft) => {
+						for (const msg of draft.conversation.messages) {
+							for (const rec of msg.recommendations) {
+								if (rec.id === recommendationId) {
+									rec.feedback = feedback;
+								}
+							}
+						}
+					}),
+				);
+				try {
+					await queryFulfilled;
+				} catch {
+					patchResult.undo();
+				}
+			},
+		}),
 	}),
 });
 
@@ -80,6 +111,7 @@ const {
 	useGetConversationsQuery,
 	useGetConversationQuery,
 	useDeleteConversationMutation,
+	useUpdateFeedbackMutation,
 } = chatApi;
 
 export {
@@ -87,5 +119,6 @@ export {
 	useGetConversationQuery,
 	useGetConversationsQuery,
 	useSendChatMessageMutation,
+	useUpdateFeedbackMutation,
 };
 export type { ConversationSummary };
