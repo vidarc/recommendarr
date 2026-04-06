@@ -79,10 +79,17 @@ const chatRequestSchema = z.object({
 	excludeLibrary: z.boolean().optional(),
 });
 
+const messageSchema = z.object({
+	id: z.string(),
+	role: z.string(),
+	content: z.string(),
+	createdAt: z.string(),
+	recommendations: z.array(recommendationSchema),
+});
+
 const chatResponseSchema = z.object({
 	conversationId: z.string(),
-	message: z.string(),
-	recommendations: z.array(recommendationSchema),
+	message: messageSchema,
 });
 
 const conversationListItemSchema = z.object({
@@ -94,14 +101,6 @@ const conversationListItemSchema = z.object({
 
 const conversationsResponseSchema = z.object({
 	conversations: z.array(conversationListItemSchema),
-});
-
-const messageSchema = z.object({
-	id: z.string(),
-	role: z.string(),
-	content: z.string(),
-	createdAt: z.string(),
-	recommendations: z.array(recommendationSchema),
 });
 
 const conversationDetailSchema = z.object({
@@ -358,6 +357,7 @@ const chatRoutes = (app: FastifyInstance) => {
 
 			// Save assistant message
 			const assistantMessageId = randomUUID();
+			const assistantCreatedAt = new Date().toISOString();
 			app.db
 				.insert(messages)
 				.values({
@@ -365,7 +365,7 @@ const chatRoutes = (app: FastifyInstance) => {
 					conversationId: activeConversationId,
 					role: "assistant",
 					content: aiResponse,
-					createdAt: new Date().toISOString(),
+					createdAt: assistantCreatedAt,
 				})
 				.run();
 
@@ -436,8 +436,13 @@ const chatRoutes = (app: FastifyInstance) => {
 
 			return reply.code(StatusCodes.OK).send({
 				conversationId: activeConversationId,
-				message: parsed.conversationalText,
-				recommendations: savedRecommendations,
+				message: {
+					id: assistantMessageId,
+					role: "assistant",
+					content: parsed.conversationalText,
+					createdAt: assistantCreatedAt,
+					recommendations: savedRecommendations,
+				},
 			});
 		},
 	);

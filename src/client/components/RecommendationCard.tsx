@@ -231,9 +231,13 @@ const CardActions = ({ mediaType, addedToArr, isConnected, onAdd, children }: Ca
 const RecommendationCard = ({
 	recommendation,
 	conversationId,
+	onFeedbackChange,
 }: {
 	recommendation: Recommendation;
 	conversationId: string;
+	onFeedbackChange?:
+		| ((recommendationId: string, feedback: "liked" | "disliked" | null) => void)
+		| undefined;
 }) => {
 	const [modalOpen, setModalOpen] = useState(false);
 	const serviceType = recommendation.mediaType === "movie" ? "radarr" : "sonarr";
@@ -252,6 +256,7 @@ const RecommendationCard = ({
 
 	const handleFeedback = useCallback(
 		(feedback: "liked" | "disliked" | null) => {
+			onFeedbackChange?.(recommendation.id, feedback);
 			/* eslint-disable promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- intentional fire-and-forget with error handling */
 			void updateFeedback({
 				recommendationId: recommendation.id,
@@ -262,7 +267,7 @@ const RecommendationCard = ({
 			});
 			/* eslint-enable promise/prefer-await-to-then, promise/prefer-await-to-callbacks */
 		},
-		[updateFeedback, recommendation.id, conversationId],
+		[updateFeedback, recommendation.id, conversationId, onFeedbackChange],
 	);
 
 	return (

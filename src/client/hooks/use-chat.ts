@@ -59,6 +59,20 @@ export const useChat = () => {
 		setExcludeLibrary(value);
 	}, []);
 
+	const handleRecommendationFeedback = useCallback(
+		(recommendationId: string, feedback: "liked" | "disliked" | null) => {
+			setMessages((prev) =>
+				prev.map((msg) => ({
+					...msg,
+					recommendations: msg.recommendations.map((rec) =>
+						rec.id === recommendationId ? { ...rec, feedback } : rec,
+					),
+				})),
+			);
+		},
+		[],
+	);
+
 	return {
 		messages,
 		isLoading,
@@ -73,5 +87,6 @@ export const useChat = () => {
 		handleExcludeLibraryChange,
 		handleNewConversation,
 		handleSend,
+		handleRecommendationFeedback,
 	};
 };

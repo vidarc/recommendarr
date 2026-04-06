@@ -187,9 +187,12 @@ describe("POST /api/chat", () => {
 		expect(response.statusCode).toBe(StatusCodes.OK);
 		const body = response.json();
 		expect(body.conversationId).toBeDefined();
-		expect(body.message).toContain("great recommendations");
-		expect(body.recommendations).toHaveLength(EXPECTED_REC_COUNT);
-		expect(body.recommendations[FIRST_INDEX].title).toBe("The Matrix");
+		expect(body.message.content).toContain("great recommendations");
+		expect(body.message.role).toBe("assistant");
+		expect(body.message.id).toBeDefined();
+		expect(body.message.createdAt).toBeDefined();
+		expect(body.message.recommendations).toHaveLength(EXPECTED_REC_COUNT);
+		expect(body.message.recommendations[FIRST_INDEX].title).toBe("The Matrix");
 	});
 
 	test("appends to existing conversation", async () => {

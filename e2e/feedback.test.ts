@@ -38,9 +38,17 @@ const conversationDetailSchema = z.object({
 });
 
 // Helper: send a chat message and wait for at least one recommendation card.
+// Disables "Exclude Library" so past recommendations are not filtered out on
+// Repeat calls (the mock always returns the same movie).
 const sendMessageAndWaitForRecommendation = async (page: Page) => {
 	await page.goto("/");
-	await page.getByRole("textbox", { name: /message/i }).fill("Recommend me some sci-fi movies");
+	const excludeToggle = page.getByRole("checkbox", { name: /on/i });
+	if (await excludeToggle.isChecked()) {
+		await excludeToggle.click();
+	}
+	await page
+		.getByRole("textbox", { name: /ask for recommendations/i })
+		.fill("Recommend me some sci-fi movies");
 	await page.getByRole("button", { name: /send/i }).click();
 	await expect(page.getByRole("button", { name: "Thumbs up" }).first()).toBeVisible({
 		timeout: 15_000,
@@ -193,7 +201,7 @@ test.describe("recommendation feedback flow", () => {
 		const { conversations } = conversationsResponseSchema.parse(await convListResp.json());
 		expect(conversations.length).toBeGreaterThan(0);
 
-		const latestConvId = conversations[0]?.id;
+		const latestConvId = conversations.at(-1)?.id;
 		expect(latestConvId).toBeDefined();
 
 		const detailResp = await page.request.get(`/api/conversations/${String(latestConvId)}`);
