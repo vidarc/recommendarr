@@ -268,12 +268,11 @@ const createSonarrMock = async () => {
 
 const RECOMMENDATION_BODY = `Here is a movie you might enjoy:
 
-[RECOMMENDATION]
-Title: Blade Runner 2049
-Year: 2017
-Type: movie
-Synopsis: A young blade runner's discovery of a long-buried secret leads him to track down former blade runner Rick Deckard.
-[/RECOMMENDATION]`;
+\`\`\`json
+[
+  { "title": "Blade Runner 2049", "year": 2017, "mediaType": "movie", "synopsis": "A young blade runner's discovery of a long-buried secret leads him to track down former blade runner Rick Deckard." }
+]
+\`\`\``;
 
 const TITLE_BODY = "Sci-Fi Recommendations";
 
