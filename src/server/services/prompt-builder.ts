@@ -6,11 +6,19 @@ interface WatchHistoryItem {
 	type: string;
 }
 
+interface FeedbackItem {
+	title: string;
+	year: number | undefined;
+	mediaType: string;
+	feedback: "liked" | "disliked";
+}
+
 interface BuildSystemPromptOptions {
 	watchHistory: WatchHistoryItem[];
 	mediaType: string;
 	resultCount: number;
 	exclusionContext?: ExclusionContext;
+	feedbackContext?: FeedbackItem[];
 }
 
 const formatExclusionTitles = (titles: ExclusionContext["titles"]): string =>
@@ -52,6 +60,34 @@ const buildExclusionSection = (exclusionContext: ExclusionContext): string => {
 	return sections.join("\n\n");
 };
 
+const formatFeedbackTitle = (item: FeedbackItem): string =>
+	`${item.title}${item.year ? ` (${String(item.year)})` : ""}`;
+
+const buildFeedbackSection = (feedbackContext: FeedbackItem[]): string => {
+	if (feedbackContext.length === EMPTY_LENGTH) {
+		return "";
+	}
+
+	const liked = feedbackContext.filter((item) => item.feedback === "liked");
+	const disliked = feedbackContext.filter((item) => item.feedback === "disliked");
+
+	const sections: string[] = ["The user has provided feedback on past recommendations:"];
+
+	if (liked.length > EMPTY_LENGTH) {
+		sections.push(`Liked: ${liked.map(formatFeedbackTitle).join(", ")}`);
+	}
+
+	if (disliked.length > EMPTY_LENGTH) {
+		sections.push(`Disliked: ${disliked.map(formatFeedbackTitle).join(", ")}`);
+	}
+
+	sections.push(
+		"Use this feedback to inform your recommendations. Suggest more content similar to liked items and avoid content similar to disliked items.",
+	);
+
+	return sections.join("\n");
+};
+
 const formatWatchHistory = (watchHistory: WatchHistoryItem[]): string => {
 	const items = watchHistory
 		.map((item) => {
@@ -68,7 +104,7 @@ const NO_HISTORY_MESSAGE =
 	"The user has no watch history available. Make general recommendations based on popular and well-regarded titles.";
 
 const buildSystemPrompt = (options: BuildSystemPromptOptions): string => {
-	const { watchHistory, mediaType, resultCount, exclusionContext } = options;
+	const { watchHistory, mediaType, resultCount, exclusionContext, feedbackContext } = options;
 
 	const mediaTypeInstruction =
 		mediaType === "either"
@@ -81,12 +117,16 @@ const buildSystemPrompt = (options: BuildSystemPromptOptions): string => {
 			: NO_HISTORY_MESSAGE;
 
 	const exclusionSection = exclusionContext ? `\n\n${buildExclusionSection(exclusionContext)}` : "";
+	const feedbackSection =
+		feedbackContext && feedbackContext.length > EMPTY_LENGTH
+			? `\n\n${buildFeedbackSection(feedbackContext)}`
+			: "";
 
 	return `You are a media recommendation assistant. Your job is to recommend movies and TV shows based on the user's watch history and preferences.
 
 ${watchHistorySection}
 
-${mediaTypeInstruction}${exclusionSection}
+${mediaTypeInstruction}${exclusionSection}${feedbackSection}
 
 When making recommendations, return exactly ${String(resultCount)} recommendations.
 
@@ -104,4 +144,4 @@ Include conversational text before and/or after the JSON block explaining your r
 
 export { buildSystemPrompt };
 
-export type { BuildSystemPromptOptions, WatchHistoryItem };
+export type { BuildSystemPromptOptions, FeedbackItem, WatchHistoryItem };

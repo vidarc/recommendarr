@@ -27,6 +27,17 @@ const server = setupServer(
 			],
 		}),
 	),
+	http.get("/api/library/status", () =>
+		HttpResponse.json({
+			lastSynced: undefined,
+			interval: "manual",
+			itemCount: 0,
+			movieCount: 0,
+			showCount: 0,
+			excludeDefault: true,
+		}),
+	),
+	http.get("/api/arr/config", () => HttpResponse.json([])),
 );
 
 beforeAll(() => {

@@ -1,4 +1,5 @@
-import { integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { check, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 
 const settings = sqliteTable("settings", {
@@ -84,16 +85,26 @@ const messages = sqliteTable("messages", {
 const selectMessageSchema = createSelectSchema(messages);
 const insertMessageSchema = createInsertSchema(messages);
 
-const recommendations = sqliteTable("recommendations", {
-	id: text("id").primaryKey(),
-	messageId: text("message_id").notNull(),
-	title: text("title").notNull(),
-	year: integer("year"),
-	mediaType: text("media_type").notNull(),
-	synopsis: text("synopsis"),
-	tmdbId: integer("tmdb_id"),
-	addedToArr: integer("added_to_arr", { mode: "boolean" }).notNull().default(false),
-});
+const recommendations = sqliteTable(
+	"recommendations",
+	{
+		id: text("id").primaryKey(),
+		messageId: text("message_id").notNull(),
+		title: text("title").notNull(),
+		year: integer("year"),
+		mediaType: text("media_type").notNull(),
+		synopsis: text("synopsis"),
+		tmdbId: integer("tmdb_id"),
+		addedToArr: integer("added_to_arr", { mode: "boolean" }).notNull().default(false),
+		feedback: text("feedback"),
+	},
+	(table) => [
+		check(
+			"feedback_values",
+			sql`${table.feedback} IN ('liked', 'disliked') OR ${table.feedback} IS NULL`,
+		),
+	],
+);
 
 const selectRecommendationSchema = createSelectSchema(recommendations);
 const insertRecommendationSchema = createInsertSchema(recommendations);

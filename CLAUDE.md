@@ -147,6 +147,7 @@ Fastify uses `fastify-type-provider-zod` for request/response validation and typ
 - `GET /api/arr/options/:serviceType` — returns root folders and quality profiles for an arr service
 - `POST /api/arr/lookup` — searches an arr service for media
 - `POST /api/arr/add` — adds media to an arr service, updates recommendation
+- `PATCH /api/recommendations/:id/feedback` — sets, toggles, or clears thumbs-up/thumbs-down feedback on a recommendation
 - `POST /api/library/sync` — triggers manual library sync, returns item counts
 - `GET /api/library/status` — returns last synced time, interval, item counts, and exclude default
 - `PUT /api/library/settings` — updates sync interval and exclude-library default

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
@@ -24,6 +24,7 @@ import {
 } from "../services/response-parser.ts";
 
 import type { ExclusionContext } from "../services/library-sync.ts";
+import type { FeedbackItem } from "../services/prompt-builder.ts";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
@@ -35,11 +36,15 @@ const MAX_TITLE_WORDS = 6;
 const NO_PRIOR_MESSAGES = 0;
 const MAX_TITLE_MESSAGE_LENGTH = 200;
 const EMPTY_ARRAY_LENGTH = 0;
+const FEEDBACK_LIMIT = 50;
 const STRING_START = 0;
 const NO_FILTERED_ITEMS = 0;
 
 const VALID_MEDIA_TYPES = ["movie", "show", "either"] as const;
 type MediaType = (typeof VALID_MEDIA_TYPES)[number];
+
+const toFeedback = (value: string | null): "liked" | "disliked" | undefined =>
+	value === "liked" || value === "disliked" ? value : undefined;
 
 const errorResponseSchema = z.object({
 	error: z.string(),
@@ -57,6 +62,7 @@ const recommendationSchema = z.object({
 	synopsis: z.string().optional(),
 	tmdbId: z.number().optional(),
 	addedToArr: z.boolean(),
+	feedback: z.enum(["liked", "disliked"]).nullable().optional(),
 });
 
 const chatRequestSchema = z.object({
@@ -73,10 +79,17 @@ const chatRequestSchema = z.object({
 	excludeLibrary: z.boolean().optional(),
 });
 
+const messageSchema = z.object({
+	id: z.string(),
+	role: z.string(),
+	content: z.string(),
+	createdAt: z.string(),
+	recommendations: z.array(recommendationSchema),
+});
+
 const chatResponseSchema = z.object({
 	conversationId: z.string(),
-	message: z.string(),
-	recommendations: z.array(recommendationSchema),
+	message: messageSchema,
 });
 
 const conversationListItemSchema = z.object({
@@ -88,14 +101,6 @@ const conversationListItemSchema = z.object({
 
 const conversationsResponseSchema = z.object({
 	conversations: z.array(conversationListItemSchema),
-});
-
-const messageSchema = z.object({
-	id: z.string(),
-	role: z.string(),
-	content: z.string(),
-	createdAt: z.string(),
-	recommendations: z.array(recommendationSchema),
 });
 
 const conversationDetailSchema = z.object({
@@ -216,12 +221,51 @@ const chatRoutes = (app: FastifyInstance) => {
 				});
 			}
 
+			// Query recent feedback (bounded, filtered at DB level)
+			const feedbackRows = app.db
+				.select({
+					title: recommendations.title,
+					year: recommendations.year,
+					mediaType: recommendations.mediaType,
+					feedback: recommendations.feedback,
+				})
+				.from(recommendations)
+				.innerJoin(messages, eq(recommendations.messageId, messages.id))
+				.innerJoin(conversations, eq(messages.conversationId, conversations.id))
+				.where(and(eq(conversations.userId, userId), isNotNull(recommendations.feedback)))
+				.orderBy(desc(messages.createdAt))
+				.limit(FEEDBACK_LIMIT)
+				.all();
+
+			// Deduplicate by title — keep only the most recent feedback per title
+			const seenTitles = new Set<string>();
+			const feedbackContext: FeedbackItem[] = feedbackRows
+				.map((row) => {
+					const feedback = toFeedback(row.feedback);
+					if (!feedback) {
+						return undefined;
+					}
+					const key = row.title.toLowerCase();
+					if (seenTitles.has(key)) {
+						return undefined;
+					}
+					seenTitles.add(key);
+					return {
+						title: row.title,
+						year: row.year ?? undefined,
+						mediaType: row.mediaType,
+						feedback,
+					};
+				})
+				.filter((item): item is FeedbackItem => item !== undefined);
+
 			// Build system prompt
 			const systemPrompt = buildSystemPrompt({
 				watchHistory,
 				mediaType,
 				resultCount,
 				...(exclusionContext !== undefined && { exclusionContext }),
+				...(feedbackContext.length > EMPTY_ARRAY_LENGTH && { feedbackContext }),
 			});
 
 			// Fetch conversation history
@@ -313,6 +357,7 @@ const chatRoutes = (app: FastifyInstance) => {
 
 			// Save assistant message
 			const assistantMessageId = randomUUID();
+			const assistantCreatedAt = new Date().toISOString();
 			app.db
 				.insert(messages)
 				.values({
@@ -320,7 +365,7 @@ const chatRoutes = (app: FastifyInstance) => {
 					conversationId: activeConversationId,
 					role: "assistant",
 					content: aiResponse,
-					createdAt: new Date().toISOString(),
+					createdAt: assistantCreatedAt,
 				})
 				.run();
 
@@ -348,6 +393,7 @@ const chatRoutes = (app: FastifyInstance) => {
 					synopsis: rec.synopsis,
 					tmdbId: undefined,
 					addedToArr: false,
+					feedback: undefined,
 				};
 			});
 
@@ -390,8 +436,13 @@ const chatRoutes = (app: FastifyInstance) => {
 
 			return reply.code(StatusCodes.OK).send({
 				conversationId: activeConversationId,
-				message: parsed.conversationalText,
-				recommendations: savedRecommendations,
+				message: {
+					id: assistantMessageId,
+					role: "assistant",
+					content: parsed.conversationalText,
+					createdAt: assistantCreatedAt,
+					recommendations: savedRecommendations,
+				},
 			});
 		},
 	);
@@ -494,6 +545,7 @@ const chatRoutes = (app: FastifyInstance) => {
 						synopsis: rec.synopsis ?? undefined,
 						tmdbId: rec.tmdbId ?? undefined,
 						addedToArr: rec.addedToArr,
+						feedback: toFeedback(rec.feedback),
 					})),
 				};
 			});

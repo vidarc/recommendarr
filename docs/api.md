@@ -633,15 +633,16 @@ Sends a message to the AI for media recommendations. Creates a new conversation 
 
 Each recommendation object:
 
-| Field        | Type      | Description                             |
-| ------------ | --------- | --------------------------------------- |
-| `id`         | `string`  | Recommendation UUID                     |
-| `title`      | `string`  | Media title                             |
-| `year`       | `number`  | Optional, release year                  |
-| `mediaType`  | `string`  | Type of media (e.g. `movie`, `show`)    |
-| `synopsis`   | `string`  | Optional, brief description             |
-| `tmdbId`     | `number`  | Optional, TMDB ID                       |
-| `addedToArr` | `boolean` | Whether item was added to \*arr service |
+| Field        | Type      | Description                                  |
+| ------------ | --------- | -------------------------------------------- |
+| `id`         | `string`  | Recommendation UUID                          |
+| `title`      | `string`  | Media title                                  |
+| `year`       | `number`  | Optional, release year                       |
+| `mediaType`  | `string`  | Type of media (e.g. `movie`, `show`)         |
+| `synopsis`   | `string`  | Optional, brief description                  |
+| `tmdbId`     | `number`  | Optional, TMDB ID                            |
+| `addedToArr` | `boolean` | Whether item was added to \*arr service      |
+| `feedback`   | `string`  | Optional. `"liked"`, `"disliked"`, or `null` |
 
 **Response `404 Not Found`**
 
@@ -1204,6 +1205,58 @@ Updates the library sync interval and/or the exclude-library default setting.
 
 ```json
 { "success": true }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+## Recommendations
+
+All recommendation endpoints require authentication via `session` cookie.
+
+### `PATCH /api/recommendations/:id/feedback`
+
+Sets, toggles, or clears thumbs-up/thumbs-down feedback on a recommendation. Feedback is used to influence future AI recommendations across conversations.
+
+**Request**
+
+| Path Param | Type     | Description         |
+| ---------- | -------- | ------------------- |
+| `id`       | `string` | Recommendation UUID |
+
+```json
+{
+	"feedback": "liked"
+}
+```
+
+| Field      | Type               | Description                                 |
+| ---------- | ------------------ | ------------------------------------------- |
+| `feedback` | `string` or `null` | `"liked"`, `"disliked"`, or `null` to clear |
+
+**Response `200 OK`**
+
+```json
+{
+	"id": "550e8400-e29b-41d4-a716-446655440000",
+	"feedback": "liked"
+}
+```
+
+| Field      | Type               | Description            |
+| ---------- | ------------------ | ---------------------- |
+| `id`       | `string`           | Recommendation UUID    |
+| `feedback` | `string` or `null` | Current feedback value |
+
+**Response `404 Not Found`**
+
+```json
+{ "error": "Recommendation not found" }
 ```
 
 **Response `401 Unauthorized`**

@@ -24,6 +24,10 @@ type: project
 - **Streaming availability** — show where a recommendation is available (JustWatch API or similar)
 - **Poster art** — pull movie/show posters from TMDB for RecommendationCards
 
+## Token Management
+
+- **Token budget / accuracy levels** — let users choose a token usage tier (e.g., "lean" vs "full") that disables or simplifies token-heavy features like feedback injection, exclusion context, or backfill requests. Helps cost-conscious users control AI API spend.
+
 ## Power User Features
 
 - **Scheduled recommendations** — weekly email/notification with fresh picks

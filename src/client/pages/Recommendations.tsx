@@ -99,12 +99,27 @@ const LoadingBubble = () => (
 	</div>
 );
 
-const MessageItem = ({ message }: { message: ChatMessageResponse }) => (
+const MessageItem = ({
+	message,
+	conversationId,
+	onFeedbackChange,
+}: {
+	message: ChatMessageResponse;
+	conversationId: string;
+	onFeedbackChange?:
+		| ((recommendationId: string, feedback: "liked" | "disliked" | null) => void)
+		| undefined;
+}) => (
 	<>
 		<ChatMessage content={message.content} role={message.role} />
 		{message.recommendations.length > NO_RECOMMENDATIONS
 			? message.recommendations.map((rec) => (
-					<RecommendationCard key={rec.id} recommendation={rec} />
+					<RecommendationCard
+						key={rec.id}
+						recommendation={rec}
+						conversationId={conversationId}
+						onFeedbackChange={onFeedbackChange}
+					/>
 				))
 			: undefined}
 	</>
@@ -113,9 +128,15 @@ const MessageItem = ({ message }: { message: ChatMessageResponse }) => (
 const MessageThread = ({
 	messages,
 	isLoading,
+	conversationId,
+	onFeedbackChange,
 }: {
 	messages: ChatMessageResponse[];
 	isLoading: boolean;
+	conversationId: string | undefined;
+	onFeedbackChange?:
+		| ((recommendationId: string, feedback: "liked" | "disliked" | null) => void)
+		| undefined;
 }) => {
 	const threadRef = useRef<HTMLDivElement>(null);
 
@@ -136,7 +157,12 @@ const MessageThread = ({
 	return (
 		<div className={threadArea} ref={threadRef}>
 			{messages.map((msg) => (
-				<MessageItem key={msg.id} message={msg} />
+				<MessageItem
+					key={msg.id}
+					message={msg}
+					conversationId={conversationId ?? ""}
+					onFeedbackChange={onFeedbackChange}
+				/>
 			))}
 			{isLoading ? <LoadingBubble /> : undefined}
 		</div>
@@ -161,7 +187,12 @@ const Recommendations = () => {
 				excludeLibrary={chat.excludeLibrary}
 				onExcludeLibraryChange={chat.handleExcludeLibraryChange}
 			/>
-			<MessageThread messages={chat.messages} isLoading={chat.isLoading} />
+			<MessageThread
+				messages={chat.messages}
+				isLoading={chat.isLoading}
+				conversationId={chat.conversationId}
+				onFeedbackChange={chat.handleRecommendationFeedback}
+			/>
 			<ChatInput onSend={chat.handleSend} isLoading={chat.isLoading} />
 		</div>
 	);

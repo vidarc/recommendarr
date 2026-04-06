@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures.ts";
+import { expect, login, sharedPassword, test } from "./fixtures.ts";
 
 const mockPlexUrl = "http://mock-services:9090";
 const mockServerName = "E2E Plex Server";
@@ -13,7 +13,7 @@ test.describe("library settings flow", () => {
 		// If already connected from a previous failed serial run, skip setup
 		const alreadyConnected = await page
 			.getByText(mockServerName)
-			.isVisible({ timeout: 1000 })
+			.isVisible({ timeout: 3000 })
 			.catch(() => false);
 		if (alreadyConnected) {
 			return;
@@ -58,6 +58,11 @@ test.describe("library settings flow", () => {
 		await page.goto("/settings");
 		await page.getByRole("tab", { name: "Library" }).click();
 
+		// Wait for status data to load before interacting — the useEffect that
+		// Hydrates local form state from the API fires after the fetch resolves.
+		// Without this, WebKit can overwrite our selections when the effect runs.
+		await expect(page.getByText(/Last synced:/)).toBeVisible();
+
 		await page.locator("#sync-interval").selectOption("24h");
 		await expect(page.locator("#sync-interval")).toHaveValue("24h");
 
@@ -81,9 +86,20 @@ test.describe("library settings flow", () => {
 		expect(newChecked).toBe(!isChecked);
 	});
 
-	test("clean up Plex connection", async ({ authenticatedPage: page }) => {
+	// Clean up Plex connection so other test suites start with a clean slate.
+	// Uses afterAll so cleanup runs even when earlier tests fail.
+	test.afterAll(async ({ browser }, workerInfo) => {
+		const context = await browser.newContext();
+		const page = await context.newPage();
+		const username = `admin-${workerInfo.project.name}`;
+		await login(page, username, sharedPassword);
+
 		await page.goto("/settings");
-		await page.getByRole("button", { name: "Disconnect" }).click();
-		await expect(page.getByRole("button", { name: "Connect Plex" })).toBeVisible();
+		const disconnectButton = page.getByRole("button", { name: "Disconnect" });
+		if (await disconnectButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+			await disconnectButton.click();
+		}
+
+		await context.close();
 	});
 });

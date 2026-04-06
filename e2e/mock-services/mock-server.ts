@@ -5,6 +5,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 const PLEX_PORT = 9090;
 const RADARR_PORT = 7878;
 const SONARR_PORT = 8989;
+const OPENAI_PORT = 4000;
 
 // ── Auth middleware helpers ──────────────────────────────────
 
@@ -259,7 +260,56 @@ const createSonarrMock = async () => {
 	console.log(`Mock Sonarr server listening on port ${String(SONARR_PORT)}`);
 };
 
+// ── OpenAI-compatible mock (port 4000) ──────────────────────
+
+// Returns a single deterministic movie recommendation that the feedback E2E
+// Tests can reliably interact with. The title-generation call (identified by a
+// "Generate a short title" system prompt) returns a short string instead.
+
+const RECOMMENDATION_BODY = `Here is a movie you might enjoy:
+
+\`\`\`json
+[
+  { "title": "Blade Runner 2049", "year": 2017, "mediaType": "movie", "synopsis": "A young blade runner's discovery of a long-buried secret leads him to track down former blade runner Rick Deckard." }
+]
+\`\`\``;
+
+const TITLE_BODY = "Sci-Fi Recommendations";
+
+const createOpenAiMock = async () => {
+	const openai = Fastify();
+
+	openai.get("/healthz", async () => ({ status: "ok" }));
+
+	openai.post<{
+		Body: { messages?: { role: string; content: string }[] };
+	}>("/v1/chat/completions", async (request) => {
+		const messages = request.body.messages ?? [];
+		const isTitle = messages.some(
+			(msg) => msg.role === "system" && msg.content.includes("Generate a short title"),
+		);
+		const content = isTitle ? TITLE_BODY : RECOMMENDATION_BODY;
+		return {
+			id: "mock-completion-id",
+			object: "chat.completion",
+			created: Math.floor(Date.now() / 1000),
+			model: "gpt-4",
+			choices: [
+				{
+					index: 0,
+					message: { role: "assistant", content },
+					finish_reason: "stop",
+				},
+			],
+			usage: { prompt_tokens: 10, completion_tokens: 50, total_tokens: 60 },
+		};
+	});
+
+	await openai.listen({ port: OPENAI_PORT, host: "0.0.0.0" });
+	console.log(`Mock OpenAI server listening on port ${String(OPENAI_PORT)}`);
+};
+
 // ── Start all ───────────────────────────────────────────────
 
-await Promise.all([createPlexMock(), createRadarrMock(), createSonarrMock()]);
+await Promise.all([createPlexMock(), createRadarrMock(), createSonarrMock(), createOpenAiMock()]);
 console.log("All mock services started");
