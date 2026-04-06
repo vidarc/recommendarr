@@ -38,10 +38,9 @@ const makeRecommendation = (overrides: Partial<Recommendation> = {}): Recommenda
 
 const server = setupServer(
 	http.get("/api/arr/config", () => HttpResponse.json([])),
-	http.patch("/api/recommendations/:id/feedback", async ({ request, params }) => {
-		const body = await request.json();
-		return HttpResponse.json({ id: params["id"], feedback: body });
-	}),
+	http.patch("/api/recommendations/:id/feedback", async ({ params }) =>
+		HttpResponse.json({ id: params["id"], feedback: "liked" }),
+	),
 );
 
 beforeAll(() => {

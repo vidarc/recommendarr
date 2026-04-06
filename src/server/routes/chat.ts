@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
@@ -222,32 +222,36 @@ const chatRoutes = (app: FastifyInstance) => {
 				});
 			}
 
-			// Query recent feedback
+			// Query recent feedback (bounded, filtered at DB level)
 			const feedbackRows = app.db
 				.select({
 					title: recommendations.title,
 					year: recommendations.year,
 					mediaType: recommendations.mediaType,
 					feedback: recommendations.feedback,
-					createdAt: messages.createdAt,
 				})
 				.from(recommendations)
 				.innerJoin(messages, eq(recommendations.messageId, messages.id))
 				.innerJoin(conversations, eq(messages.conversationId, conversations.id))
-				.where(eq(conversations.userId, userId))
-				.orderBy(messages.createdAt)
-				.all()
-				.filter(
-					(row): row is typeof row & { feedback: "liked" | "disliked" } => row.feedback !== null,
-				)
-				.slice(-FEEDBACK_LIMIT);
+				.where(and(eq(conversations.userId, userId), isNotNull(recommendations.feedback)))
+				.orderBy(desc(messages.createdAt))
+				.limit(FEEDBACK_LIMIT)
+				.all();
 
-			const feedbackContext: FeedbackItem[] = feedbackRows.map((row) => ({
-				title: row.title,
-				year: row.year ?? undefined,
-				mediaType: row.mediaType,
-				feedback: row.feedback,
-			}));
+			const feedbackContext: FeedbackItem[] = feedbackRows
+				.map((row) => {
+					const feedback = toFeedback(row.feedback);
+					if (!feedback) {
+						return undefined;
+					}
+					return {
+						title: row.title,
+						year: row.year ?? undefined,
+						mediaType: row.mediaType,
+						feedback,
+					};
+				})
+				.filter((item): item is FeedbackItem => item !== undefined);
 
 			// Build system prompt
 			const systemPrompt = buildSystemPrompt({

@@ -250,11 +250,15 @@ const RecommendationCard = ({
 
 	const handleFeedback = useCallback(
 		(feedback: "liked" | "disliked" | null) => {
+			/* eslint-disable promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- intentional fire-and-forget with error handling */
 			void updateFeedback({
 				recommendationId: recommendation.id,
 				conversationId,
 				feedback,
+			}).catch(() => {
+				// Optimistic update handles rollback; no additional error handling needed
 			});
+			/* eslint-enable promise/prefer-await-to-then, promise/prefer-await-to-callbacks */
 		},
 		[updateFeedback, recommendation.id, conversationId],
 	);

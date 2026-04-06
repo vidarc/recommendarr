@@ -252,4 +252,19 @@ describe("PATCH /api/recommendations/:id/feedback", () => {
 
 		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
 	});
+
+	test("rejects invalid feedback values", async () => {
+		const app = await setupDb();
+		const { sessionId, userId } = await getSessionCookie(app);
+		const { recId } = seedRecommendation(app, userId);
+
+		const response = await app.inject({
+			method: "PATCH",
+			url: `/api/recommendations/${recId}/feedback`,
+			cookies: { session: sessionId },
+			payload: { feedback: "love" },
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
+	});
 });
