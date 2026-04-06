@@ -13,7 +13,7 @@ test.describe("library settings flow", () => {
 		// If already connected from a previous failed serial run, skip setup
 		const alreadyConnected = await page
 			.getByText(mockServerName)
-			.isVisible({ timeout: 1000 })
+			.isVisible({ timeout: 3000 })
 			.catch(() => false);
 		if (alreadyConnected) {
 			return;
@@ -57,6 +57,11 @@ test.describe("library settings flow", () => {
 	test("change preferences and save", async ({ authenticatedPage: page }) => {
 		await page.goto("/settings");
 		await page.getByRole("tab", { name: "Library" }).click();
+
+		// Wait for status data to load before interacting — the useEffect that
+		// Hydrates local form state from the API fires after the fetch resolves.
+		// Without this, WebKit can overwrite our selections when the effect runs.
+		await expect(page.getByText(/Last synced:/)).toBeVisible();
 
 		await page.locator("#sync-interval").selectOption("24h");
 		await expect(page.locator("#sync-interval")).toHaveValue("24h");
