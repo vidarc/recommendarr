@@ -1,4 +1,4 @@
-import { expect, login, sharedPassword, test } from "./fixtures.ts";
+import { adminPassword, adminUsername, expect, login, test } from "./fixtures.ts";
 
 const mockPlexUrl = "http://mock-services:9090";
 const mockServerName = "E2E Plex Server";
@@ -88,11 +88,10 @@ test.describe("library settings flow", () => {
 
 	// Clean up Plex connection so other test suites start with a clean slate.
 	// Uses afterAll so cleanup runs even when earlier tests fail.
-	test.afterAll(async ({ browser }, workerInfo) => {
+	test.afterAll(async ({ browser }) => {
 		const context = await browser.newContext();
 		const page = await context.newPage();
-		const username = `admin-${workerInfo.project.name}`;
-		await login(page, username, sharedPassword);
+		await login(page, adminUsername, adminPassword);
 
 		await page.goto("/settings");
 		const disconnectButton = page.getByRole("button", { name: "Disconnect" });

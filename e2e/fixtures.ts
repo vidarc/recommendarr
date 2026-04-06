@@ -1,13 +1,8 @@
 import { test as base, expect } from "@playwright/test";
 
-import type { Page } from "@playwright/test";
+import { adminPassword, adminUsername } from "./constants.ts";
 
-/**
- * Shared credentials matching admin-login.test.ts.
- * Tests run with workers: 1, so admin-login (alphabetically first) always
- * registers the user before other test files need to log in.
- */
-const sharedPassword = "admin1234";
+import type { Page } from "@playwright/test";
 
 const LOGIN_TIMEOUT = 15_000;
 
@@ -28,24 +23,19 @@ interface AuthFixtures {
 
 /**
  * Extends Playwright's base test with an `authenticatedPage` fixture.
- * All test files share the same user (created by admin-login.test.ts).
- * Since tests run serially (workers: 1), the user is guaranteed to exist.
+ * Authentication is handled by storageState (set in playwright.config.ts),
+ * so this fixture just ensures the page is ready — no login round-trip needed.
  */
 const test = base.extend<AuthFixtures>({
-	testPassword: [sharedPassword, { option: true }],
+	testPassword: [adminPassword, { option: true }],
+	testUsername: [adminUsername, { option: true }],
 
-	testUsername: [
-		async ({}, use, testInfo) => {
-			const username = `admin-${testInfo.project.name}`;
-			await use(username);
-		},
-		{ scope: "test" },
-	],
-
-	authenticatedPage: async ({ page, testUsername, testPassword }, use) => {
-		await login(page, testUsername, testPassword);
+	authenticatedPage: async ({ page }, use) => {
+		// StorageState already has valid session cookies — just navigate to verify
+		await page.goto("/", { waitUntil: "domcontentloaded" });
+		await page.waitForLoadState("networkidle");
 		await use(page);
 	},
 });
 
-export { expect, login, sharedPassword, test };
+export { adminPassword, adminUsername, expect, login, test };
