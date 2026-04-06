@@ -11,18 +11,17 @@ const ciExpectTimeout = 10_000;
 
 const storageState = "e2e/.auth/user.json";
 
-// Cross-file DB conflicts (both pairs touch the same user's settings):
+// Workers must stay at 1 because test files share a single-user DB:
 // - ai-config.test.ts  <->  feedback.test.ts    (both modify AI config)
 // - plex-connection.test.ts  <->  library-settings.test.ts  (both modify Plex connection)
-// With fullyParallel: false, tests within a file stay on one worker in order,
-// And workers: 2 lets independent files overlap while keeping conflict risk low.
-const defaultWorkers = 2;
+// To increase workers, merge conflicting pairs into single serial files
+// Or give each file its own isolated user (requires multi-user registration).
 
 const testIgnore = [/auth\.setup\.ts/, /admin-login\.test\.ts/];
 
 export default defineConfig({
 	testDir: "./e2e",
-	workers: defaultWorkers,
+	workers: 1,
 	timeout: isCI ? ciTimeout : localTimeout,
 	expect: { timeout: isCI ? ciExpectTimeout : defaultExpectTimeout },
 	forbidOnly: isCI,

@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures.ts";
 test.describe("navigation", () => {
 	test("landing page shows Recommendations", async ({ authenticatedPage: page }) => {
 		await expect(page).toHaveURL("/");
-		await expect(page.getByText("Recommendations")).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Recommendations" })).toBeVisible();
 	});
 
 	test("sidebar Settings link navigates to /settings", async ({ authenticatedPage: page }) => {
