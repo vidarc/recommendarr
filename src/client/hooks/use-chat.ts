@@ -62,6 +62,7 @@ export const useChat = () => {
 	return {
 		messages,
 		isLoading,
+		conversationId,
 		mediaType,
 		handleMediaTypeChange,
 		libraryId,

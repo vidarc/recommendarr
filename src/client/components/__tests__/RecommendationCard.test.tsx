@@ -27,6 +27,8 @@ const baseRecommendation: Recommendation = {
 	mediaType: "movie",
 	synopsis: "An NYPD officer battles terrorists in a skyscraper.",
 	addedToArr: false,
+	// eslint-disable-next-line unicorn/no-null -- matches API response shape
+	feedback: null,
 };
 
 const makeRecommendation = (overrides: Partial<Recommendation> = {}): Recommendation => ({
@@ -34,7 +36,13 @@ const makeRecommendation = (overrides: Partial<Recommendation> = {}): Recommenda
 	...overrides,
 });
 
-const server = setupServer(http.get("/api/arr/config", () => HttpResponse.json([])));
+const server = setupServer(
+	http.get("/api/arr/config", () => HttpResponse.json([])),
+	http.patch("/api/recommendations/:id/feedback", async ({ request, params }) => {
+		const body = await request.json();
+		return HttpResponse.json({ id: params["id"], feedback: body });
+	}),
+);
 
 beforeAll(() => {
 	server.listen();
@@ -56,7 +64,7 @@ const renderCard = (recommendation: Recommendation) => {
 	});
 	render(
 		<Provider store={testStore}>
-			<RecommendationCard recommendation={recommendation} />
+			<RecommendationCard recommendation={recommendation} conversationId="test-conv-1" />
 		</Provider>,
 	);
 };
@@ -155,5 +163,40 @@ describe("RecommendationCard", () => {
 
 		expect(screen.getByText(/added to radarr/i)).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: /add to radarr/i })).not.toBeInTheDocument();
+	});
+
+	test("renders thumbs up and thumbs down buttons", () => {
+		renderCard(baseRecommendation);
+
+		expect(screen.getByRole("button", { name: /thumbs up/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /thumbs down/i })).toBeInTheDocument();
+	});
+
+	test("thumbs up button is highlighted when feedback is liked", () => {
+		renderCard(makeRecommendation({ feedback: "liked" }));
+
+		const thumbsUp = screen.getByRole("button", { name: /thumbs up/i });
+		expect(thumbsUp).toHaveAttribute("aria-pressed", "true");
+	});
+
+	test("thumbs down button is highlighted when feedback is disliked", () => {
+		renderCard(makeRecommendation({ feedback: "disliked" }));
+
+		const thumbsDown = screen.getByRole("button", { name: /thumbs down/i });
+		expect(thumbsDown).toHaveAttribute("aria-pressed", "true");
+	});
+
+	test("neither button is pressed when feedback is null", () => {
+		// eslint-disable-next-line unicorn/no-null -- matches API response shape
+		renderCard(makeRecommendation({ feedback: null }));
+
+		expect(screen.getByRole("button", { name: /thumbs up/i })).toHaveAttribute(
+			"aria-pressed",
+			"false",
+		);
+		expect(screen.getByRole("button", { name: /thumbs down/i })).toHaveAttribute(
+			"aria-pressed",
+			"false",
+		);
 	});
 });

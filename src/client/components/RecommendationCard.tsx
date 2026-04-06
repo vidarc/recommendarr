@@ -2,10 +2,12 @@ import { css } from "@linaria/atomic";
 import { useCallback, useState } from "react";
 
 import { useGetArrConfigQuery } from "../features/arr/api.ts";
+import { useUpdateFeedbackMutation } from "../features/chat/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 import { AddToArrModal } from "./AddToArrModal.tsx";
 
 import type { Recommendation } from "../shared/types.ts";
+import type { ReactNode } from "react";
 
 const card = css`
 	background: ${colors.bgLight};
@@ -92,6 +94,33 @@ const addedBadge = css`
 	border: 1px solid rgba(173, 219, 103, 0.3);
 `;
 
+const feedbackButton = css`
+	padding: ${spacing.xs};
+	background: none;
+	border: 1px solid transparent;
+	border-radius: ${radii.sm};
+	font-size: 1rem;
+	cursor: pointer;
+	opacity: 0.5;
+	transition: opacity 0.15s;
+	line-height: 1;
+
+	&:hover {
+		opacity: 0.8;
+	}
+`;
+
+const feedbackButtonActive = css`
+	padding: ${spacing.xs};
+	background: none;
+	border: 1px solid transparent;
+	border-radius: ${radii.sm};
+	font-size: 1rem;
+	cursor: pointer;
+	opacity: 1;
+	line-height: 1;
+`;
+
 const CardHeaderContent = ({
 	title,
 	year,
@@ -108,20 +137,65 @@ const CardHeaderContent = ({
 	</div>
 );
 
+interface FeedbackButtonsProps {
+	feedback: "liked" | "disliked" | null | undefined;
+	onFeedback: (feedback: "liked" | "disliked" | null) => void;
+}
+
+const FeedbackButtons = ({ feedback, onFeedback }: FeedbackButtonsProps) => {
+	const isLiked = feedback === "liked";
+	const isDisliked = feedback === "disliked";
+
+	const handleLike = useCallback(() => {
+		// eslint-disable-next-line unicorn/no-null -- API requires null to clear feedback
+		onFeedback(isLiked ? null : "liked");
+	}, [onFeedback, isLiked]);
+
+	const handleDislike = useCallback(() => {
+		// eslint-disable-next-line unicorn/no-null -- API requires null to clear feedback
+		onFeedback(isDisliked ? null : "disliked");
+	}, [onFeedback, isDisliked]);
+
+	return (
+		<>
+			<button
+				type="button"
+				className={isLiked ? feedbackButtonActive : feedbackButton}
+				aria-label="Thumbs up"
+				aria-pressed={isLiked}
+				onClick={handleLike}
+			>
+				👍
+			</button>
+			<button
+				type="button"
+				className={isDisliked ? feedbackButtonActive : feedbackButton}
+				aria-label="Thumbs down"
+				aria-pressed={isDisliked}
+				onClick={handleDislike}
+			>
+				👎
+			</button>
+		</>
+	);
+};
+
 interface CardActionsProps {
 	mediaType: string;
 	addedToArr: boolean;
 	isConnected: boolean;
 	onAdd: () => void;
+	children: ReactNode;
 }
 
-const CardActions = ({ mediaType, addedToArr, isConnected, onAdd }: CardActionsProps) => {
+const CardActions = ({ mediaType, addedToArr, isConnected, onAdd, children }: CardActionsProps) => {
 	const serviceName = mediaType === "movie" ? "Radarr" : "Sonarr";
 
 	if (addedToArr) {
 		return (
 			<div className={actionRow}>
 				<span className={addedBadge}>Added to {serviceName}</span>
+				{children}
 			</div>
 		);
 	}
@@ -132,6 +206,7 @@ const CardActions = ({ mediaType, addedToArr, isConnected, onAdd }: CardActionsP
 				<button type="button" className={arrButtonEnabled} onClick={onAdd}>
 					Add to {serviceName}
 				</button>
+				{children}
 			</div>
 		);
 	}
@@ -146,16 +221,24 @@ const CardActions = ({ mediaType, addedToArr, isConnected, onAdd }: CardActionsP
 			>
 				Add to {serviceName}
 			</button>
+			{children}
 		</div>
 	);
 };
 
-const RecommendationCard = ({ recommendation }: { recommendation: Recommendation }) => {
+const RecommendationCard = ({
+	recommendation,
+	conversationId,
+}: {
+	recommendation: Recommendation;
+	conversationId: string;
+}) => {
 	const [modalOpen, setModalOpen] = useState(false);
 	const serviceType = recommendation.mediaType === "movie" ? "radarr" : "sonarr";
 	const { data: arrConnections } = useGetArrConfigQuery();
 	const isConnected =
 		arrConnections !== undefined && arrConnections.some((conn) => conn.serviceType === serviceType);
+	const [updateFeedback] = useUpdateFeedbackMutation();
 
 	const handleOpenModal = useCallback(() => {
 		setModalOpen(true);
@@ -164,6 +247,17 @@ const RecommendationCard = ({ recommendation }: { recommendation: Recommendation
 	const handleCloseModal = useCallback(() => {
 		setModalOpen(false);
 	}, []);
+
+	const handleFeedback = useCallback(
+		(feedback: "liked" | "disliked" | null) => {
+			void updateFeedback({
+				recommendationId: recommendation.id,
+				conversationId,
+				feedback,
+			});
+		},
+		[updateFeedback, recommendation.id, conversationId],
+	);
 
 	return (
 		<div className={card}>
@@ -178,7 +272,9 @@ const RecommendationCard = ({ recommendation }: { recommendation: Recommendation
 				addedToArr={recommendation.addedToArr}
 				isConnected={isConnected}
 				onAdd={handleOpenModal}
-			/>
+			>
+				<FeedbackButtons feedback={recommendation.feedback} onFeedback={handleFeedback} />
+			</CardActions>
 			{isConnected ? (
 				<AddToArrModal
 					recommendation={recommendation}
