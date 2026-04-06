@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { expect, test } from "./fixtures.ts";
+import { expect, login, sharedPassword, test } from "./fixtures.ts";
 
 import type { Page } from "@playwright/test";
 
@@ -226,15 +226,22 @@ test.describe("recommendation feedback flow", () => {
 		await expect(convRow.first()).toBeVisible({ timeout: 5000 });
 	});
 
-	// Remove AI config so other test suites start with a clean slate
-	test("clean up: remove AI configuration", async ({ authenticatedPage: page }) => {
+	// Clean up AI config so other test suites start with a clean slate.
+	// Uses afterAll so cleanup runs even when earlier tests fail.
+	test.afterAll(async ({ browser }, workerInfo) => {
+		const context = await browser.newContext();
+		const page = await context.newPage();
+		const username = `admin-${workerInfo.project.name}`;
+		await login(page, username, sharedPassword);
+
 		await page.goto("/settings");
 		await page.getByRole("tab", { name: "AI Configuration" }).click();
 
 		const removeButton = page.getByRole("button", { name: "Remove" });
 		if (await removeButton.isVisible({ timeout: 1000 }).catch(() => false)) {
 			await removeButton.click();
-			await expect(removeButton).not.toBeVisible();
 		}
+
+		await context.close();
 	});
 });

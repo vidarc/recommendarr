@@ -48,4 +48,4 @@ const test = base.extend<AuthFixtures>({
 	},
 });
 
-export { expect, test };
+export { expect, login, sharedPassword, test };
