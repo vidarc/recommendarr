@@ -163,6 +163,7 @@ const FeedbackButtons = ({ feedback, onFeedback }: FeedbackButtonsProps) => {
 				className={isLiked ? feedbackButtonActive : feedbackButton}
 				aria-label="Thumbs up"
 				aria-pressed={isLiked}
+				title={isLiked ? "Remove like" : "Like this recommendation"}
 				onClick={handleLike}
 			>
 				👍
@@ -172,6 +173,7 @@ const FeedbackButtons = ({ feedback, onFeedback }: FeedbackButtonsProps) => {
 				className={isDisliked ? feedbackButtonActive : feedbackButton}
 				aria-label="Thumbs down"
 				aria-pressed={isDisliked}
+				title={isDisliked ? "Remove dislike" : "Dislike this recommendation"}
 				onClick={handleDislike}
 			>
 				👎

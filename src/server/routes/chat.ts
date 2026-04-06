@@ -238,12 +238,19 @@ const chatRoutes = (app: FastifyInstance) => {
 				.limit(FEEDBACK_LIMIT)
 				.all();
 
+			// Deduplicate by title — keep only the most recent feedback per title
+			const seenTitles = new Set<string>();
 			const feedbackContext: FeedbackItem[] = feedbackRows
 				.map((row) => {
 					const feedback = toFeedback(row.feedback);
 					if (!feedback) {
 						return undefined;
 					}
+					const key = row.title.toLowerCase();
+					if (seenTitles.has(key)) {
+						return undefined;
+					}
+					seenTitles.add(key);
 					return {
 						title: row.title,
 						year: row.year ?? undefined,
