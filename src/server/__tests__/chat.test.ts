@@ -25,6 +25,7 @@ import {
 	libraryItems,
 	messages,
 	plexConnections,
+	recommendations,
 	userSettings,
 	users,
 } from "../schema.ts";
@@ -636,5 +637,93 @@ describe("POST /api/chat with library exclusion", () => {
 		expect(response.statusCode).toBe(StatusCodes.OK);
 		expect(capturedSystemPrompt).not.toContain("do NOT recommend");
 		expect(capturedSystemPrompt).not.toContain("Inception");
+	});
+});
+
+describe("POST /api/chat with feedback context", () => {
+	test("includes feedback context in system prompt", async () => {
+		const app = await setupDb();
+		const { sessionId, userId } = await getSessionCookie(app);
+		setupAiAndPlex(app, userId);
+
+		// Seed a conversation with a recommendation that has feedback
+		const now = new Date().toISOString();
+		const convId = randomUUID();
+		const msgId = randomUUID();
+		const recId = randomUUID();
+
+		app.db
+			.insert(conversations)
+			.values({ id: convId, userId, mediaType: "movie", createdAt: now })
+			.run();
+		app.db
+			.insert(messages)
+			.values({
+				id: msgId,
+				conversationId: convId,
+				role: "assistant",
+				content: "Here are recommendations",
+				createdAt: now,
+			})
+			.run();
+		app.db
+			.insert(recommendations)
+			.values({
+				id: recId,
+				messageId: msgId,
+				title: "Inception",
+				year: 2010,
+				mediaType: "movie",
+				synopsis: "Dreams within dreams.",
+				addedToArr: false,
+				feedback: "liked",
+			})
+			.run();
+
+		// Capture the system prompt
+		let capturedSystemPrompt = "";
+		mswServer.use(
+			http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, async ({ request }) => {
+				const body: unknown = await request.json();
+				if (
+					body !== null &&
+					typeof body === "object" &&
+					"messages" in body &&
+					Array.isArray(body.messages)
+				) {
+					const systemMsg: unknown = body.messages.find(
+						(msg: unknown) =>
+							msg !== null && typeof msg === "object" && "role" in msg && msg.role === "system",
+					);
+					if (
+						systemMsg !== null &&
+						typeof systemMsg === "object" &&
+						"content" in systemMsg &&
+						typeof systemMsg.content === "string"
+					) {
+						capturedSystemPrompt = systemMsg.content;
+					}
+				}
+				return HttpResponse.json({
+					id: "chatcmpl-test",
+					choices: [{ message: { role: "assistant", content: mockAiResponse } }],
+				});
+			}),
+		);
+
+		const response = await app.inject({
+			method: "POST",
+			url: "/api/chat",
+			cookies: { session: sessionId },
+			payload: {
+				message: "Recommend more movies",
+				mediaType: "movie",
+				resultCount: 5,
+			},
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		expect(capturedSystemPrompt).toContain("Liked:");
+		expect(capturedSystemPrompt).toContain("Inception (2010)");
 	});
 });

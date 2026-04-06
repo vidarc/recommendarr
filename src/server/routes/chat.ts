@@ -24,6 +24,7 @@ import {
 } from "../services/response-parser.ts";
 
 import type { ExclusionContext } from "../services/library-sync.ts";
+import type { FeedbackItem } from "../services/prompt-builder.ts";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
@@ -35,11 +36,15 @@ const MAX_TITLE_WORDS = 6;
 const NO_PRIOR_MESSAGES = 0;
 const MAX_TITLE_MESSAGE_LENGTH = 200;
 const EMPTY_ARRAY_LENGTH = 0;
+const FEEDBACK_LIMIT = 50;
 const STRING_START = 0;
 const NO_FILTERED_ITEMS = 0;
 
 const VALID_MEDIA_TYPES = ["movie", "show", "either"] as const;
 type MediaType = (typeof VALID_MEDIA_TYPES)[number];
+
+const toFeedback = (value: string | null): "liked" | "disliked" | undefined =>
+	value === "liked" || value === "disliked" ? value : undefined;
 
 const errorResponseSchema = z.object({
 	error: z.string(),
@@ -57,6 +62,7 @@ const recommendationSchema = z.object({
 	synopsis: z.string().optional(),
 	tmdbId: z.number().optional(),
 	addedToArr: z.boolean(),
+	feedback: z.enum(["liked", "disliked"]).nullable().optional(),
 });
 
 const chatRequestSchema = z.object({
@@ -216,12 +222,40 @@ const chatRoutes = (app: FastifyInstance) => {
 				});
 			}
 
+			// Query recent feedback
+			const feedbackRows = app.db
+				.select({
+					title: recommendations.title,
+					year: recommendations.year,
+					mediaType: recommendations.mediaType,
+					feedback: recommendations.feedback,
+					createdAt: messages.createdAt,
+				})
+				.from(recommendations)
+				.innerJoin(messages, eq(recommendations.messageId, messages.id))
+				.innerJoin(conversations, eq(messages.conversationId, conversations.id))
+				.where(eq(conversations.userId, userId))
+				.orderBy(messages.createdAt)
+				.all()
+				.filter(
+					(row): row is typeof row & { feedback: "liked" | "disliked" } => row.feedback !== null,
+				)
+				.slice(-FEEDBACK_LIMIT);
+
+			const feedbackContext: FeedbackItem[] = feedbackRows.map((row) => ({
+				title: row.title,
+				year: row.year ?? undefined,
+				mediaType: row.mediaType,
+				feedback: row.feedback,
+			}));
+
 			// Build system prompt
 			const systemPrompt = buildSystemPrompt({
 				watchHistory,
 				mediaType,
 				resultCount,
 				...(exclusionContext !== undefined && { exclusionContext }),
+				...(feedbackContext.length > EMPTY_ARRAY_LENGTH && { feedbackContext }),
 			});
 
 			// Fetch conversation history
@@ -348,6 +382,7 @@ const chatRoutes = (app: FastifyInstance) => {
 					synopsis: rec.synopsis,
 					tmdbId: undefined,
 					addedToArr: false,
+					feedback: undefined,
 				};
 			});
 
@@ -494,6 +529,7 @@ const chatRoutes = (app: FastifyInstance) => {
 						synopsis: rec.synopsis ?? undefined,
 						tmdbId: rec.tmdbId ?? undefined,
 						addedToArr: rec.addedToArr,
+						feedback: toFeedback(rec.feedback),
 					})),
 				};
 			});
