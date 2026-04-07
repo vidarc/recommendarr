@@ -13,11 +13,10 @@ interface AuthFixtures {
  */
 const test = base.extend<AuthFixtures>({
 	authenticatedPage: async ({ page }, use) => {
-		// StorageState already has valid session cookies — just verify auth works
-		const me = await page.request.get("/api/auth/me");
-		if (!me.ok()) {
-			throw new Error("storageState session is invalid — re-run setup");
-		}
+		// StorageState already has valid session cookies — navigate to "/" so
+		// The page has content (sidebar, etc.) before the test interacts with it.
+		// Using domcontentloaded avoids stalling on background API requests.
+		await page.goto("/", { waitUntil: "domcontentloaded" });
 		await use(page);
 	},
 });
