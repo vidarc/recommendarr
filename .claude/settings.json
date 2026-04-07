@@ -30,6 +30,10 @@
 		"vite-plus": {
 			"command": "npx",
 			"args": ["vp", "mcp"]
+		},
+		"playwright": {
+			"command": "npx",
+			"args": ["@playwright/mcp@latest"]
 		}
 	}
 }
