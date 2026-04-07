@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { adminPassword, adminUsername, expect, login, test } from "./fixtures.ts";
+import { expect, test } from "./fixtures.ts";
 
 import type { Page } from "@playwright/test";
 
@@ -62,20 +62,9 @@ test.describe("recommendation feedback flow", () => {
 			return;
 		}
 
-		// Clean up AI config so other test suites start with a clean slate.
-		const cleanupContext = await page.context().browser()!.newContext();
-		const cleanupPage = await cleanupContext.newPage();
-		await login(cleanupPage, adminUsername, adminPassword);
-
-		await cleanupPage.goto("/settings");
-		await cleanupPage.getByRole("tab", { name: "AI Configuration" }).click();
-
-		const removeButton = cleanupPage.getByRole("button", { name: "Remove" });
-		if (await removeButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await removeButton.click();
-		}
-
-		await cleanupContext.close();
+		// Clean up AI config via API (faster and more reliable than UI navigation).
+		// The shared page has valid session cookies from storageState.
+		await page.request.delete("/api/ai/config");
 		await page.context().close();
 	});
 
