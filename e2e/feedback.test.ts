@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { expect, login, sharedPassword, test } from "./fixtures.ts";
+import { expect, test } from "./fixtures.ts";
 
 import type { Page } from "@playwright/test";
 
@@ -37,24 +37,6 @@ const conversationDetailSchema = z.object({
 	),
 });
 
-// Helper: send a chat message and wait for at least one recommendation card.
-// Disables "Exclude Library" so past recommendations are not filtered out on
-// Repeat calls (the mock always returns the same movie).
-const sendMessageAndWaitForRecommendation = async (page: Page) => {
-	await page.goto("/");
-	const excludeToggle = page.getByRole("checkbox", { name: /on/i });
-	if (await excludeToggle.isChecked()) {
-		await excludeToggle.click();
-	}
-	await page
-		.getByRole("textbox", { name: /ask for recommendations/i })
-		.fill("Recommend me some sci-fi movies");
-	await page.getByRole("button", { name: /send/i }).click();
-	await expect(page.getByRole("button", { name: "Thumbs up" }).first()).toBeVisible({
-		timeout: 15_000,
-	});
-};
-
 // Helper: wait for the PATCH /api/recommendations/:id/feedback response.
 const waitForFeedbackPatch = (page: Page) =>
 	page.waitForResponse(
@@ -64,9 +46,31 @@ const waitForFeedbackPatch = (page: Page) =>
 test.describe.configure({ mode: "serial" });
 
 test.describe("recommendation feedback flow", () => {
+	// Shared page across all serial tests — avoids re-sending the chat message
+	// For every test (previously 8 AI round-trips, now just 1).
+	// eslint-disable-next-line init-declarations -- initialized in beforeAll
+	let page: Page;
+
+	test.beforeAll(async ({ browser }) => {
+		const context = await browser.newContext({ storageState: "e2e/.auth/user.json" });
+		page = await context.newPage();
+	});
+
+	test.afterAll(async () => {
+		// Guard against beforeAll failure leaving page uninitialized
+		if (!page) {
+			return;
+		}
+
+		// Clean up AI config via API (faster and more reliable than UI navigation).
+		// The shared page has valid session cookies from storageState.
+		await page.request.delete("/api/ai/config");
+		await page.context().close();
+	});
+
 	// Set up AI config pointing at the mock OpenAI-compatible server.
 	// Plex is intentionally skipped — the chat route works without it (returns empty watch history).
-	test("configure AI to use mock endpoint", async ({ authenticatedPage: page }) => {
+	test("configure AI to use mock endpoint", async () => {
 		await page.goto("/settings");
 		await page.getByRole("tab", { name: "AI Configuration" }).click();
 
@@ -79,46 +83,46 @@ test.describe("recommendation feedback flow", () => {
 		await expect(page.getByRole("button", { name: "Test Connection" })).toBeVisible();
 	});
 
-	test("thumbs up and thumbs down buttons appear on recommendation cards", async ({
-		authenticatedPage: page,
-	}) => {
-		await sendMessageAndWaitForRecommendation(page);
+	// Send one chat message — all subsequent tests reuse this page with the recommendation visible.
+	test("send message and get recommendation", async () => {
+		await page.goto("/");
+		const excludeToggle = page.getByRole("checkbox", { name: /on/i });
+		if (await excludeToggle.isChecked()) {
+			await excludeToggle.click();
+		}
+		await page
+			.getByRole("textbox", { name: /ask for recommendations/i })
+			.fill("Recommend me some sci-fi movies");
+		await page.getByRole("button", { name: /send/i }).click();
+		await expect(page.getByRole("button", { name: "Thumbs up" }).first()).toBeVisible({
+			timeout: 15_000,
+		});
+	});
 
+	test("recommendation card shows the expected title from the AI mock", async () => {
+		await expect(page.getByText(RECOMMENDATION_TITLE)).toBeVisible();
+	});
+
+	test("thumbs up and thumbs down buttons appear on recommendation cards", async () => {
 		await expect(page.getByRole("button", { name: "Thumbs up" }).first()).toBeVisible();
 		await expect(page.getByRole("button", { name: "Thumbs down" }).first()).toBeVisible();
 	});
 
-	test("recommendation card shows the expected title from the AI mock", async ({
-		authenticatedPage: page,
-	}) => {
-		await sendMessageAndWaitForRecommendation(page);
-
-		await expect(page.getByText(RECOMMENDATION_TITLE)).toBeVisible();
-	});
-
-	test("thumbs up button starts with aria-pressed false", async ({ authenticatedPage: page }) => {
-		await sendMessageAndWaitForRecommendation(page);
-
+	test("thumbs up button starts with aria-pressed false", async () => {
 		await expect(page.getByRole("button", { name: "Thumbs up" }).first()).toHaveAttribute(
 			"aria-pressed",
 			"false",
 		);
 	});
 
-	test("thumbs down button starts with aria-pressed false", async ({ authenticatedPage: page }) => {
-		await sendMessageAndWaitForRecommendation(page);
-
+	test("thumbs down button starts with aria-pressed false", async () => {
 		await expect(page.getByRole("button", { name: "Thumbs down" }).first()).toHaveAttribute(
 			"aria-pressed",
 			"false",
 		);
 	});
 
-	test("clicking thumbs up sends PATCH with feedback liked", async ({
-		authenticatedPage: page,
-	}) => {
-		await sendMessageAndWaitForRecommendation(page);
-
+	test("clicking thumbs up sends PATCH with feedback liked", async () => {
 		const patchPromise = waitForFeedbackPatch(page);
 		await page.getByRole("button", { name: "Thumbs up" }).first().click();
 		const resp = await patchPromise;
@@ -128,33 +132,18 @@ test.describe("recommendation feedback flow", () => {
 		expect(parsed.feedback).toBe("liked");
 	});
 
-	test("clicking thumbs up again sends PATCH with null (toggle off)", async ({
-		authenticatedPage: page,
-	}) => {
-		await sendMessageAndWaitForRecommendation(page);
-
-		const thumbsUp = page.getByRole("button", { name: "Thumbs up" }).first();
-
-		// First click — like
-		const firstPatch = waitForFeedbackPatch(page);
-		await thumbsUp.click();
-		await firstPatch;
-
-		// Second click on the same button — should clear feedback (null)
-		const secondPatch = waitForFeedbackPatch(page);
-		await thumbsUp.click();
-		const resp = await secondPatch;
+	test("clicking thumbs up again sends PATCH with null (toggle off)", async () => {
+		// Previous test left thumbs-up active — clicking again should clear it
+		const patchPromise = waitForFeedbackPatch(page);
+		await page.getByRole("button", { name: "Thumbs up" }).first().click();
+		const resp = await patchPromise;
 
 		expect(resp.status()).toBe(200);
 		const parsed = feedbackPatchResponseSchema.parse(await resp.json());
 		expect(parsed.feedback).toBeNull();
 	});
 
-	test("clicking thumbs down after thumbs up switches feedback to disliked", async ({
-		authenticatedPage: page,
-	}) => {
-		await sendMessageAndWaitForRecommendation(page);
-
+	test("clicking thumbs down after thumbs up switches feedback to disliked", async () => {
 		const thumbsUp = page.getByRole("button", { name: "Thumbs up" }).first();
 		const thumbsDown = page.getByRole("button", { name: "Thumbs down" }).first();
 
@@ -175,12 +164,8 @@ test.describe("recommendation feedback flow", () => {
 		expect(parsed.feedback).toBe("disliked");
 	});
 
-	test("feedback persists in the database after navigating to History", async ({
-		authenticatedPage: page,
-	}) => {
-		await sendMessageAndWaitForRecommendation(page);
-
-		// Click thumbs up and capture the recommendation ID from the PATCH response
+	test("feedback persists in the database after navigating to History", async () => {
+		// Previous test left feedback as "disliked" — click thumbs up to set "liked"
 		const patchPromise = waitForFeedbackPatch(page);
 		await page.getByRole("button", { name: "Thumbs up" }).first().click();
 		const patchResp = await patchPromise;
@@ -214,16 +199,7 @@ test.describe("recommendation feedback flow", () => {
 		expect(likedRec?.feedback).toBe("liked");
 	});
 
-	test("history page lists the conversation after getting recommendations", async ({
-		authenticatedPage: page,
-	}) => {
-		await sendMessageAndWaitForRecommendation(page);
-
-		// Ensure the conversation is created by waiting for a feedback action
-		const patchPromise = waitForFeedbackPatch(page);
-		await page.getByRole("button", { name: "Thumbs up" }).first().click();
-		await patchPromise;
-
+	test("history page lists the conversation after getting recommendations", async () => {
 		await page.goto("/history");
 		await expect(page.getByRole("heading", { level: 1, name: "History" })).toBeVisible();
 
@@ -232,24 +208,5 @@ test.describe("recommendation feedback flow", () => {
 			name: /Sci-Fi Recommendations|Untitled/i,
 		});
 		await expect(convRow.first()).toBeVisible({ timeout: 5000 });
-	});
-
-	// Clean up AI config so other test suites start with a clean slate.
-	// Uses afterAll so cleanup runs even when earlier tests fail.
-	test.afterAll(async ({ browser }, workerInfo) => {
-		const context = await browser.newContext();
-		const page = await context.newPage();
-		const username = `admin-${workerInfo.project.name}`;
-		await login(page, username, sharedPassword);
-
-		await page.goto("/settings");
-		await page.getByRole("tab", { name: "AI Configuration" }).click();
-
-		const removeButton = page.getByRole("button", { name: "Remove" });
-		if (await removeButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await removeButton.click();
-		}
-
-		await context.close();
 	});
 });

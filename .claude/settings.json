@@ -30,6 +30,14 @@
 		"vite-plus": {
 			"command": "npx",
 			"args": ["vp", "mcp"]
+		},
+		"playwright": {
+			"command": "npx",
+			"args": ["@playwright/mcp@latest"]
+		},
+		"playwright-test": {
+			"command": "npx",
+			"args": ["playwright", "run-test-mcp-server"]
 		}
 	}
 }
