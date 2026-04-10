@@ -25,8 +25,8 @@ const useArrConfig = () => {
 	const [testConnection] = useTestArrConnectionMutation();
 	const [activeAction, setActiveAction] = useState<string | undefined>(undefined);
 
-	const [radarr, setRadarr] = useState<ServiceState>(DEFAULT_STATE);
-	const [sonarr, setSonarr] = useState<ServiceState>(DEFAULT_STATE);
+	const [radarr, setRadarr] = useState(DEFAULT_STATE);
+	const [sonarr, setSonarr] = useState(DEFAULT_STATE);
 	const [testResult, setTestResult] = useState<Record<string, string>>({});
 
 	useEffect(() => {
