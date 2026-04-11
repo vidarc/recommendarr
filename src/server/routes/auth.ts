@@ -2,8 +2,13 @@ import { randomUUID } from "node:crypto";
 
 import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
 
+import {
+	credentialsSchema,
+	setupStatusSchema,
+	userResponseSchema,
+} from "../../shared/schemas/auth.ts";
+import { errorResponseSchema, successResponseSchema } from "../../shared/schemas/common.ts";
 import { users } from "../schema.ts";
 import { hashPassword, verifyPassword } from "../services/auth-utils.ts";
 import { createSession, deleteSession } from "../services/session.ts";
@@ -11,32 +16,7 @@ import { createSession, deleteSession } from "../services/session.ts";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
-const minUsernameLength = 1;
-const minPasswordLength = 8;
 const noUsers = 0;
-
-const credentialsSchema = z.object({
-	username: z.string().min(minUsernameLength),
-	password: z.string().min(minPasswordLength),
-});
-
-const userResponseSchema = z.object({
-	id: z.string(),
-	username: z.string(),
-	isAdmin: z.boolean(),
-});
-
-const errorResponseSchema = z.object({
-	error: z.string(),
-});
-
-const setupStatusSchema = z.object({
-	needsSetup: z.boolean(),
-});
-
-const successResponseSchema = z.object({
-	success: z.boolean(),
-});
 
 const setSessionCookie = (request: FastifyRequest, reply: FastifyReply, sessionId: string) => {
 	reply.setCookie("session", sessionId, {
