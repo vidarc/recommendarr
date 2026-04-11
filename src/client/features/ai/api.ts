@@ -1,25 +1,15 @@
 import { api } from "../../api.ts";
 
-interface AiConfig {
-	endpointUrl: string;
-	apiKey: string;
-	modelName: string;
-	temperature: number;
-	maxTokens: number;
-}
-
-interface AiTestResult {
-	success: boolean;
-	error?: string;
-}
+import type { AiConfigBody, AiConfigResponse, AiTestResult } from "@shared/schemas/ai";
+import type { SuccessResponse } from "@shared/schemas/common";
 
 const aiApi = api.injectEndpoints({
 	endpoints: (builder) => ({
-		getAiConfig: builder.query<AiConfig, void>({
+		getAiConfig: builder.query<AiConfigResponse, void>({
 			query: () => "api/ai/config",
 			providesTags: ["AiConfig"],
 		}),
-		updateAiConfig: builder.mutation<{ success: boolean }, AiConfig>({
+		updateAiConfig: builder.mutation<SuccessResponse, AiConfigBody>({
 			query: (body) => ({
 				url: "api/ai/config",
 				method: "PUT",
@@ -27,14 +17,14 @@ const aiApi = api.injectEndpoints({
 			}),
 			invalidatesTags: ["AiConfig"],
 		}),
-		deleteAiConfig: builder.mutation<{ success: boolean }, void>({
+		deleteAiConfig: builder.mutation<SuccessResponse, void>({
 			query: () => ({
 				url: "api/ai/config",
 				method: "DELETE",
 			}),
 			invalidatesTags: ["AiConfig"],
 		}),
-		testAiConnection: builder.mutation<AiTestResult, AiConfig | void>({
+		testAiConnection: builder.mutation<AiTestResult, AiConfigBody | void>({
 			query: (body) => ({
 				url: "api/ai/test",
 				method: "POST",
@@ -57,4 +47,3 @@ export {
 	useTestAiConnectionMutation,
 	useUpdateAiConfigMutation,
 };
-export type { AiConfig };
