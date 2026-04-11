@@ -4,6 +4,20 @@ import { and, eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
+import {
+	arrAddBodySchema,
+	arrAddResponseSchema,
+	arrConfigBodySchema,
+	arrConnectionResponseSchema,
+	arrLookupBodySchema,
+	arrLookupResultSchema,
+	arrOptionsResponseSchema,
+	arrServiceTypeParamsSchema,
+	arrServiceTypeSchema,
+	arrTestConnectionBodySchema,
+	arrTestConnectionResponseSchema,
+} from "../../shared/schemas/arr.ts";
+import { errorResponseSchema, successResponseSchema } from "../../shared/schemas/common.ts";
 import { arrConnections, recommendations } from "../schema.ts";
 import {
 	addMedia,
@@ -18,7 +32,6 @@ import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
 const MASK_VISIBLE_CHARS = 4;
-const MIN_STRING_LENGTH = 1;
 
 const maskApiKey = (key: string): string => {
 	if (key.length <= MASK_VISIBLE_CHARS) {
@@ -26,90 +39,6 @@ const maskApiKey = (key: string): string => {
 	}
 	return `****${key.slice(-MASK_VISIBLE_CHARS)}`;
 };
-
-const serviceTypeSchema = z.enum(["radarr", "sonarr"]);
-
-const errorResponseSchema = z.object({
-	error: z.string(),
-});
-
-const successResponseSchema = z.object({
-	success: z.boolean(),
-});
-
-const arrConnectionResponseSchema = z.object({
-	id: z.string(),
-	serviceType: z.string(),
-	url: z.string(),
-	apiKey: z.string(),
-});
-
-const arrConfigBodySchema = z.object({
-	url: z.string().url(),
-	apiKey: z.string().min(MIN_STRING_LENGTH),
-});
-
-const testConnectionBodySchema = z.object({
-	serviceType: serviceTypeSchema,
-});
-
-const testConnectionResponseSchema = z.object({
-	success: z.boolean(),
-	version: z.string().optional(),
-	error: z.string().optional(),
-});
-
-const rootFolderSchema = z.object({
-	id: z.number(),
-	path: z.string(),
-	freeSpace: z.number(),
-});
-
-const qualityProfileSchema = z.object({
-	id: z.number(),
-	name: z.string(),
-});
-
-const optionsResponseSchema = z.object({
-	rootFolders: z.array(rootFolderSchema),
-	qualityProfiles: z.array(qualityProfileSchema),
-});
-
-const lookupBodySchema = z.object({
-	serviceType: serviceTypeSchema,
-	title: z.string().min(MIN_STRING_LENGTH),
-	year: z.number().optional(),
-});
-
-const lookupResultSchema = z.object({
-	title: z.string(),
-	year: z.number(),
-	tmdbId: z.number().optional(),
-	tvdbId: z.number().optional(),
-	overview: z.string(),
-	existsInLibrary: z.boolean(),
-	arrId: z.number(),
-});
-
-const addBodySchema = z.object({
-	serviceType: serviceTypeSchema,
-	recommendationId: z.string(),
-	tmdbId: z.number().optional(),
-	tvdbId: z.number().optional(),
-	title: z.string().min(MIN_STRING_LENGTH),
-	year: z.number(),
-	qualityProfileId: z.number(),
-	rootFolderPath: z.string().min(MIN_STRING_LENGTH),
-});
-
-const addResponseSchema = z.object({
-	success: z.boolean(),
-	error: z.string().optional(),
-});
-
-const serviceTypeParamsSchema = z.object({
-	serviceType: serviceTypeSchema,
-});
 
 const arrRoutes = (app: FastifyInstance) => {
 	const typedApp = app.withTypeProvider<ZodTypeProvider>();
@@ -138,7 +67,7 @@ const arrRoutes = (app: FastifyInstance) => {
 			return reply.code(StatusCodes.OK).send(
 				connections.map((conn) => ({
 					id: conn.id,
-					serviceType: conn.serviceType,
+					serviceType: arrServiceTypeSchema.parse(conn.serviceType),
 					url: conn.url,
 					apiKey: maskApiKey(decrypt(conn.apiKey)),
 				})),
@@ -150,7 +79,7 @@ const arrRoutes = (app: FastifyInstance) => {
 		"/api/arr/config/:serviceType",
 		{
 			schema: {
-				params: serviceTypeParamsSchema,
+				params: arrServiceTypeParamsSchema,
 				body: arrConfigBodySchema,
 				response: {
 					[StatusCodes.OK]: successResponseSchema,
@@ -213,7 +142,7 @@ const arrRoutes = (app: FastifyInstance) => {
 		"/api/arr/config/:serviceType",
 		{
 			schema: {
-				params: serviceTypeParamsSchema,
+				params: arrServiceTypeParamsSchema,
 				response: {
 					[StatusCodes.OK]: successResponseSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
@@ -263,9 +192,9 @@ const arrRoutes = (app: FastifyInstance) => {
 		"/api/arr/test",
 		{
 			schema: {
-				body: testConnectionBodySchema,
+				body: arrTestConnectionBodySchema,
 				response: {
-					[StatusCodes.OK]: testConnectionResponseSchema,
+					[StatusCodes.OK]: arrTestConnectionResponseSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
@@ -306,9 +235,9 @@ const arrRoutes = (app: FastifyInstance) => {
 		"/api/arr/options/:serviceType",
 		{
 			schema: {
-				params: serviceTypeParamsSchema,
+				params: arrServiceTypeParamsSchema,
 				response: {
-					[StatusCodes.OK]: optionsResponseSchema,
+					[StatusCodes.OK]: arrOptionsResponseSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
@@ -352,9 +281,9 @@ const arrRoutes = (app: FastifyInstance) => {
 		"/api/arr/lookup",
 		{
 			schema: {
-				body: lookupBodySchema,
+				body: arrLookupBodySchema,
 				response: {
-					[StatusCodes.OK]: z.array(lookupResultSchema),
+					[StatusCodes.OK]: z.array(arrLookupResultSchema),
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
@@ -399,9 +328,9 @@ const arrRoutes = (app: FastifyInstance) => {
 		"/api/arr/add",
 		{
 			schema: {
-				body: addBodySchema,
+				body: arrAddBodySchema,
 				response: {
-					[StatusCodes.OK]: addResponseSchema,
+					[StatusCodes.OK]: arrAddResponseSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},

@@ -8,8 +8,8 @@ import {
 } from "../features/arr/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 
-import type { ArrLookupResult, ArrOptions } from "../features/arr/api.ts";
 import type { Recommendation } from "../shared/types.ts";
+import type { ArrLookupResult, ArrOptionsResponse } from "@shared/schemas/arr";
 import type { ChangeEvent, KeyboardEvent, MouseEvent } from "react";
 
 interface AddToArrModalProps {
@@ -355,7 +355,7 @@ const LookupResultsList = ({ results, selectedResult, onSelect }: LookupResultsL
 );
 
 interface RootFolderSelectProps {
-	options: ArrOptions | undefined;
+	options: ArrOptionsResponse | undefined;
 	value: string;
 	disabled: boolean;
 	onChange: (value: string) => void;
@@ -388,7 +388,7 @@ const RootFolderSelect = ({ options, value, disabled, onChange }: RootFolderSele
 };
 
 interface QualityProfileSelectProps {
-	options: ArrOptions | undefined;
+	options: ArrOptionsResponse | undefined;
 	value: string;
 	disabled: boolean;
 	onChange: (value: string) => void;
@@ -426,7 +426,7 @@ const QualityProfileSelect = ({
 };
 
 interface AddMediaFormProps {
-	options: ArrOptions | undefined;
+	options: ArrOptionsResponse | undefined;
 	isLoading: boolean;
 	rootFolderPath: string;
 	qualityProfileId: string;
@@ -536,7 +536,7 @@ interface ModalBodyProps {
 	lookupError: unknown;
 	lookupResults: ArrLookupResult[] | undefined;
 	selectedResult: ArrLookupResult | undefined;
-	arrOptions: ArrOptions | undefined;
+	arrOptions: ArrOptionsResponse | undefined;
 	isLoadingOptions: boolean;
 	rootFolderPath: string;
 	qualityProfileId: string;
@@ -610,7 +610,7 @@ const AddToArrModal = ({ recommendation, serviceType, isOpen, onClose }: AddToAr
 
 	const [arrLookup, { data: lookupResults, isLoading: isLookingUp, error: lookupError }] =
 		useArrLookupMutation();
-	const [getArrOptions, { data: arrOptions, isLoading: isLoadingOptions }] =
+	const [getArrOptionsResponse, { data: arrOptions, isLoading: isLoadingOptions }] =
 		useLazyGetArrOptionsQuery();
 	const [addToArr, { isLoading: isAdding }] = useAddToArrMutation();
 
@@ -632,9 +632,9 @@ const AddToArrModal = ({ recommendation, serviceType, isOpen, onClose }: AddToAr
 			setRootFolderPath("");
 			setQualityProfileId("");
 			setAddError(undefined);
-			void getArrOptions(serviceType);
+			void getArrOptionsResponse(serviceType);
 		},
-		[serviceType, getArrOptions],
+		[serviceType, getArrOptionsResponse],
 	);
 
 	const handleAdd = useCallback(async () => {
