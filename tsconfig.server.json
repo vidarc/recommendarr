@@ -1,9 +1,10 @@
 {
 	"extends": "./tsconfig.json",
-	"include": ["src/server/**/*", "src/shared/**/*"],
+	"include": ["src/server/**/*"],
+	"references": [{ "path": "./tsconfig.shared.json" }],
 	"compilerOptions": {
 		"composite": true,
-		"rootDir": "src",
+		"rootDir": "src/server",
 		"outDir": "dist/server"
 	}
 }

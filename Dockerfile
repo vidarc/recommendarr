@@ -21,7 +21,7 @@ COPY src/ src/
 
 RUN yarn vp build && \
   yarn vp build --ssr entry-server.tsx --outDir ../../dist/ssr && \
-  yarn vp exec tsc -p tsconfig.server.json
+  yarn vp exec tsc -b tsconfig.server.json
 
 # Prune to production dependencies
 RUN yarn workspaces focus --production
