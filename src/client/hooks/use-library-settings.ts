@@ -1,3 +1,4 @@
+import { librarySyncIntervalSchema } from "@shared/schemas/library";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -6,16 +7,17 @@ import {
 	useUpdateLibrarySettingsMutation,
 } from "../features/library/api.ts";
 
+import type { LibrarySyncInterval } from "@shared/schemas/library";
 import type { ChangeEvent } from "react";
 
-const DEFAULT_INTERVAL = "manual";
+const DEFAULT_INTERVAL: LibrarySyncInterval = "manual";
 
 export const useLibrarySettings = () => {
 	const { data: status } = useGetLibraryStatusQuery();
 	const [syncLibrary, { isLoading: isSyncing }] = useSyncLibraryMutation();
 	const [updateSettings, { isLoading: isSaving }] = useUpdateLibrarySettingsMutation();
 
-	const [interval, setSyncInterval] = useState(DEFAULT_INTERVAL);
+	const [interval, setSyncInterval] = useState<LibrarySyncInterval>(DEFAULT_INTERVAL);
 	const [excludeDefault, setExcludeDefault] = useState(false);
 	const [syncResult, setSyncResult] = useState("");
 
@@ -27,7 +29,10 @@ export const useLibrarySettings = () => {
 	}, [status]);
 
 	const handleIntervalChange = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
-		setSyncInterval(event.target.value);
+		const parsed = librarySyncIntervalSchema.safeParse(event.target.value);
+		if (parsed.success) {
+			setSyncInterval(parsed.data);
+		}
 	}, []);
 
 	const handleExcludeToggle = useCallback((event: ChangeEvent<HTMLInputElement>) => {

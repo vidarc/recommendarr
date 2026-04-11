@@ -45,4 +45,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 VOLUME /app/data
 
-CMD ["node", "dist/server/server.js"]
+CMD ["node", "dist/server/server/server.js"]

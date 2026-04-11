@@ -1,6 +1,6 @@
 {
 	"extends": "./tsconfig.json",
-	"include": ["src/client/**/*"],
+	"include": ["src/client/**/*", "src/shared/**/*"],
 	"compilerOptions": {
 		"composite": true,
 		"target": "es2024",
@@ -9,6 +9,9 @@
 		"moduleResolution": "bundler",
 		"jsx": "react-jsx",
 		"outDir": "dist/client",
-		"types": ["@testing-library/jest-dom"]
+		"types": ["@testing-library/jest-dom"],
+		"paths": {
+			"@shared/*": ["./src/shared/*"]
+		}
 	}
 }
