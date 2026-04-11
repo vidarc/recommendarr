@@ -2,8 +2,17 @@ import { randomUUID } from "node:crypto";
 
 import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
 
+import { errorResponseSchema, successResponseSchema } from "../../shared/schemas/common.ts";
+import {
+	plexAuthCheckQuerySchema,
+	plexAuthCheckResponseSchema,
+	plexAuthStartResponseSchema,
+	plexLibrariesResponseSchema,
+	plexManualAuthBodySchema,
+	plexSelectServerBodySchema,
+	plexServersResponseSchema,
+} from "../../shared/schemas/plex.ts";
 import { plexConnections } from "../schema.ts";
 import { decrypt, encrypt } from "../services/encryption.ts";
 import {
@@ -18,65 +27,6 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
 const DEFAULT_PLEX_PORT = 32_400;
 
-const errorResponseSchema = z.object({
-	error: z.string(),
-});
-
-const successResponseSchema = z.object({
-	success: z.boolean(),
-});
-
-const authStartResponseSchema = z.object({
-	pinId: z.number(),
-	authUrl: z.string(),
-});
-
-const authCheckQuerySchema = z.object({
-	pinId: z.coerce.number(),
-});
-
-const authCheckResponseSchema = z.object({
-	claimed: z.boolean(),
-});
-
-const NON_EMPTY = 1;
-
-const manualAuthBodySchema = z.object({
-	authToken: z.string().min(NON_EMPTY),
-	serverUrl: z.string().url(),
-	serverName: z.string().min(NON_EMPTY),
-});
-
-const serverSchema = z.object({
-	name: z.string(),
-	address: z.string(),
-	port: z.number(),
-	scheme: z.string(),
-	uri: z.string(),
-	clientIdentifier: z.string(),
-	owned: z.boolean(),
-});
-
-const serversResponseSchema = z.object({
-	servers: z.array(serverSchema),
-});
-
-const selectServerBodySchema = z.object({
-	serverUrl: z.string().url(),
-	serverName: z.string(),
-	machineIdentifier: z.string(),
-});
-
-const librarySchema = z.object({
-	key: z.string(),
-	title: z.string(),
-	type: z.string(),
-});
-
-const librariesResponseSchema = z.object({
-	libraries: z.array(librarySchema),
-});
-
 const plexRoutes = (app: FastifyInstance) => {
 	const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
@@ -85,7 +35,7 @@ const plexRoutes = (app: FastifyInstance) => {
 		{
 			schema: {
 				response: {
-					[StatusCodes.OK]: authStartResponseSchema,
+					[StatusCodes.OK]: plexAuthStartResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
 			},
@@ -104,9 +54,9 @@ const plexRoutes = (app: FastifyInstance) => {
 		"/api/plex/auth/check",
 		{
 			schema: {
-				querystring: authCheckQuerySchema,
+				querystring: plexAuthCheckQuerySchema,
 				response: {
-					[StatusCodes.OK]: authCheckResponseSchema,
+					[StatusCodes.OK]: plexAuthCheckResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
 			},
@@ -160,7 +110,7 @@ const plexRoutes = (app: FastifyInstance) => {
 		"/api/plex/auth/manual",
 		{
 			schema: {
-				body: manualAuthBodySchema,
+				body: plexManualAuthBodySchema,
 				response: {
 					[StatusCodes.OK]: successResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
@@ -219,7 +169,7 @@ const plexRoutes = (app: FastifyInstance) => {
 		{
 			schema: {
 				response: {
-					[StatusCodes.OK]: serversResponseSchema,
+					[StatusCodes.OK]: plexServersResponseSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
@@ -268,7 +218,7 @@ const plexRoutes = (app: FastifyInstance) => {
 		"/api/plex/servers/select",
 		{
 			schema: {
-				body: selectServerBodySchema,
+				body: plexSelectServerBodySchema,
 				response: {
 					[StatusCodes.OK]: successResponseSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
@@ -345,7 +295,7 @@ const plexRoutes = (app: FastifyInstance) => {
 		{
 			schema: {
 				response: {
-					[StatusCodes.OK]: librariesResponseSchema,
+					[StatusCodes.OK]: plexLibrariesResponseSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
 					[StatusCodes.BAD_REQUEST]: errorResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
