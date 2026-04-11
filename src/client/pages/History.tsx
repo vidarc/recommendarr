@@ -5,7 +5,7 @@ import { useConversations } from "../hooks/use-conversations.ts";
 import { colors, radii, spacing } from "../theme.ts";
 import { formatRelativeDate } from "../utils/format-date.ts";
 
-import type { ConversationSummary } from "../features/chat/api.ts";
+import type { ConversationListItem } from "@shared/schemas/chat";
 import type { KeyboardEvent, MouseEvent } from "react";
 
 const NO_CONVERSATIONS = 0;
@@ -179,7 +179,7 @@ const DeleteActions = ({
 	);
 };
 
-const ConversationMeta = ({ conversation }: { conversation: ConversationSummary }) => (
+const ConversationMeta = ({ conversation }: { conversation: ConversationListItem }) => (
 	<div className={infoWrapper}>
 		<span className={titleText}>{conversation.title || "Untitled"}</span>
 		<div className={metaRow}>
@@ -197,7 +197,7 @@ const ConversationRow = ({
 	onConfirmDelete,
 	onCancelDelete,
 }: {
-	conversation: ConversationSummary;
+	conversation: ConversationListItem;
 	isConfirming: boolean;
 	onNavigate: (id: string) => void;
 	onDeleteClick: (event: MouseEvent, id: string) => void;

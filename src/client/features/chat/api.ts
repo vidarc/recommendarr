@@ -1,49 +1,25 @@
 import { api } from "../../api.ts";
 
-import type { ChatMessageResponse } from "../../shared/types.ts";
+import type {
+	ChatRequest,
+	ChatResponse,
+	ConversationDetail,
+	ConversationsResponse,
+	FeedbackBody,
+	FeedbackResponse,
+	RecommendationFeedback,
+} from "@shared/schemas/chat";
+import type { SuccessResponse } from "@shared/schemas/common";
 
-interface SendChatMessageBody {
-	message: string;
-	mediaType: string;
-	resultCount: number;
-	conversationId?: string | undefined;
-	libraryIds?: string[] | undefined;
-	excludeLibrary?: boolean | undefined;
-}
-
-interface SendChatMessageResponse {
+interface UpdateFeedbackArgs {
+	recommendationId: string;
 	conversationId: string;
-	message: ChatMessageResponse;
-}
-
-interface ConversationSummary {
-	id: string;
-	title: string;
-	mediaType: string;
-	createdAt: string;
-}
-
-interface ConversationsResponse {
-	conversations: ConversationSummary[];
-}
-
-interface ConversationDetail {
-	conversation: {
-		id: string;
-		title: string;
-		mediaType: string;
-		createdAt: string;
-		messages: ChatMessageResponse[];
-	};
-}
-
-interface DeleteConversationResponse {
-	success: boolean;
+	feedback: RecommendationFeedback | null;
 }
 
 const chatApi = api.injectEndpoints({
 	endpoints: (builder) => ({
-		sendChatMessage: builder.mutation<SendChatMessageResponse, SendChatMessageBody>({
+		sendChatMessage: builder.mutation<ChatResponse, ChatRequest>({
 			query: (body) => ({
 				url: "api/chat",
 				method: "POST",
@@ -62,7 +38,7 @@ const chatApi = api.injectEndpoints({
 			query: (id) => `api/conversations/${id}`,
 			providesTags: (_result, _error, id) => [{ type: "Conversations", id }],
 		}),
-		deleteConversation: builder.mutation<DeleteConversationResponse, string>({
+		deleteConversation: builder.mutation<SuccessResponse, string>({
 			query: (id) => ({
 				url: `api/conversations/${id}`,
 				method: "DELETE",
@@ -72,22 +48,22 @@ const chatApi = api.injectEndpoints({
 				{ type: "Conversations", id },
 			],
 		}),
-		updateFeedback: builder.mutation<
-			{ id: string; feedback: "liked" | "disliked" | null },
-			{ recommendationId: string; conversationId: string; feedback: "liked" | "disliked" | null }
-		>({
-			query: ({ recommendationId, feedback }) => ({
-				url: `api/recommendations/${recommendationId}/feedback`,
-				method: "PATCH",
-				body: { feedback },
-			}),
+		updateFeedback: builder.mutation<FeedbackResponse, UpdateFeedbackArgs>({
+			query: ({ recommendationId, feedback }) => {
+				const body: FeedbackBody = { feedback };
+				return {
+					url: `api/recommendations/${recommendationId}/feedback`,
+					method: "PATCH",
+					body,
+				};
+			},
 			onQueryStarted: async (
 				{ recommendationId, conversationId, feedback },
 				{ dispatch, queryFulfilled },
 			) => {
 				const patchResult = dispatch(
 					chatApi.util.updateQueryData("getConversation", conversationId, (draft) => {
-						for (const msg of draft.conversation.messages) {
+						for (const msg of draft.messages) {
 							for (const rec of msg.recommendations) {
 								if (rec.id === recommendationId) {
 									rec.feedback = feedback;
@@ -121,4 +97,3 @@ export {
 	useSendChatMessageMutation,
 	useUpdateFeedbackMutation,
 };
-export type { ConversationSummary };

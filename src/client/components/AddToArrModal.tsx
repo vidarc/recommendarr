@@ -8,8 +8,8 @@ import {
 } from "../features/arr/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 
-import type { Recommendation } from "../shared/types.ts";
 import type { ArrLookupResult, ArrOptionsResponse } from "@shared/schemas/arr";
+import type { Recommendation } from "@shared/schemas/chat";
 import type { ChangeEvent, KeyboardEvent, MouseEvent } from "react";
 
 interface AddToArrModalProps {

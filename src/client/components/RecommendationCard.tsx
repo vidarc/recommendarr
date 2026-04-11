@@ -6,7 +6,7 @@ import { useUpdateFeedbackMutation } from "../features/chat/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 import { AddToArrModal } from "./AddToArrModal.tsx";
 
-import type { Recommendation } from "../shared/types.ts";
+import type { Recommendation } from "@shared/schemas/chat";
 import type { ReactNode } from "react";
 
 const card = css`

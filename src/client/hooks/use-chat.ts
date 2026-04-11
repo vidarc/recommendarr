@@ -4,12 +4,12 @@ import { useSendChatMessageMutation } from "../features/chat/api.ts";
 import { useGetLibraryStatusQuery } from "../features/library/api.ts";
 
 import type { MediaType } from "../components/ChatControls.tsx";
-import type { ChatMessageResponse } from "../shared/types.ts";
+import type { ChatMessage } from "@shared/schemas/chat";
 
 const DEFAULT_RESULT_COUNT = 10;
 
 export const useChat = () => {
-	const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
+	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [conversationId, setConversationId] = useState<string | undefined>(undefined);
 	const [mediaType, handleMediaTypeChange] = useState<MediaType>("any");
 	const [libraryId, handleLibraryIdChange] = useState("");
@@ -26,7 +26,7 @@ export const useChat = () => {
 
 	const handleSend = useCallback(
 		async (message: string) => {
-			const userMessage: ChatMessageResponse = {
+			const userMessage: ChatMessage = {
 				id: `temp-${Date.now().toString()}`,
 				content: message,
 				role: "user",

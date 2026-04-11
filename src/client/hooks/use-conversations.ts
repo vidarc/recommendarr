@@ -3,10 +3,10 @@ import { useLocation } from "wouter";
 
 import { useDeleteConversationMutation, useGetConversationsQuery } from "../features/chat/api.ts";
 
-import type { ConversationSummary } from "../features/chat/api.ts";
+import type { ConversationListItem } from "@shared/schemas/chat";
 import type { MouseEvent } from "react";
 
-const EMPTY_CONVERSATIONS: ConversationSummary[] = [];
+const EMPTY_CONVERSATIONS: ConversationListItem[] = [];
 
 export const useConversations = () => {
 	const { data } = useGetConversationsQuery();
