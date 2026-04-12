@@ -41,7 +41,7 @@ yarn vp fmt          # Format only
 
 - `src/server` — Fastify backend
   - `routes/` — Route handlers (auth, health, plex, ai, chat)
-  - `services/` — Business logic (auth-utils, session, encryption, plex-api, ai-client, prompt-builder, response-parser)
+  - `services/` — Business logic (auth-utils, session, encryption, plex-api, ai-client, prompt-builder, response-parser, metadata-types, tmdb-client, tvdb-client)
   - `middleware/` — Request middleware (auth — session-based authentication via httpOnly cookies)
   - Root: app factory, entry point, db plugin, SSR plugin, schema
 - `src/client` — React frontend
@@ -164,6 +164,8 @@ Fastify uses `fastify-type-provider-zod` for request/response validation and typ
 - `POST /api/library/sync` — triggers manual library sync, returns item counts
 - `GET /api/library/status` — returns last synced time, interval, item counts, and exclude default
 - `PUT /api/library/settings` — updates sync interval and exclude-library default
+- `GET /api/metadata/status` — returns `{ tvdb: boolean, tmdb: boolean }` indicating which metadata sources are configured
+- `GET /api/metadata/:recommendationId` — returns enriched metadata (poster, overview, genres, rating, cast/crew) for a recommendation, fetched from TVDB (shows) or TMDB (movies) with 7-day cache
 - `GET /*` — SSR catch-all (registered last so API routes take priority)
 
 ### SSR
@@ -197,6 +199,8 @@ The app uses wouter for routing. Routes: `/login`, `/register`, `/` (recommendat
 - `SESSION_DURATION_DAYS` — session lifetime in days (default: `7`)
 - `LOG_LEVEL` — server log level (default: `info`; options: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`)
 - `LOG_PRETTY` — set to `true` to enable pretty-printed logs via `pino-pretty`
+- `TVDB_API_KEY` — optional; TVDB v4 API key for enriching TV show recommendation cards with metadata
+- `TMDB_API_KEY` — optional; TMDB API key for enriching movie recommendation cards with metadata
 
 ### Modules
 

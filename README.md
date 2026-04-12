@@ -45,17 +45,19 @@ volumes:
 
 ### ⚙️ Environment Variables
 
-| Variable                 | Required | Default                  | Description                                                                                                                           |
-| ------------------------ | -------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `ENCRYPTION_KEY`         | **Yes**  | —                        | 64-character hex string for AES-256-GCM encryption of stored secrets (Plex tokens, AI API keys). Generate with `openssl rand -hex 32` |
-| `PORT`                   | No       | `3000`                   | Port the HTTP server listens on                                                                                                       |
-| `HOST`                   | No       | `0.0.0.0`                | Host the HTTP server binds to                                                                                                         |
-| `DATABASE_PATH`          | No       | `./data/recommendarr.db` | Path to the SQLite database file                                                                                                      |
-| `DEFAULT_ADMIN_USERNAME` | No       | `admin`                  | Username for the auto-created admin (only used with `DEFAULT_ADMIN_PASSWORD`)                                                         |
-| `DEFAULT_ADMIN_PASSWORD` | No       | —                        | If set, creates an admin user on first boot with these credentials                                                                    |
-| `SESSION_DURATION_DAYS`  | No       | `7`                      | How long login sessions last (in days)                                                                                                |
-| `LOG_LEVEL`              | No       | `info`                   | Server log level (`fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`)                                                       |
-| `LOG_PRETTY`             | No       | —                        | Set to `true` to enable pretty-printed logs via `pino-pretty`                                                                         |
+| Variable                 | Required | Default                  | Description                                                                                                                                                            |
+| ------------------------ | -------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ENCRYPTION_KEY`         | **Yes**  | —                        | 64-character hex string for AES-256-GCM encryption of stored secrets (Plex tokens, AI API keys). Generate with `openssl rand -hex 32`                                  |
+| `PORT`                   | No       | `3000`                   | Port the HTTP server listens on                                                                                                                                        |
+| `HOST`                   | No       | `0.0.0.0`                | Host the HTTP server binds to                                                                                                                                          |
+| `DATABASE_PATH`          | No       | `./data/recommendarr.db` | Path to the SQLite database file                                                                                                                                       |
+| `DEFAULT_ADMIN_USERNAME` | No       | `admin`                  | Username for the auto-created admin (only used with `DEFAULT_ADMIN_PASSWORD`)                                                                                          |
+| `DEFAULT_ADMIN_PASSWORD` | No       | —                        | If set, creates an admin user on first boot with these credentials                                                                                                     |
+| `SESSION_DURATION_DAYS`  | No       | `7`                      | How long login sessions last (in days)                                                                                                                                 |
+| `LOG_LEVEL`              | No       | `info`                   | Server log level (`fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`)                                                                                        |
+| `LOG_PRETTY`             | No       | —                        | Set to `true` to enable pretty-printed logs via `pino-pretty`                                                                                                          |
+| `TVDB_API_KEY`           | No       | —                        | TVDB v4 API key for enriching TV show recommendation cards with metadata (poster, overview, genres, rating, cast/crew). Get one at https://thetvdb.com/api-information |
+| `TMDB_API_KEY`           | No       | —                        | TMDB API key for enriching movie recommendation cards with metadata (poster, overview, genres, rating, cast/crew). Get one at https://www.themoviedb.org/settings/api  |
 
 ### 🔒 Reverse Proxy / TLS
 
