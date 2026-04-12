@@ -65,7 +65,7 @@ export const useChat = () => {
 				prev.map((msg) => ({
 					...msg,
 					recommendations: msg.recommendations.map((rec) =>
-						rec.id === recommendationId ? { ...rec, feedback } : rec,
+						rec.id === recommendationId ? { ...rec, feedback: feedback ?? undefined } : rec,
 					),
 				})),
 			);

@@ -27,8 +27,7 @@ const baseRecommendation: Recommendation = {
 	mediaType: "movie",
 	synopsis: "An NYPD officer battles terrorists in a skyscraper.",
 	addedToArr: false,
-	// eslint-disable-next-line unicorn/no-null -- matches API response shape
-	feedback: null,
+	feedback: undefined,
 };
 
 const makeRecommendation = (overrides: Partial<Recommendation> = {}): Recommendation => ({
@@ -185,9 +184,8 @@ describe("RecommendationCard", () => {
 		expect(thumbsDown).toHaveAttribute("aria-pressed", "true");
 	});
 
-	test("neither button is pressed when feedback is null", () => {
-		// eslint-disable-next-line unicorn/no-null -- matches API response shape
-		renderCard(makeRecommendation({ feedback: null }));
+	test("neither button is pressed when feedback is undefined", () => {
+		renderCard(makeRecommendation({ feedback: undefined }));
 
 		expect(screen.getByRole("button", { name: /thumbs up/i })).toHaveAttribute(
 			"aria-pressed",

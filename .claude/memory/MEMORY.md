@@ -21,5 +21,6 @@
 ## TODOs
 
 - [project_shared_types_todo.md](project_shared_types_todo.md) — Audit and share types between server and client
+- [project_null_vs_undefined.md](project_null_vs_undefined.md) — Standardize on undefined vs null across shared schemas and DB boundary
 
 ## References

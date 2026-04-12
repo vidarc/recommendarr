@@ -66,7 +66,7 @@ const chatApi = api.injectEndpoints({
 						for (const msg of draft.messages) {
 							for (const rec of msg.recommendations) {
 								if (rec.id === recommendationId) {
-									rec.feedback = feedback;
+									rec.feedback = feedback ?? undefined;
 								}
 							}
 						}
