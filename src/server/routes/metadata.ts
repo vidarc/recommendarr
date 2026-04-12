@@ -7,7 +7,7 @@ import {
 	metadataResponseSchema,
 	metadataStatusResponseSchema,
 } from "../../shared/schemas/metadata.ts";
-import { metadataCache, recommendations } from "../schema.ts";
+import { conversations, messages, metadataCache, recommendations } from "../schema.ts";
 import {
 	getMovieById,
 	getMovieCredits,
@@ -29,21 +29,24 @@ const MS_PER_DAY = 86_400_000;
 const FIRST = 0;
 
 const metadataSourceSchema = z.enum(["tvdb", "tmdb"]);
-const creditPersonSchema = z
-	.object({
-		name: z.string(),
-		role: z.string(),
-		character: z.string().optional(),
-	})
-	.transform(
-		(val): CreditPerson => ({
-			name: val.name,
-			role: val.role,
-			character: val.character,
-		}),
-	);
+const creditPersonSchema = z.object({
+	name: z.string(),
+	role: z.string(),
+	character: z.string().optional(),
+});
 const creditPersonArraySchema = z.array(creditPersonSchema);
 const stringArraySchema = z.array(z.string());
+
+// Cache rows are written by our own serialize path; parsing ensures the
+// Trust boundary is enforced (e.g. tampered DB) but the shape mirrors
+// CreditPerson exactly. Map to normalize character to `string | undefined`
+// For exactOptionalPropertyTypes.
+const normalizeCredits = (input: unknown): CreditPerson[] =>
+	creditPersonArraySchema.parse(input).map((person) => ({
+		name: person.name,
+		role: person.role,
+		character: person.character,
+	}));
 
 const isCacheExpired = (fetchedAt: number): boolean => {
 	const now = Date.now();
@@ -88,8 +91,8 @@ const deserializeMetadata = (row: {
 	genres: row.genres ? stringArraySchema.parse(JSON.parse(row.genres)) : [],
 	rating: row.rating ?? undefined,
 	year: row.year ?? undefined,
-	cast: row.cast ? creditPersonArraySchema.parse(JSON.parse(row.cast)) : [],
-	crew: row.crew ? creditPersonArraySchema.parse(JSON.parse(row.crew)) : [],
+	cast: row.cast ? normalizeCredits(JSON.parse(row.cast)) : [],
+	crew: row.crew ? normalizeCredits(JSON.parse(row.crew)) : [],
 	status: row.status ?? undefined,
 });
 
@@ -97,7 +100,7 @@ const fetchMovieMetadata = async (
 	tmdbId: number | undefined,
 	title: string,
 	year: number | undefined,
-): Promise<MediaMetadata | undefined> => {
+): Promise<{ metadata: MediaMetadata | undefined; resolvedTmdbId: number | undefined }> => {
 	if (tmdbId !== undefined) {
 		const movie = await getMovieById(tmdbId);
 		if (movie) {
@@ -106,14 +109,14 @@ const fetchMovieMetadata = async (
 				movie.cast = credits.cast;
 				movie.crew = credits.crew;
 			}
-			return movie;
+			return { metadata: movie, resolvedTmdbId: tmdbId };
 		}
 	}
 	// Fallback to search
 	const results = await searchMovie(title, year);
 	const match = results[FIRST];
 	if (!match) {
-		return undefined;
+		return { metadata: undefined, resolvedTmdbId: undefined };
 	}
 	// Get full details + credits for the search result
 	const movie = await getMovieById(match.externalId);
@@ -124,7 +127,7 @@ const fetchMovieMetadata = async (
 			movie.crew = credits.crew;
 		}
 	}
-	return movie;
+	return { metadata: movie, resolvedTmdbId: match.externalId };
 };
 
 const fetchShowMetadata = async (
@@ -147,23 +150,34 @@ const fetchShowMetadata = async (
 	return { metadata: series, resolvedTvdbId: match.externalId };
 };
 
+interface ResolvedMetadata {
+	metadata: MediaMetadata | undefined;
+	resolvedTmdbId: number | undefined;
+	resolvedTvdbId: number | undefined;
+}
+
 const resolveMetadata = async (rec: {
 	mediaType: string;
 	tmdbId: number | null;
 	tvdbId: number | null;
 	title: string;
 	year: number | null;
-}): Promise<{ metadata: MediaMetadata | undefined; resolvedTvdbId: number | undefined }> => {
+}): Promise<ResolvedMetadata> => {
 	const isMovie = rec.mediaType === "movie";
 	if (isMovie) {
-		const metadata = await fetchMovieMetadata(
+		const { metadata, resolvedTmdbId } = await fetchMovieMetadata(
 			rec.tmdbId ?? undefined,
 			rec.title,
 			rec.year ?? undefined,
 		);
-		return { metadata, resolvedTvdbId: undefined };
+		return { metadata, resolvedTmdbId, resolvedTvdbId: undefined };
 	}
-	return fetchShowMetadata(rec.tvdbId ?? undefined, rec.title, rec.year ?? undefined);
+	const { metadata, resolvedTvdbId } = await fetchShowMetadata(
+		rec.tvdbId ?? undefined,
+		rec.title,
+		rec.year ?? undefined,
+	);
+	return { metadata, resolvedTmdbId: undefined, resolvedTvdbId };
 };
 
 const metadataRoutes = (app: FastifyInstance) => {
@@ -208,15 +222,30 @@ const metadataRoutes = (app: FastifyInstance) => {
 
 			const { recommendationId } = request.params;
 
-			// Look up the recommendation
+			// Look up the recommendation and verify ownership
+			// (recommendation -> message -> conversation -> user)
 			const rec = app.db
-				.select()
+				.select({
+					id: recommendations.id,
+					messageId: recommendations.messageId,
+					title: recommendations.title,
+					year: recommendations.year,
+					mediaType: recommendations.mediaType,
+					synopsis: recommendations.synopsis,
+					tmdbId: recommendations.tmdbId,
+					tvdbId: recommendations.tvdbId,
+					addedToArr: recommendations.addedToArr,
+					feedback: recommendations.feedback,
+					userId: conversations.userId,
+				})
 				.from(recommendations)
+				.innerJoin(messages, eq(recommendations.messageId, messages.id))
+				.innerJoin(conversations, eq(messages.conversationId, conversations.id))
 				.where(eq(recommendations.id, recommendationId))
 				.get();
 
-			if (!rec) {
-				request.log.debug({ recommendationId }, "recommendation not found for metadata lookup");
+			if (!rec || rec.userId !== request.user.id) {
+				request.log.debug({ recommendationId }, "recommendation not found or not owned by user");
 				return reply.code(StatusCodes.OK).send({ available: false });
 			}
 
@@ -247,7 +276,7 @@ const metadataRoutes = (app: FastifyInstance) => {
 
 			// Fetch from external API
 			try {
-				const { metadata, resolvedTvdbId } = await resolveMetadata(rec);
+				const { metadata, resolvedTmdbId, resolvedTvdbId } = await resolveMetadata(rec);
 
 				// Backfill tvdbId on recommendation if resolved via search
 				if (resolvedTvdbId !== undefined && rec.tvdbId === null) {
@@ -259,6 +288,19 @@ const metadataRoutes = (app: FastifyInstance) => {
 					request.log.debug(
 						{ recommendationId, tvdbId: resolvedTvdbId },
 						"backfilled tvdbId on recommendation",
+					);
+				}
+
+				// Backfill tmdbId on recommendation if resolved via search
+				if (resolvedTmdbId !== undefined && rec.tmdbId === null) {
+					app.db
+						.update(recommendations)
+						.set({ tmdbId: resolvedTmdbId })
+						.where(eq(recommendations.id, recommendationId))
+						.run();
+					request.log.debug(
+						{ recommendationId, tmdbId: resolvedTmdbId },
+						"backfilled tmdbId on recommendation",
 					);
 				}
 

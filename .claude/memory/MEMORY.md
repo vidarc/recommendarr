@@ -4,6 +4,7 @@
 
 - [project_status.md](project_status.md) — Current state of the recommendarr project and what's been built so far
 - [project_future_features.md](project_future_features.md) — Brainstormed feature ideas to revisit after arr integration
+- [project_metadata_route_followups.md](project_metadata_route_followups.md) — Deferred cleanups on /api/metadata route from PR #44 review
 
 ## User
 
