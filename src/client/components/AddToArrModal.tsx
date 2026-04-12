@@ -610,7 +610,7 @@ const AddToArrModal = ({ recommendation, serviceType, isOpen, onClose }: AddToAr
 
 	const [arrLookup, { data: lookupResults, isLoading: isLookingUp, error: lookupError }] =
 		useArrLookupMutation();
-	const [getArrOptionsResponse, { data: arrOptions, isLoading: isLoadingOptions }] =
+	const [getArrOptions, { data: arrOptions, isLoading: isLoadingOptions }] =
 		useLazyGetArrOptionsQuery();
 	const [addToArr, { isLoading: isAdding }] = useAddToArrMutation();
 
@@ -632,9 +632,9 @@ const AddToArrModal = ({ recommendation, serviceType, isOpen, onClose }: AddToAr
 			setRootFolderPath("");
 			setQualityProfileId("");
 			setAddError(undefined);
-			void getArrOptionsResponse(serviceType);
+			void getArrOptions(serviceType);
 		},
-		[serviceType, getArrOptionsResponse],
+		[serviceType, getArrOptions],
 	);
 
 	const handleAdd = useCallback(async () => {
