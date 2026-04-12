@@ -134,7 +134,8 @@ describe("testConnection", () => {
 
 		const result = await testConnection(mockRequest, defaultTestConfig);
 
-		expect(result).toStrictEqual({ success: false });
+		expect(result.success).toBe(false);
+		expect(result.error).toBeTypeOf("string");
 		expect(mockRequest.log.error).toHaveBeenCalled();
 	});
 });

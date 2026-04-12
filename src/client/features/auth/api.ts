@@ -1,21 +1,9 @@
 import { api } from "../../api.ts";
 
-interface User {
-	id: string;
-	username: string;
-	isAdmin: boolean;
-}
+import type { Credentials, SetupStatus, UserResponse } from "@shared/schemas/auth";
+import type { SuccessResponse } from "@shared/schemas/common";
 
 type Settings = Record<string, string>;
-
-interface Credentials {
-	username: string;
-	password: string;
-}
-
-interface SetupStatus {
-	needsSetup: boolean;
-}
 
 const authApi = api.injectEndpoints({
 	endpoints: (builder) => ({
@@ -25,24 +13,24 @@ const authApi = api.injectEndpoints({
 		getSetupStatus: builder.query<SetupStatus, void>({
 			query: () => "api/auth/setup-status",
 		}),
-		login: builder.mutation<User, Credentials>({
+		login: builder.mutation<UserResponse, Credentials>({
 			query: (body) => ({
 				url: "api/auth/login",
 				method: "POST",
 				body,
 			}),
 		}),
-		register: builder.mutation<User, Credentials>({
+		register: builder.mutation<UserResponse, Credentials>({
 			query: (body) => ({
 				url: "api/auth/register",
 				method: "POST",
 				body,
 			}),
 		}),
-		getMe: builder.query<User, void>({
+		getMe: builder.query<UserResponse, void>({
 			query: () => "api/auth/me",
 		}),
-		logout: builder.mutation<{ success: boolean }, void>({
+		logout: builder.mutation<SuccessResponse, void>({
 			query: () => ({
 				url: "api/auth/logout",
 				method: "POST",
@@ -68,4 +56,3 @@ export {
 	useLogoutMutation,
 	useRegisterMutation,
 };
-export type { User };

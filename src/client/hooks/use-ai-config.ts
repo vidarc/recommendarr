@@ -7,6 +7,7 @@ import {
 	useUpdateAiConfigMutation,
 } from "../features/ai/api.ts";
 
+import type { AiTestResult } from "@shared/schemas/ai";
 import type { ChangeEvent } from "react";
 
 const DEFAULT_TEMPERATURE = 0.7;
@@ -17,9 +18,7 @@ export const useAiConfig = () => {
 	const [updateConfig, { isLoading: isSaving }] = useUpdateAiConfigMutation();
 	const [deleteConfig, { isLoading: isDeleting }] = useDeleteAiConfigMutation();
 	const [testConnection, { isLoading: isTesting }] = useTestAiConnectionMutation();
-	const [testResult, setTestResult] = useState<{ error?: string; success: boolean } | undefined>(
-		undefined,
-	);
+	const [testResult, setTestResult] = useState<AiTestResult | undefined>(undefined);
 
 	const [endpointUrl, setEndpointUrl] = useState("");
 	const [apiKey, setApiKey] = useState("");

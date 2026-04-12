@@ -23,7 +23,7 @@ import {
 } from "./settings-styles.ts";
 import { SettingsField } from "./SettingsField.tsx";
 
-import type { PlexServer } from "../../features/plex/api.ts";
+import type { PlexServer } from "@shared/schemas/plex";
 import type { ChangeEvent } from "react";
 
 const NO_SERVERS = 0;

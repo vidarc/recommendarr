@@ -2,41 +2,19 @@ import { randomUUID } from "node:crypto";
 
 import { count, eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
 
+import { errorResponseSchema, successResponseSchema } from "../../shared/schemas/common.ts";
+import {
+	librarySettingsBodySchema,
+	libraryStatusSchema,
+	librarySyncIntervalSchema,
+	librarySyncResponseSchema,
+} from "../../shared/schemas/library.ts";
 import { arrConnections, libraryItems, plexConnections, userSettings } from "../schema.ts";
 import { syncLibrary } from "../services/library-sync.ts";
 
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
-
-const errorResponseSchema = z.object({
-	error: z.string(),
-});
-
-const syncResponseSchema = z.object({
-	movieCount: z.number(),
-	showCount: z.number(),
-	totalCount: z.number(),
-});
-
-const statusResponseSchema = z.object({
-	lastSynced: z.string().optional(),
-	interval: z.string(),
-	itemCount: z.number(),
-	movieCount: z.number(),
-	showCount: z.number(),
-	excludeDefault: z.boolean(),
-});
-
-const settingsBodySchema = z.object({
-	interval: z.enum(["manual", "6h", "12h", "24h", "7d"]),
-	excludeDefault: z.boolean(),
-});
-
-const settingsResponseSchema = z.object({
-	success: z.boolean(),
-});
 
 const libraryRoutes = (app: FastifyInstance) => {
 	const typedApp = app.withTypeProvider<ZodTypeProvider>();
@@ -46,7 +24,7 @@ const libraryRoutes = (app: FastifyInstance) => {
 		{
 			schema: {
 				response: {
-					[StatusCodes.OK]: syncResponseSchema,
+					[StatusCodes.OK]: librarySyncResponseSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
@@ -100,7 +78,7 @@ const libraryRoutes = (app: FastifyInstance) => {
 		{
 			schema: {
 				response: {
-					[StatusCodes.OK]: statusResponseSchema,
+					[StatusCodes.OK]: libraryStatusSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
 			},
@@ -127,9 +105,14 @@ const libraryRoutes = (app: FastifyInstance) => {
 			const movieCount = counts.find((row) => row.mediaType === "movie")?.total ?? ZERO_COUNT;
 			const showCount = counts.find((row) => row.mediaType === "show")?.total ?? ZERO_COUNT;
 
+			const parsedInterval = librarySyncIntervalSchema.safeParse(
+				settings?.librarySyncInterval ?? "manual",
+			);
+			const interval = parsedInterval.success ? parsedInterval.data : "manual";
+
 			return reply.code(StatusCodes.OK).send({
 				lastSynced: settings?.librarySyncLast ?? undefined,
-				interval: settings?.librarySyncInterval ?? "manual",
+				interval,
 				itemCount: movieCount + showCount,
 				movieCount,
 				showCount,
@@ -142,9 +125,9 @@ const libraryRoutes = (app: FastifyInstance) => {
 		"/api/library/settings",
 		{
 			schema: {
-				body: settingsBodySchema,
+				body: librarySettingsBodySchema,
 				response: {
-					[StatusCodes.OK]: settingsResponseSchema,
+					[StatusCodes.OK]: successResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},
 			},

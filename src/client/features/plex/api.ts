@@ -1,66 +1,31 @@
 import { api } from "../../api.ts";
 
-interface PlexAuthStart {
-	pinId: number;
-	authUrl: string;
-}
-
-interface PlexAuthCheck {
-	claimed: boolean;
-}
-
-interface PlexServer {
-	name: string;
-	address: string;
-	port: number;
-	scheme: string;
-	uri: string;
-	clientIdentifier: string;
-	owned: boolean;
-}
-
-interface PlexServersResponse {
-	servers: PlexServer[];
-}
-
-interface SelectPlexServerBody {
-	serverUrl: string;
-	serverName: string;
-	machineIdentifier: string;
-}
-
-interface ManualPlexAuthBody {
-	authToken: string;
-	serverUrl: string;
-	serverName: string;
-}
-
-interface PlexLibrary {
-	key: string;
-	title: string;
-	type: string;
-}
-
-interface PlexLibrariesResponse {
-	libraries: PlexLibrary[];
-}
+import type { SuccessResponse } from "@shared/schemas/common";
+import type {
+	PlexAuthCheckResponse,
+	PlexAuthStartResponse,
+	PlexLibrariesResponse,
+	PlexManualAuthBody,
+	PlexSelectServerBody,
+	PlexServersResponse,
+} from "@shared/schemas/plex";
 
 const plexApi = api.injectEndpoints({
 	endpoints: (builder) => ({
-		startPlexAuth: builder.mutation<PlexAuthStart, void>({
+		startPlexAuth: builder.mutation<PlexAuthStartResponse, void>({
 			query: () => ({
 				url: "api/plex/auth/start",
 				method: "POST",
 			}),
 		}),
-		checkPlexAuth: builder.query<PlexAuthCheck, number>({
+		checkPlexAuth: builder.query<PlexAuthCheckResponse, number>({
 			query: (pinId) => `api/plex/auth/check?pinId=${String(pinId)}`,
 		}),
 		getPlexServers: builder.query<PlexServersResponse, void>({
 			query: () => "api/plex/servers",
 			providesTags: ["PlexConnection"],
 		}),
-		selectPlexServer: builder.mutation<{ success: boolean }, SelectPlexServerBody>({
+		selectPlexServer: builder.mutation<SuccessResponse, PlexSelectServerBody>({
 			query: (body) => ({
 				url: "api/plex/servers/select",
 				method: "POST",
@@ -68,14 +33,14 @@ const plexApi = api.injectEndpoints({
 			}),
 			invalidatesTags: ["PlexConnection"],
 		}),
-		disconnectPlex: builder.mutation<{ success: boolean }, void>({
+		disconnectPlex: builder.mutation<SuccessResponse, void>({
 			query: () => ({
 				url: "api/plex/connection",
 				method: "DELETE",
 			}),
 			invalidatesTags: ["PlexConnection"],
 		}),
-		manualPlexAuth: builder.mutation<{ success: boolean }, ManualPlexAuthBody>({
+		manualPlexAuth: builder.mutation<SuccessResponse, PlexManualAuthBody>({
 			query: (body) => ({
 				url: "api/plex/auth/manual",
 				method: "POST",
@@ -109,4 +74,3 @@ export {
 	useSelectPlexServerMutation,
 	useStartPlexAuthMutation,
 };
-export type { PlexServer };

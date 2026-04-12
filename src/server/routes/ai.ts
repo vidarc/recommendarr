@@ -4,6 +4,12 @@ import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
+import {
+	aiConfigBodySchema,
+	aiConfigResponseSchema,
+	aiTestResultSchema,
+} from "../../shared/schemas/ai.ts";
+import { errorResponseSchema, successResponseSchema } from "../../shared/schemas/common.ts";
 import { aiConfigs } from "../schema.ts";
 import { testConnection } from "../services/ai-client.ts";
 import { decrypt, encrypt } from "../services/encryption.ts";
@@ -12,40 +18,8 @@ import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
 const MASK_VISIBLE_CHARS = 4;
-const MIN_STRING_LENGTH = 1;
-const MIN_TEMPERATURE = 0;
-const MAX_TEMPERATURE = 2;
-const MIN_TOKENS = 1;
 const PREFIX_START = 0;
 const SEPARATOR_OFFSET = 1;
-
-const errorResponseSchema = z.object({
-	error: z.string(),
-});
-
-const successResponseSchema = z.object({
-	success: z.boolean(),
-});
-
-const aiConfigResponseSchema = z.object({
-	endpointUrl: z.string(),
-	apiKey: z.string(),
-	modelName: z.string(),
-	temperature: z.number(),
-	maxTokens: z.number(),
-});
-
-const aiConfigBodySchema = z.object({
-	endpointUrl: z.string().url(),
-	apiKey: z.string().min(MIN_STRING_LENGTH),
-	modelName: z.string().min(MIN_STRING_LENGTH),
-	temperature: z.number().min(MIN_TEMPERATURE).max(MAX_TEMPERATURE),
-	maxTokens: z.number().int().min(MIN_TOKENS),
-});
-
-const testConnectionResponseSchema = z.object({
-	success: z.boolean(),
-});
 
 const testConnectionBodySchema = aiConfigBodySchema.or(z.null()).or(z.undefined());
 
@@ -197,7 +171,7 @@ const aiRoutes = (app: FastifyInstance) => {
 			schema: {
 				body: testConnectionBodySchema,
 				response: {
-					[StatusCodes.OK]: testConnectionResponseSchema,
+					[StatusCodes.OK]: aiTestResultSchema,
 					[StatusCodes.NOT_FOUND]: errorResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
 				},

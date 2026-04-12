@@ -2,23 +2,12 @@ import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
+import { feedbackBodySchema, feedbackResponseSchema } from "../../shared/schemas/chat.ts";
+import { errorResponseSchema } from "../../shared/schemas/common.ts";
 import { conversations, messages, recommendations } from "../schema.ts";
 
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
-
-const feedbackBodySchema = z.object({
-	feedback: z.enum(["liked", "disliked"]).nullable(),
-});
-
-const feedbackResponseSchema = z.object({
-	id: z.string(),
-	feedback: z.enum(["liked", "disliked"]).nullable(),
-});
-
-const errorResponseSchema = z.object({
-	error: z.string(),
-});
 
 const feedbackRoutes = (app: FastifyInstance) => {
 	const typedApp = app.withTypeProvider<ZodTypeProvider>();

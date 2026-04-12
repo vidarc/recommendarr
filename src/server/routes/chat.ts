@@ -5,6 +5,13 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import {
+	chatRequestSchema,
+	chatResponseSchema,
+	conversationDetailSchema,
+	conversationsResponseSchema,
+} from "../../shared/schemas/chat.ts";
+import { errorResponseSchema, successResponseSchema } from "../../shared/schemas/common.ts";
+import {
 	aiConfigs,
 	arrConnections as arrConnectionsTable,
 	conversations,
@@ -28,10 +35,6 @@ import type { FeedbackItem } from "../services/prompt-builder.ts";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
-const MIN_STRING_LENGTH = 1;
-const MIN_RESULT_COUNT = 1;
-const MAX_RESULT_COUNT = 25;
-const DEFAULT_RESULT_COUNT = 5;
 const MAX_TITLE_WORDS = 6;
 const NO_PRIOR_MESSAGES = 0;
 const MAX_TITLE_MESSAGE_LENGTH = 200;
@@ -45,71 +48,6 @@ type MediaType = (typeof VALID_MEDIA_TYPES)[number];
 
 const toFeedback = (value: string | null): "liked" | "disliked" | undefined =>
 	value === "liked" || value === "disliked" ? value : undefined;
-
-const errorResponseSchema = z.object({
-	error: z.string(),
-});
-
-const successResponseSchema = z.object({
-	success: z.boolean(),
-});
-
-const recommendationSchema = z.object({
-	id: z.string(),
-	title: z.string(),
-	year: z.number().optional(),
-	mediaType: z.string(),
-	synopsis: z.string().optional(),
-	tmdbId: z.number().optional(),
-	addedToArr: z.boolean(),
-	feedback: z.enum(["liked", "disliked"]).nullable().optional(),
-});
-
-const chatRequestSchema = z.object({
-	message: z.string().min(MIN_STRING_LENGTH),
-	mediaType: z.string().min(MIN_STRING_LENGTH),
-	resultCount: z
-		.number()
-		.int()
-		.min(MIN_RESULT_COUNT)
-		.max(MAX_RESULT_COUNT)
-		.default(DEFAULT_RESULT_COUNT),
-	conversationId: z.string().optional(),
-	libraryIds: z.array(z.string()).optional(),
-	excludeLibrary: z.boolean().optional(),
-});
-
-const messageSchema = z.object({
-	id: z.string(),
-	role: z.string(),
-	content: z.string(),
-	createdAt: z.string(),
-	recommendations: z.array(recommendationSchema),
-});
-
-const chatResponseSchema = z.object({
-	conversationId: z.string(),
-	message: messageSchema,
-});
-
-const conversationListItemSchema = z.object({
-	id: z.string(),
-	mediaType: z.string(),
-	title: z.string().optional(),
-	createdAt: z.string(),
-});
-
-const conversationsResponseSchema = z.object({
-	conversations: z.array(conversationListItemSchema),
-});
-
-const conversationDetailSchema = z.object({
-	id: z.string(),
-	mediaType: z.string(),
-	title: z.string().optional(),
-	createdAt: z.string(),
-	messages: z.array(messageSchema),
-});
 
 const chatRoutes = (app: FastifyInstance) => {
 	const typedApp = app.withTypeProvider<ZodTypeProvider>();

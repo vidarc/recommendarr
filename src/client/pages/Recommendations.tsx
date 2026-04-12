@@ -8,7 +8,7 @@ import { RecommendationCard } from "../components/RecommendationCard.tsx";
 import { useChat } from "../hooks/use-chat.ts";
 import { colors, spacing } from "../theme.ts";
 
-import type { ChatMessageResponse } from "../shared/types.ts";
+import type { ChatMessage as ChatMessageType } from "@shared/schemas/chat";
 
 const NO_RECOMMENDATIONS = 0;
 const NO_MESSAGES = 0;
@@ -104,7 +104,7 @@ const MessageItem = ({
 	conversationId,
 	onFeedbackChange,
 }: {
-	message: ChatMessageResponse;
+	message: ChatMessageType;
 	conversationId: string;
 	onFeedbackChange?:
 		| ((recommendationId: string, feedback: "liked" | "disliked" | null) => void)
@@ -131,7 +131,7 @@ const MessageThread = ({
 	conversationId,
 	onFeedbackChange,
 }: {
-	messages: ChatMessageResponse[];
+	messages: ChatMessageType[];
 	isLoading: boolean;
 	conversationId: string | undefined;
 	onFeedbackChange?:

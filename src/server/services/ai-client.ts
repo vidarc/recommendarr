@@ -17,6 +17,7 @@ interface ChatMessage {
 
 interface TestConnectionResult {
 	success: boolean;
+	error?: string;
 }
 
 const FIRST_CHOICE = 0;
@@ -53,7 +54,8 @@ const testConnection = async (
 		return { success: true };
 	} catch (error) {
 		request.log.error(error, "AI Test connection call failed");
-		return { success: false };
+		const message = error instanceof Error ? error.message : "Connection failed";
+		return { success: false, error: message };
 	}
 };
 

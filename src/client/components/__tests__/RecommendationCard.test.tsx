@@ -16,7 +16,7 @@ import { api } from "../../api.ts";
 import { createStore } from "../../store.ts";
 import { RecommendationCard } from "../RecommendationCard.tsx";
 
-import type { Recommendation } from "../../shared/types.ts";
+import type { Recommendation } from "@shared/schemas/chat";
 
 const movieYear = 1988;
 

@@ -17,6 +17,7 @@ import {
 } from "./settings-styles.ts";
 import { SettingsField } from "./SettingsField.tsx";
 
+import type { AiTestResult } from "@shared/schemas/ai";
 import type { ChangeEvent } from "react";
 
 const TEMP_STEP = 0.1;
@@ -152,7 +153,7 @@ const AiTabButtons = ({
 	</div>
 );
 
-const AiTestResultMessage = ({ result }: { result: { error?: string; success: boolean } }) => {
+const AiTestResultMessage = ({ result }: { result: AiTestResult }) => {
 	if (result.success) {
 		return <p className={successText}>Connection successful!</p>;
 	}

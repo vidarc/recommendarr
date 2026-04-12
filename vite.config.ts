@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import babel from "@rolldown/plugin-babel";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import wyw from "@wyw-in-js/vite";
@@ -9,6 +11,11 @@ export default defineConfig({
 	build: {
 		emptyOutDir: true,
 		outDir: "../../dist/client",
+	},
+	resolve: {
+		alias: {
+			"@shared": path.resolve(import.meta.dirname, "src/shared"),
+		},
 	},
 	plugins: [
 		react(),
@@ -95,7 +102,7 @@ export default defineConfig({
 		},
 		overrides: [
 			{
-				files: ["src/server/**"],
+				files: ["src/server/**", "vite.config.ts"],
 				rules: { "import/no-nodejs-modules": "off" },
 			},
 			{

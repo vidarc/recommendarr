@@ -1,24 +1,11 @@
 import { api } from "../../api.ts";
 
-interface LibraryStatus {
-	lastSynced: string | undefined;
-	interval: string;
-	itemCount: number;
-	movieCount: number;
-	showCount: number;
-	excludeDefault: boolean;
-}
-
-interface SyncResponse {
-	movieCount: number;
-	showCount: number;
-	totalCount: number;
-}
-
-interface LibrarySettingsBody {
-	interval: string;
-	excludeDefault: boolean;
-}
+import type { SuccessResponse } from "@shared/schemas/common";
+import type {
+	LibrarySettingsBody,
+	LibraryStatus,
+	LibrarySyncResponse,
+} from "@shared/schemas/library";
 
 const libraryApi = api.injectEndpoints({
 	endpoints: (builder) => ({
@@ -26,14 +13,14 @@ const libraryApi = api.injectEndpoints({
 			query: () => "api/library/status",
 			providesTags: ["Library"],
 		}),
-		syncLibrary: builder.mutation<SyncResponse, void>({
+		syncLibrary: builder.mutation<LibrarySyncResponse, void>({
 			query: () => ({
 				url: "api/library/sync",
 				method: "POST",
 			}),
 			invalidatesTags: ["Library"],
 		}),
-		updateLibrarySettings: builder.mutation<LibraryStatus, LibrarySettingsBody>({
+		updateLibrarySettings: builder.mutation<SuccessResponse, LibrarySettingsBody>({
 			query: (body) => ({
 				url: "api/library/settings",
 				method: "PUT",
@@ -48,5 +35,3 @@ const { useGetLibraryStatusQuery, useSyncLibraryMutation, useUpdateLibrarySettin
 	libraryApi;
 
 export { useGetLibraryStatusQuery, useSyncLibraryMutation, useUpdateLibrarySettingsMutation };
-
-export type { LibrarySettingsBody, LibraryStatus, SyncResponse };

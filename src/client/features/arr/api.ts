@@ -1,53 +1,28 @@
 import { api } from "../../api.ts";
 
-interface ArrConnection {
-	id: string;
-	serviceType: "radarr" | "sonarr";
-	url: string;
-	apiKey: string;
-}
-
-interface ArrOptions {
-	rootFolders: { id: number; path: string; freeSpace: number }[];
-	qualityProfiles: { id: number; name: string }[];
-}
-
-interface ArrLookupResult {
-	title: string;
-	year: number;
-	tmdbId?: number;
-	tvdbId?: number;
-	overview: string;
-	existsInLibrary: boolean;
-	arrId: number;
-}
-
-interface ArrTestResult {
-	success: boolean;
-	version?: string;
-	error?: string;
-}
-
-interface AddToArrParams {
-	serviceType: "radarr" | "sonarr";
-	recommendationId: string;
-	tmdbId?: number;
-	tvdbId?: number;
-	title: string;
-	year: number;
-	qualityProfileId: number;
-	rootFolderPath: string;
-}
+import type {
+	ArrAddBody,
+	ArrAddResponse,
+	ArrConfigBody,
+	ArrConnectionResponse,
+	ArrLookupBody,
+	ArrLookupResult,
+	ArrOptionsResponse,
+	ArrServiceType,
+	ArrTestConnectionBody,
+	ArrTestConnectionResponse,
+} from "@shared/schemas/arr";
+import type { SuccessResponse } from "@shared/schemas/common";
 
 const arrApi = api.injectEndpoints({
 	endpoints: (builder) => ({
-		getArrConfig: builder.query<ArrConnection[], void>({
+		getArrConfig: builder.query<ArrConnectionResponse[], void>({
 			query: () => "api/arr/config",
 			providesTags: ["ArrConfig"],
 		}),
 		updateArrConfig: builder.mutation<
-			{ success: boolean },
-			{ serviceType: string; url: string; apiKey: string }
+			SuccessResponse,
+			{ serviceType: ArrServiceType } & ArrConfigBody
 		>({
 			query: ({ serviceType, ...body }) => ({
 				url: `api/arr/config/${serviceType}`,
@@ -56,34 +31,31 @@ const arrApi = api.injectEndpoints({
 			}),
 			invalidatesTags: ["ArrConfig"],
 		}),
-		deleteArrConfig: builder.mutation<{ success: boolean }, string>({
+		deleteArrConfig: builder.mutation<SuccessResponse, ArrServiceType>({
 			query: (serviceType) => ({
 				url: `api/arr/config/${serviceType}`,
 				method: "DELETE",
 			}),
 			invalidatesTags: ["ArrConfig"],
 		}),
-		testArrConnection: builder.mutation<ArrTestResult, { serviceType: string }>({
+		testArrConnection: builder.mutation<ArrTestConnectionResponse, ArrTestConnectionBody>({
 			query: (body) => ({
 				url: "api/arr/test",
 				method: "POST",
 				body,
 			}),
 		}),
-		getArrOptions: builder.query<ArrOptions, string>({
+		getArrOptions: builder.query<ArrOptionsResponse, ArrServiceType>({
 			query: (serviceType) => `api/arr/options/${serviceType}`,
 		}),
-		arrLookup: builder.mutation<
-			ArrLookupResult[],
-			{ serviceType: string; title: string; year?: number }
-		>({
+		arrLookup: builder.mutation<ArrLookupResult[], ArrLookupBody>({
 			query: (body) => ({
 				url: "api/arr/lookup",
 				method: "POST",
 				body,
 			}),
 		}),
-		addToArr: builder.mutation<{ success: boolean; error?: string }, AddToArrParams>({
+		addToArr: builder.mutation<ArrAddResponse, ArrAddBody>({
 			query: (body) => ({
 				url: "api/arr/add",
 				method: "POST",
@@ -113,4 +85,3 @@ export {
 	useTestArrConnectionMutation,
 	useUpdateArrConfigMutation,
 };
-export type { ArrConnection, ArrLookupResult, ArrOptions, ArrTestResult };
