@@ -38,6 +38,7 @@ const server = setupServer(
 		}),
 	),
 	http.get("/api/arr/config", () => HttpResponse.json([])),
+	http.get("/api/metadata/status", () => HttpResponse.json({ tvdb: false, tmdb: false })),
 );
 
 beforeAll(() => {
