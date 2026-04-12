@@ -81,7 +81,7 @@ const plexHeaders = (authToken?: string): Record<string, string> => {
 
 const plexPinResponseSchema = z.object({ id: z.number(), code: z.string() });
 
-const plexPinCheckResponseSchema = z.object({ authToken: z.string().optional() });
+const plexPinCheckResponseSchema = z.object({ authToken: z.string().nullable().optional() });
 
 const plexResourceSchema = z.array(
 	z.object({

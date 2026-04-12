@@ -59,7 +59,8 @@ const mockPinCheckClaimedResponse = {
 const mockPinCheckPendingResponse = {
 	id: MOCK_PIN_ID,
 	code: "ABCD1234",
-	authToken: undefined,
+	// oxlint-disable-next-line unicorn/no-null
+	authToken: null,
 };
 
 const mockResourcesResponse = [
@@ -240,8 +241,16 @@ describe("getPlexLibraries", () => {
 		const libraries = await getPlexLibraries(testServerUrl, "test-token");
 
 		expect(libraries).toHaveLength(THREE_LIBRARIES);
-		expect(libraries[FIRST]).toStrictEqual({ key: "1", title: "Movies", type: "movie" });
-		expect(libraries[SECOND]).toStrictEqual({ key: "2", title: "TV Shows", type: "show" });
+		expect(libraries[FIRST]).toStrictEqual({
+			key: "1",
+			title: "Movies",
+			type: "movie",
+		});
+		expect(libraries[SECOND]).toStrictEqual({
+			key: "2",
+			title: "TV Shows",
+			type: "show",
+		});
 	});
 
 	test("throws on non-ok response", async () => {
@@ -260,7 +269,10 @@ describe("getPlexLibraries", () => {
 
 describe("getWatchHistory", () => {
 	test("returns watch history items", async () => {
-		const items = await getWatchHistory({ serverUrl: testServerUrl, authToken: "test-token" });
+		const items = await getWatchHistory({
+			serverUrl: testServerUrl,
+			authToken: "test-token",
+		});
 
 		expect(items).toHaveLength(TWO_ITEMS);
 		expect(items[FIRST]!.title).toBe("Episode 1");
@@ -284,7 +296,10 @@ describe("getWatchHistory", () => {
 			http.get(`${testServerUrl}/library/all`, () => HttpResponse.json({ MediaContainer: {} })),
 		);
 
-		const items = await getWatchHistory({ serverUrl: testServerUrl, authToken: "test-token" });
+		const items = await getWatchHistory({
+			serverUrl: testServerUrl,
+			authToken: "test-token",
+		});
 
 		expect(items).toStrictEqual([]);
 	});

@@ -11,6 +11,7 @@ const ssrRoutes = async (app: FastifyInstance) => {
 	if (isDev) {
 		const { createServer: createViteServer } = await import("vite");
 
+		app.log.debug("creating vite dev server for SSR");
 		const vite = await createViteServer({
 			appType: "custom",
 			configFile: resolve(root, "vite.config.ts"),
@@ -20,6 +21,7 @@ const ssrRoutes = async (app: FastifyInstance) => {
 
 		await app.register(import("@fastify/middie"));
 		app.use(vite.middlewares);
+		app.log.info("SSR middleware registered (dev mode)");
 
 		app.get("/*", async (_request, reply) => {
 			const { url } = _request;
@@ -52,6 +54,7 @@ const ssrRoutes = async (app: FastifyInstance) => {
 			prefix: "/assets/",
 			root: resolve(clientDist, "assets"),
 		});
+		app.log.info("SSR configured (production mode)");
 
 		const templatePath = resolve(clientDist, "index.html");
 		const template = await readFile(templatePath, "utf8");

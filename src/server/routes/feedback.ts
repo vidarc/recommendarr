@@ -60,6 +60,7 @@ const feedbackRoutes = (app: FastifyInstance) => {
 			// Update feedback
 			app.db.update(recommendations).set({ feedback }).where(eq(recommendations.id, id)).run();
 
+			request.log.info({ recommendationId: id, feedback }, "recommendation feedback updated");
 			return reply.code(StatusCodes.OK).send({ id, feedback });
 		},
 	);

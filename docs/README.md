@@ -4,15 +4,16 @@ AI-based recommendation engine for the \*arr stack (Radarr, Sonarr, Lidarr) and 
 
 ## Environment Variables
 
-| Variable                 | Default                  | Description                                                                    |
-| ------------------------ | ------------------------ | ------------------------------------------------------------------------------ |
-| `PORT`                   | `3000`                   | Port the HTTP server listens on                                                |
-| `HOST`                   | `0.0.0.0`                | Host the HTTP server binds to                                                  |
-| `DATABASE_PATH`          | `./data/recommendarr.db` | Path to the SQLite database file                                               |
-| `DEFAULT_ADMIN_USERNAME` | `admin`                  | Username for the default admin account (only used with DEFAULT_ADMIN_PASSWORD) |
-| `DEFAULT_ADMIN_PASSWORD` | (none)                   | If set, creates an admin user on first boot with these credentials             |
-| `ENCRYPTION_KEY`         | (none)                   | Required, 64-character hex string for AES-256-GCM encryption of stored secrets |
-| `SESSION_DURATION_DAYS`  | `7`                      | Controls how long login sessions last (in days)                                |
+| Variable                 | Default                  | Description                                                                     |
+| ------------------------ | ------------------------ | ------------------------------------------------------------------------------- |
+| `PORT`                   | `3000`                   | Port the HTTP server listens on                                                 |
+| `HOST`                   | `0.0.0.0`                | Host the HTTP server binds to                                                   |
+| `DATABASE_PATH`          | `./data/recommendarr.db` | Path to the SQLite database file                                                |
+| `DEFAULT_ADMIN_USERNAME` | `admin`                  | Username for the default admin account (only used with DEFAULT_ADMIN_PASSWORD)  |
+| `DEFAULT_ADMIN_PASSWORD` | (none)                   | If set, creates an admin user on first boot with these credentials              |
+| `ENCRYPTION_KEY`         | (none)                   | Required, 64-character hex string for AES-256-GCM encryption of stored secrets  |
+| `SESSION_DURATION_DAYS`  | `7`                      | Controls how long login sessions last (in days)                                 |
+| `LOG_LEVEL`              | `info`                   | Server log level (`fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`) |
 
 ## Reverse Proxy / TLS
 

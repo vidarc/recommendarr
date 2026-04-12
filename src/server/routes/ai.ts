@@ -112,6 +112,7 @@ const aiRoutes = (app: FastifyInstance) => {
 					})
 					.where(eq(aiConfigs.userId, request.user.id))
 					.run();
+				request.log.info({ endpointUrl, modelName }, "AI config updated");
 			} else {
 				app.db
 					.insert(aiConfigs)
@@ -127,6 +128,7 @@ const aiRoutes = (app: FastifyInstance) => {
 						updatedAt: now,
 					})
 					.run();
+				request.log.info({ endpointUrl, modelName }, "AI config created");
 			}
 
 			return reply.code(StatusCodes.OK).send({ success: true });
@@ -161,6 +163,7 @@ const aiRoutes = (app: FastifyInstance) => {
 
 			app.db.delete(aiConfigs).where(eq(aiConfigs.userId, request.user.id)).run();
 
+			request.log.info("AI config removed");
 			return reply.code(StatusCodes.OK).send({ success: true });
 		},
 	);
@@ -183,6 +186,10 @@ const aiRoutes = (app: FastifyInstance) => {
 			}
 
 			if (request.body) {
+				request.log.debug(
+					{ endpointUrl: request.body.endpointUrl },
+					"testing AI connection with provided config",
+				);
 				const result = await testConnection(request, {
 					endpointUrl: request.body.endpointUrl,
 					apiKey: request.body.apiKey,
@@ -191,6 +198,7 @@ const aiRoutes = (app: FastifyInstance) => {
 					maxTokens: request.body.maxTokens,
 				});
 
+				request.log.info({ success: result.success }, "AI connection test completed");
 				return reply.code(StatusCodes.OK).send(result);
 			}
 
@@ -204,6 +212,10 @@ const aiRoutes = (app: FastifyInstance) => {
 				return reply.code(StatusCodes.NOT_FOUND).send({ error: "No AI configuration found" });
 			}
 
+			request.log.debug(
+				{ endpointUrl: config.endpointUrl },
+				"testing AI connection with saved config",
+			);
 			const result = await testConnection(request, {
 				endpointUrl: config.endpointUrl,
 				apiKey: decrypt(config.apiKey),
@@ -212,6 +224,7 @@ const aiRoutes = (app: FastifyInstance) => {
 				maxTokens: config.maxTokens,
 			});
 
+			request.log.info({ success: result.success }, "AI connection test completed");
 			return reply.code(StatusCodes.OK).send(result);
 		},
 	);

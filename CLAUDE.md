@@ -78,6 +78,19 @@ yarn vp fmt          # Format only
 
 - When modifying tsconfig files, preserve `extends` fields unless explicitly asked to remove them
 
+## Logging
+
+- All new features and bug fixes should include appropriate log statements
+- Use `request.log` in route handlers (inherits request context like reqId)
+- Use `app.log` in plugins/startup code where no request is available
+- Log levels:
+  - `debug` — verbose operational detail (API calls, fetched counts, intermediate steps)
+  - `info` — significant actions (user login, config saved, sync completed, media added)
+  - `warn` — recoverable issues (failed login, expired session, missing config)
+  - `error` — unexpected failures (caught exceptions, background task failures)
+- Never log sensitive data (passwords, API keys, auth tokens, encryption keys)
+- Include structured context as the first argument: `request.log.info({ userId, title }, "media added")`
+
 ## Debugging Approach
 
 - When fixing browser-specific issues (especially WebKit), investigate ALL related CSP/security directives, not just the obvious ones
@@ -182,6 +195,7 @@ The app uses wouter for routing. Routes: `/login`, `/register`, `/` (recommendat
 - `HOST` — bind address (default: `0.0.0.0`)
 - `ENCRYPTION_KEY` — required, 64-character hex string for AES-256-GCM encryption of stored secrets
 - `SESSION_DURATION_DAYS` — session lifetime in days (default: `7`)
+- `LOG_LEVEL` — server log level (default: `info`; options: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`)
 
 ### Modules
 

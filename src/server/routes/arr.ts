@@ -119,6 +119,7 @@ const arrRoutes = (app: FastifyInstance) => {
 						),
 					)
 					.run();
+				request.log.info({ serviceType, url }, "arr connection updated");
 			} else {
 				app.db
 					.insert(arrConnections)
@@ -132,6 +133,7 @@ const arrRoutes = (app: FastifyInstance) => {
 						updatedAt: now,
 					})
 					.run();
+				request.log.info({ serviceType, url }, "arr connection created");
 			}
 
 			return reply.code(StatusCodes.OK).send({ success: true });
@@ -184,6 +186,7 @@ const arrRoutes = (app: FastifyInstance) => {
 				)
 				.run();
 
+			request.log.info({ serviceType }, "arr connection removed");
 			return reply.code(StatusCodes.OK).send({ success: true });
 		},
 	);
@@ -225,8 +228,10 @@ const arrRoutes = (app: FastifyInstance) => {
 			}
 
 			const decryptedKey = decrypt(connection.apiKey);
+			request.log.debug({ serviceType }, "testing arr connection");
 			const result = await testArrConnection(connection.url, decryptedKey);
 
+			request.log.info({ serviceType, success: result.success }, "arr connection test completed");
 			return reply.code(StatusCodes.OK).send(result);
 		},
 	);
@@ -314,12 +319,17 @@ const arrRoutes = (app: FastifyInstance) => {
 			}
 
 			const decryptedKey = decrypt(connection.apiKey);
+			request.log.debug({ serviceType, title, year }, "looking up media in arr");
 			const lookupOptions =
 				year !== undefined
 					? { url: connection.url, apiKey: decryptedKey, serviceType, title, year }
 					: { url: connection.url, apiKey: decryptedKey, serviceType, title };
 			const results = await lookupMedia(lookupOptions);
 
+			request.log.debug(
+				{ serviceType, title, resultCount: results.length },
+				"arr lookup completed",
+			);
 			return reply.code(StatusCodes.OK).send(results);
 		},
 	);
@@ -394,6 +404,9 @@ const arrRoutes = (app: FastifyInstance) => {
 					.set(updateValues)
 					.where(eq(recommendations.id, recommendationId))
 					.run();
+				request.log.info({ serviceType, title, year }, "media added to arr");
+			} else {
+				request.log.warn({ serviceType, title, error: result.error }, "failed to add media to arr");
 			}
 
 			return reply.code(StatusCodes.OK).send({ success: result.success, error: result.error });
