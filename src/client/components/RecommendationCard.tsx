@@ -3,8 +3,10 @@ import { useCallback, useState } from "react";
 
 import { useGetArrConfigQuery } from "../features/arr/api.ts";
 import { useUpdateFeedbackMutation } from "../features/chat/api.ts";
+import { useGetMetadataStatusQuery } from "../features/metadata/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 import { AddToArrModal } from "./AddToArrModal.tsx";
+import { MetadataPanel } from "./MetadataPanel.tsx";
 
 import type { Recommendation } from "@shared/schemas/chat";
 import type { ReactNode } from "react";
@@ -242,6 +244,11 @@ const RecommendationCard = ({
 	const [modalOpen, setModalOpen] = useState(false);
 	const serviceType = recommendation.mediaType === "movie" ? "radarr" : "sonarr";
 	const { data: arrConnections } = useGetArrConfigQuery();
+	const { data: metadataStatus } = useGetMetadataStatusQuery();
+	const metadataAvailable =
+		metadataStatus !== undefined &&
+		((recommendation.mediaType === "movie" && metadataStatus.tmdb) ||
+			(recommendation.mediaType !== "movie" && metadataStatus.tvdb));
 	const isConnected =
 		arrConnections !== undefined && arrConnections.some((conn) => conn.serviceType === serviceType);
 	const [updateFeedback] = useUpdateFeedbackMutation();
@@ -286,6 +293,7 @@ const RecommendationCard = ({
 			>
 				<FeedbackButtons feedback={recommendation.feedback} onFeedback={handleFeedback} />
 			</CardActions>
+			<MetadataPanel recommendationId={recommendation.id} metadataAvailable={metadataAvailable} />
 			{isConnected ? (
 				<AddToArrModal
 					recommendation={recommendation}
