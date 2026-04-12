@@ -1,6 +1,7 @@
 {
 	"extends": "./tsconfig.json",
-	"include": ["src/client/**/*", "src/shared/**/*"],
+	"include": ["src/client/**/*"],
+	"references": [{ "path": "./tsconfig.shared.json" }],
 	"compilerOptions": {
 		"composite": true,
 		"target": "es2024",
