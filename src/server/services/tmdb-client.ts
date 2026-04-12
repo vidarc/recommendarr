@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { CreditPerson, MediaMetadata } from "./metadata-types.ts";
 
-const TMDB_API_BASE = "https://api.themoviedb.org/3";
+const TMDB_API_BASE_DEFAULT = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 const CAST_LIMIT = 10;
 const CREW_LIMIT = 5;
@@ -12,6 +12,8 @@ const YEAR_END = 4;
 
 const getApiKey = (): string | undefined => process.env["TMDB_API_KEY"];
 
+const getApiBase = (): string => process.env["TMDB_API_BASE_URL"] ?? TMDB_API_BASE_DEFAULT;
+
 const isAvailable = (): boolean => getApiKey() !== undefined;
 
 const tmdbFetch = async (path: string, params: Record<string, string> = {}): Promise<Response> => {
@@ -19,7 +21,7 @@ const tmdbFetch = async (path: string, params: Record<string, string> = {}): Pro
 	if (!apiKey) {
 		throw new Error("TMDB_API_KEY is not configured");
 	}
-	const url = new URL(`${TMDB_API_BASE}${path}`);
+	const url = new URL(`${getApiBase()}${path}`);
 	url.searchParams.set("api_key", apiKey);
 	for (const [key, value] of Object.entries(params)) {
 		url.searchParams.set(key, value);

@@ -2,7 +2,9 @@ import { z } from "zod";
 
 import type { CreditPerson, MediaMetadata } from "./metadata-types.ts";
 
-const TVDB_API_BASE = "https://api4.thetvdb.com/v4";
+const TVDB_API_BASE_DEFAULT = "https://api4.thetvdb.com/v4";
+
+const getApiBase = (): string => process.env["TVDB_API_BASE_URL"] ?? TVDB_API_BASE_DEFAULT;
 const CAST_LIMIT = 10;
 const CREW_LIMIT = 5;
 const NOT_FOUND = 404;
@@ -29,7 +31,7 @@ const authenticate = async (): Promise<string> => {
 	if (!apiKey) {
 		throw new Error("TVDB_API_KEY is not configured");
 	}
-	const response = await fetch(`${TVDB_API_BASE}/login`, {
+	const response = await fetch(`${getApiBase()}/login`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ apikey: apiKey }),
@@ -44,7 +46,7 @@ const authenticate = async (): Promise<string> => {
 
 const tvdbFetch = async (path: string, params: Record<string, string> = {}): Promise<Response> => {
 	const token = await authenticate();
-	const url = new URL(`${TVDB_API_BASE}${path}`);
+	const url = new URL(`${getApiBase()}${path}`);
 	for (const [key, value] of Object.entries(params)) {
 		url.searchParams.set(key, value);
 	}

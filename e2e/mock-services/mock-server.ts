@@ -6,6 +6,8 @@ const PLEX_PORT = 9090;
 const RADARR_PORT = 7878;
 const SONARR_PORT = 8989;
 const OPENAI_PORT = 4000;
+const TMDB_PORT = 5001;
+const TVDB_PORT = 5002;
 
 // ── Auth middleware helpers ──────────────────────────────────
 
@@ -165,6 +167,96 @@ const sonarrSeriesLookup = [
 	},
 ];
 
+// ── TMDB mock data ──────────────────────────────────────────
+
+const BLADE_RUNNER_TMDB_ID = 335_984;
+
+const tmdbSearchResults = {
+	results: [
+		{
+			id: BLADE_RUNNER_TMDB_ID,
+			title: "Blade Runner 2049",
+			overview:
+				"Thirty years after the events of the first film, a new blade runner, LAPD Officer K, unearths a long-buried secret.",
+			poster_path: "/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg",
+			genre_ids: [878, 18],
+			vote_average: 7.5,
+			release_date: "2017-10-04",
+		},
+	],
+};
+
+const tmdbMovieDetails = {
+	id: BLADE_RUNNER_TMDB_ID,
+	title: "Blade Runner 2049",
+	overview:
+		"Thirty years after the events of the first film, a new blade runner, LAPD Officer K, unearths a long-buried secret.",
+	poster_path: "/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg",
+	genres: [
+		{ id: 878, name: "Science Fiction" },
+		{ id: 18, name: "Drama" },
+	],
+	vote_average: 7.5,
+	release_date: "2017-10-04",
+	status: "Released",
+};
+
+const tmdbMovieCredits = {
+	cast: [
+		{ name: "Ryan Gosling", known_for_department: "Acting", character: "K", order: 0 },
+		{
+			name: "Harrison Ford",
+			known_for_department: "Acting",
+			character: "Rick Deckard",
+			order: 1,
+		},
+	],
+	crew: [
+		{ name: "Denis Villeneuve", department: "Directing", job: "Director" },
+		{ name: "Hampton Fancher", department: "Writing", job: "Writer" },
+	],
+};
+
+// ── TVDB mock data ──────────────────────────────────────────
+
+const FOUNDATION_TVDB_ID = 366_524;
+
+const tvdbLoginResponse = {
+	status: "success",
+	data: { token: "mock-tvdb-token" },
+};
+
+const tvdbSearchResults = {
+	data: [
+		{
+			tvdb_id: String(FOUNDATION_TVDB_ID),
+			name: "Foundation",
+			overview: "A complex saga of humans scattered on planets throughout the galaxy.",
+			image_url: "https://artworks.thetvdb.com/banners/series/366524/posters/example.jpg",
+			year: "2021",
+			type: "series",
+		},
+	],
+};
+
+const tvdbSeriesExtended = {
+	data: {
+		id: FOUNDATION_TVDB_ID,
+		name: "Foundation",
+		overview: "A complex saga of humans scattered on planets throughout the galaxy.",
+		image: "https://artworks.thetvdb.com/banners/series/366524/posters/example.jpg",
+		year: "2021",
+		genres: [{ name: "Science Fiction" }, { name: "Drama" }],
+		score: 8.1,
+		status: { name: "Continuing" },
+		characters: [
+			{ name: "Hari Seldon", peopleType: "Actor", personName: "Jared Harris" },
+			{ name: "Gaal Dornick", peopleType: "Actor", personName: "Lou Llobell" },
+			{ name: undefined, peopleType: "Director", personName: "David S. Goyer" },
+		],
+	},
+};
+
 // ── Plex mock (port 9090) ───────────────────────────────────
 
 const createPlexMock = async () => {
@@ -309,7 +401,47 @@ const createOpenAiMock = async () => {
 	console.log(`Mock OpenAI server listening on port ${String(OPENAI_PORT)}`);
 };
 
+// ── TMDB mock (port 5001) ───────────────────────────────────
+
+const createTmdbMock = async () => {
+	const tmdb = Fastify();
+
+	tmdb.get("/healthz", async () => ({ status: "ok" }));
+
+	tmdb.get("/3/search/movie", async () => tmdbSearchResults);
+	tmdb.get<{ Params: { id: string } }>("/3/movie/:id", async () => tmdbMovieDetails);
+	tmdb.get<{ Params: { id: string } }>("/3/movie/:id/credits", async () => tmdbMovieCredits);
+
+	await tmdb.listen({ port: TMDB_PORT, host: "0.0.0.0" });
+	console.log(`Mock TMDB server listening on port ${String(TMDB_PORT)}`);
+};
+
+// ── TVDB mock (port 5002) ───────────────────────────────────
+
+const createTvdbMock = async () => {
+	const tvdb = Fastify();
+
+	tvdb.get("/healthz", async () => ({ status: "ok" }));
+
+	tvdb.post("/v4/login", async () => tvdbLoginResponse);
+	tvdb.get("/v4/search", async () => tvdbSearchResults);
+	tvdb.get<{ Params: { id: string } }>("/v4/series/:id", async () => ({
+		data: tvdbSeriesExtended.data,
+	}));
+	tvdb.get<{ Params: { id: string } }>("/v4/series/:id/extended", async () => tvdbSeriesExtended);
+
+	await tvdb.listen({ port: TVDB_PORT, host: "0.0.0.0" });
+	console.log(`Mock TVDB server listening on port ${String(TVDB_PORT)}`);
+};
+
 // ── Start all ───────────────────────────────────────────────
 
-await Promise.all([createPlexMock(), createRadarrMock(), createSonarrMock(), createOpenAiMock()]);
+await Promise.all([
+	createPlexMock(),
+	createRadarrMock(),
+	createSonarrMock(),
+	createOpenAiMock(),
+	createTmdbMock(),
+	createTvdbMock(),
+]);
 console.log("All mock services started");
