@@ -16,6 +16,7 @@ import {
 	arrConnections as arrConnectionsTable,
 	conversations,
 	messages,
+	metadataCache,
 	plexConnections,
 	recommendations,
 	userSettings,
@@ -31,9 +32,25 @@ import {
 } from "../services/response-parser.ts";
 
 import type { ExclusionContext } from "../services/library-sync.ts";
-import type { FeedbackItem } from "../services/prompt-builder.ts";
+import type { CreditPerson } from "../services/metadata-types.ts";
+import type { CastCrewContextItem, FeedbackItem } from "../services/prompt-builder.ts";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
+
+const creditPersonSchema = z
+	.object({
+		name: z.string(),
+		role: z.string(),
+		character: z.string().optional(),
+	})
+	.transform(
+		(val): CreditPerson => ({
+			name: val.name,
+			role: val.role,
+			character: val.character,
+		}),
+	);
+const creditPersonArraySchema = z.array(creditPersonSchema);
 
 const MAX_TITLE_WORDS = 6;
 const NO_PRIOR_MESSAGES = 0;
@@ -42,6 +59,11 @@ const EMPTY_ARRAY_LENGTH = 0;
 const FEEDBACK_LIMIT = 50;
 const STRING_START = 0;
 const NO_FILTERED_ITEMS = 0;
+
+const CAST_CREW_KEYWORDS = ["actor", "director", "cast", "starring", "crew", "writer", "acted"];
+
+const messageRequestsCastInfo = (message: string): boolean =>
+	CAST_CREW_KEYWORDS.some((keyword) => message.toLowerCase().includes(keyword));
 
 const VALID_MEDIA_TYPES = ["movie", "show", "either"] as const;
 type MediaType = (typeof VALID_MEDIA_TYPES)[number];
@@ -202,6 +224,30 @@ const chatRoutes = (app: FastifyInstance) => {
 				})
 				.filter((item): item is FeedbackItem => item !== undefined);
 
+			// Optionally enrich with cast/crew metadata if the user's message suggests interest
+			let castCrewContext: CastCrewContextItem[] = [];
+			if (messageRequestsCastInfo(message)) {
+				const cachedMetadata = app.db.select().from(metadataCache).all();
+
+				castCrewContext = cachedMetadata
+					.filter((row) => row.cast !== null || row.crew !== null)
+					.map((row) => ({
+						title: row.title,
+						year: row.year ?? undefined,
+						cast: row.cast ? creditPersonArraySchema.parse(JSON.parse(row.cast)) : [],
+						crew: row.crew ? creditPersonArraySchema.parse(JSON.parse(row.crew)) : [],
+					}))
+					.filter(
+						(item) =>
+							item.cast.length > EMPTY_ARRAY_LENGTH || item.crew.length > EMPTY_ARRAY_LENGTH,
+					);
+
+				request.log.debug(
+					{ castCrewItemCount: castCrewContext.length },
+					"cast/crew metadata enrichment applied",
+				);
+			}
+
 			// Build system prompt
 			const systemPrompt = buildSystemPrompt({
 				watchHistory,
@@ -209,6 +255,7 @@ const chatRoutes = (app: FastifyInstance) => {
 				resultCount,
 				...(exclusionContext !== undefined && { exclusionContext }),
 				...(feedbackContext.length > EMPTY_ARRAY_LENGTH && { feedbackContext }),
+				...(castCrewContext.length > EMPTY_ARRAY_LENGTH && { castCrewContext }),
 			});
 
 			// Fetch conversation history
