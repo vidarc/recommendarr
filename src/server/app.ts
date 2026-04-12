@@ -15,6 +15,7 @@ import { chatRoutes } from "./routes/chat.ts";
 import { feedbackRoutes } from "./routes/feedback.ts";
 import { healthRoutes } from "./routes/health.ts";
 import { libraryRoutes } from "./routes/library.ts";
+import { metadataRoutes } from "./routes/metadata.ts";
 import { plexRoutes } from "./routes/plex.ts";
 import { getKey } from "./services/encryption.ts";
 import { ssrRoutes } from "./ssr.ts";
@@ -74,7 +75,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 				scriptSrc: isDev ? ["'self'", "'unsafe-inline'"] : ["'self'"],
 				styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
 				fontSrc: ["'self'", "https://fonts.gstatic.com"],
-				imgSrc: ["'self'", "data:"],
+				imgSrc: ["'self'", "data:", "https://image.tmdb.org", "https://artworks.thetvdb.com"],
 				connectSrc: isDev ? ["'self'", "ws:"] : ["'self'"],
 				// oxlint-disable-next-line unicorn/no-null
 				upgradeInsecureRequests: null,
@@ -93,6 +94,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 		arrRoutes(app);
 		libraryRoutes(app);
 		feedbackRoutes(app);
+		metadataRoutes(app);
 	}
 
 	if (!options.skipSSR) {
