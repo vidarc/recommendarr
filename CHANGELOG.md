@@ -1,5 +1,53 @@
 # Changelog
 
+## v0.3.0 (2026-04-11)
+
+- fix: security, accessibility, and reliability improvements across the stack
+- claude updates
+- clean up changelog, not a release yet
+- fix: e2e tests for single-user registration model
+- upgrade path-to-regexp (#21)
+- fixing the dependabot config + 2d minimum package age (#22)
+- ignore nodejs majors for now (#27)
+- chore(deps): Bump node in the docker-patch group (#28)
+- updating dependabot config (#29)
+- chore(deps-dev): Bump drizzle-kit from 1.0.0-beta.19 to 1.0.0-beta.20 (#26)
+- chore(deps): Bump drizzle-orm from 1.0.0-beta.19 to 1.0.0-beta.20 (#25)
+- feat: add plex library integration for excluding them from recommendations (#31)
+- making 5 new agents for work
+- docs: add feedback loop design spec
+- docs: add feedback loop implementation plan
+- feat: add feedback column to recommendations table
+- feat: add PATCH /api/recommendations/:id/feedback route
+- feat: add feedback context to system prompt builder
+- feat: query feedback context and inject into AI system prompt
+- feat: add feedback type and RTK Query mutation
+- feat: add thumbs up/down feedback buttons to RecommendationCard
+- docs: add feedback route to architecture and API docs
+- fix: address code review findings for feedback loop
+- fix: add CHECK constraint, deduplicate feedback, improve accessibility
+- test(e2e): add feedback loop E2E tests with OpenAI-compatible mock
+- fix: use JSON code fence format in OpenAI E2E mock response
+- e2e testing improvements
+- more test fixing
+- updating library settings test
+- chore(deps-dev): Bump the dev-minor group with 2 updates (#34)
+- chore(deps-dev): Bump rolldown from 1.0.0-rc.12 to 1.0.0-rc.13 (#36)
+- making better e2e tests (#33)
+- package upgrades (#37)
+- refactor(library): share types between server and client
+- refactor(auth): share auth schemas between server and client
+- refactor(ai): share AI schemas between server and client
+- refactor(arr): share arr schemas between server and client
+- refactor(plex): share plex schemas between server and client
+- refactor(chat): share chat schemas between server and client
+- fix docker entry
+- fix(build): split shared into its own project reference
+- fix(build): use tsc -b to follow shared project reference
+- fix missing tsconfig
+- refactor: address code review followups from shared schemas PR (#39)
+- refactor(chat): tighten recommendation feedback type to optional-only (#40)
+
 ## v0.2.1 (2026-03-28)
 
 - chore: resolve migrations path absolutely for Docker compatibility
