@@ -15,7 +15,7 @@ const recommendationSchema = z.object({
 	synopsis: z.string().optional(),
 	tmdbId: z.number().optional(),
 	addedToArr: z.boolean(),
-	feedback: recommendationFeedbackSchema.nullable().optional(),
+	feedback: recommendationFeedbackSchema.optional(),
 });
 
 const chatMessageSchema = z.object({
