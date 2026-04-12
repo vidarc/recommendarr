@@ -46,6 +46,7 @@ const plexRoutes = (app: FastifyInstance) => {
 			}
 
 			const pin = await createPlexPin();
+			request.log.info({ pinId: pin.id }, "plex OAuth flow started");
 			return reply.code(StatusCodes.OK).send({ pinId: pin.id, authUrl: pin.authUrl });
 		},
 	);
@@ -67,9 +68,11 @@ const plexRoutes = (app: FastifyInstance) => {
 			}
 
 			const { pinId } = request.query;
+			request.log.debug({ pinId }, "checking plex pin status");
 			const result = await checkPlexPin(pinId);
 
 			if (!result.authToken) {
+				request.log.debug({ pinId }, "plex pin not yet claimed");
 				return reply.code(StatusCodes.OK).send({ claimed: false });
 			}
 
@@ -102,6 +105,7 @@ const plexRoutes = (app: FastifyInstance) => {
 					.run();
 			}
 
+			request.log.info("plex OAuth token claimed and stored");
 			return reply.code(StatusCodes.OK).send({ claimed: true });
 		},
 	);
@@ -160,6 +164,7 @@ const plexRoutes = (app: FastifyInstance) => {
 					.run();
 			}
 
+			request.log.info({ serverName }, "plex manual connection saved");
 			return reply.code(StatusCodes.OK).send({ success: true });
 		},
 	);
@@ -254,6 +259,7 @@ const plexRoutes = (app: FastifyInstance) => {
 				.where(eq(plexConnections.userId, request.user.id))
 				.run();
 
+			request.log.info({ serverName, serverUrl }, "plex server selected");
 			return reply.code(StatusCodes.OK).send({ success: true });
 		},
 	);
@@ -286,6 +292,7 @@ const plexRoutes = (app: FastifyInstance) => {
 
 			app.db.delete(plexConnections).where(eq(plexConnections.userId, request.user.id)).run();
 
+			request.log.info("plex connection removed");
 			return reply.code(StatusCodes.OK).send({ success: true });
 		},
 	);
@@ -322,8 +329,10 @@ const plexRoutes = (app: FastifyInstance) => {
 			}
 
 			const authToken = decrypt(connection.authToken);
+			request.log.debug({ serverUrl: connection.serverUrl }, "fetching plex libraries");
 			const libraries = await getPlexLibraries(connection.serverUrl, authToken);
 
+			request.log.debug({ count: libraries.length }, "plex libraries fetched");
 			return reply.code(StatusCodes.OK).send({ libraries });
 		},
 	);

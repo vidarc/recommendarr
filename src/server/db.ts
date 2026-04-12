@@ -34,6 +34,7 @@ const dbPlugin = async (app: FastifyInstance) => {
 		mkdirSync(dir, { recursive: true });
 	}
 
+	app.log.info({ dbPath }, "opening database");
 	const sqlite = new Database(dbPath);
 	sqlite.pragma("journal_mode = WAL");
 
@@ -54,9 +55,11 @@ const dbPlugin = async (app: FastifyInstance) => {
 		},
 	});
 
+	app.log.debug("running database migrations");
 	migrate(db, { migrationsFolder: resolve(import.meta.dirname, "../../drizzle") });
 
 	purgeExpiredSessions(db);
+	app.log.debug("expired sessions purged");
 
 	db.insert(settings).values({ key: "app_version", value: "1.0.0" }).onConflictDoNothing().run();
 
@@ -73,6 +76,7 @@ const dbPlugin = async (app: FastifyInstance) => {
 			})
 			.onConflictDoNothing()
 			.run();
+		app.log.info({ username: defaultAdminUsername }, "default admin user ensured");
 	}
 
 	app.decorate("db", db);

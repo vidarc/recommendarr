@@ -74,10 +74,13 @@ const chatRoutes = (app: FastifyInstance) => {
 				request.body;
 			const userId = request.user.id;
 
+			request.log.info({ mediaType, conversationId, resultCount }, "chat request received");
+
 			// Get AI config
 			const aiConfig = app.db.select().from(aiConfigs).where(eq(aiConfigs.userId, userId)).get();
 
 			if (!aiConfig) {
+				request.log.warn("chat request with no AI configuration");
 				return reply.code(StatusCodes.NOT_FOUND).send({ error: "No AI configuration found" });
 			}
 
@@ -117,9 +120,11 @@ const chatRoutes = (app: FastifyInstance) => {
 				.run();
 
 			// Fetch watch history from Plex
+			request.log.debug("fetching plex watch history");
 			const watchHistory = plexConnection?.serverUrl
 				? await getWatchHistoryItems(plexConnection, libraryIds)
 				: [];
+			request.log.debug({ watchHistoryCount: watchHistory.length }, "watch history fetched");
 
 			// Resolve exclusion toggle
 			const userSetting = app.db
@@ -223,6 +228,10 @@ const chatRoutes = (app: FastifyInstance) => {
 			];
 
 			// Call AI
+			request.log.debug(
+				{ model: aiConfig.modelName, messageCount: aiMessages.length },
+				"calling AI",
+			);
 			const decryptedKey = decrypt(aiConfig.apiKey);
 			const aiResponse = await chatCompletion(
 				{
@@ -236,6 +245,7 @@ const chatRoutes = (app: FastifyInstance) => {
 			);
 
 			// Parse response
+			request.log.debug("AI response received, parsing recommendations");
 			let parsed = parseRecommendations(aiResponse);
 
 			// Post-filter: remove library-owned items and past recommendations if exclusion enabled
@@ -247,6 +257,10 @@ const chatRoutes = (app: FastifyInstance) => {
 
 				if (filterResult.filtered.length > NO_FILTERED_ITEMS) {
 					// Backfill request: ask AI for replacements
+					request.log.info(
+						{ filteredCount: filterResult.filtered.length },
+						"excluded library-owned recommendations, requesting backfill",
+					);
 					const filteredTitles = filterResult.filtered.map((rec) => rec.title).join(", ");
 					const allExcluded = [
 						...exclusionContext.titles.map((item) => item.title),
@@ -279,7 +293,8 @@ const chatRoutes = (app: FastifyInstance) => {
 							conversationalText: parsed.conversationalText,
 							recommendations: [...filterResult.kept, ...backfillFiltered.kept],
 						};
-					} catch {
+					} catch (error) {
+						request.log.warn({ error }, "backfill request failed, using kept recommendations only");
 						parsed = {
 							conversationalText: parsed.conversationalText,
 							recommendations: filterResult.kept,
@@ -372,6 +387,10 @@ const chatRoutes = (app: FastifyInstance) => {
 				}
 			}
 
+			request.log.info(
+				{ conversationId: activeConversationId, recommendationCount: savedRecommendations.length },
+				"chat response sent",
+			);
 			return reply.code(StatusCodes.OK).send({
 				conversationId: activeConversationId,
 				message: {
@@ -541,6 +560,7 @@ const chatRoutes = (app: FastifyInstance) => {
 				app.db.delete(conversations).where(eq(conversations.id, conversation.id)).run();
 			})();
 
+			request.log.info({ conversationId: conversation.id }, "conversation deleted");
 			return reply.code(StatusCodes.OK).send({ success: true });
 		},
 	);

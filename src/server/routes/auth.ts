@@ -57,11 +57,13 @@ const authRoutes = (app: FastifyInstance) => {
 			const allUsers = app.db.select().from(users).all();
 
 			if (allUsers.length > noUsers) {
+				request.log.warn({ username }, "registration attempted but disabled");
 				return reply.code(StatusCodes.FORBIDDEN).send({ error: "Registration is disabled" });
 			}
 
 			const existing = app.db.select().from(users).where(eq(users.username, username)).get();
 			if (existing) {
+				request.log.warn({ username }, "registration attempted with existing username");
 				return reply.code(StatusCodes.CONFLICT).send({ error: "Username already taken" });
 			}
 
@@ -82,6 +84,7 @@ const authRoutes = (app: FastifyInstance) => {
 			const session = createSession(app.db, id);
 			setSessionCookie(request, reply, session.id);
 
+			request.log.info({ username, isAdmin }, "user registered");
 			return reply.code(StatusCodes.CREATED).send({ id, username, isAdmin });
 		},
 	);
@@ -103,12 +106,14 @@ const authRoutes = (app: FastifyInstance) => {
 			const user = app.db.select().from(users).where(eq(users.username, username)).get();
 
 			if (!user || !(await verifyPassword(password, user.passwordHash))) {
+				request.log.warn({ username }, "login failed");
 				return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Invalid username or password" });
 			}
 
 			const session = createSession(app.db, user.id);
 			setSessionCookie(request, reply, session.id);
 
+			request.log.info({ username }, "user logged in");
 			return reply.code(StatusCodes.OK).send({
 				id: user.id,
 				username: user.username,
@@ -155,6 +160,7 @@ const authRoutes = (app: FastifyInstance) => {
 				deleteSession(app.db, sessionId);
 			}
 
+			request.log.info("user logged out");
 			reply.clearCookie("session", { path: "/" });
 			return reply.code(StatusCodes.OK).send({ success: true });
 		},

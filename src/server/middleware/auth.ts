@@ -29,6 +29,7 @@ const authMiddleware = (app: FastifyInstance) => {
 		const sessionId = request.cookies["session"];
 
 		if (!sessionId) {
+			request.log.debug({ url: request.url }, "no session cookie, rejecting");
 			reply.clearCookie("session", { path: "/" });
 			return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Authentication required" });
 		}
@@ -36,6 +37,7 @@ const authMiddleware = (app: FastifyInstance) => {
 		const session = getSession(app.db, sessionId);
 
 		if (!session) {
+			request.log.warn({ url: request.url }, "invalid or expired session");
 			reply.clearCookie("session", { path: "/" });
 			return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Invalid or expired session" });
 		}
@@ -43,6 +45,7 @@ const authMiddleware = (app: FastifyInstance) => {
 		const user = app.db.select().from(users).where(eq(users.id, session.userId)).get();
 
 		if (!user) {
+			request.log.warn({ sessionUserId: session.userId }, "session references missing user");
 			reply.clearCookie("session", { path: "/" });
 			return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "User not found" });
 		}

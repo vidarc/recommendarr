@@ -27,8 +27,11 @@ interface BuildServerOptions {
 const buildServer = async (options: BuildServerOptions = {}) => {
 	getKey(); // Validates ENCRYPTION_KEY is set and correctly formatted
 
+	const isTest = process.env["NODE_ENV"] === "test";
+	const logLevel = process.env["LOG_LEVEL"] ?? "info";
+
 	const app = fastify({
-		logger: process.env["NODE_ENV"] !== "test",
+		logger: isTest ? false : { level: logLevel },
 		genReqId: () => randomUUID(),
 		trustProxy: "loopback",
 	});

@@ -51,6 +51,7 @@ const libraryRoutes = (app: FastifyInstance) => {
 				.where(eq(arrConnections.userId, request.user.id))
 				.all();
 
+			request.log.info("library sync started");
 			await syncLibrary({
 				userId: request.user.id,
 				db: app.db,
@@ -69,6 +70,7 @@ const libraryRoutes = (app: FastifyInstance) => {
 			const showCount = items.filter((item) => item.mediaType === "show").length;
 			const totalCount = items.length;
 
+			request.log.info({ movieCount, showCount, totalCount }, "library sync completed");
 			return reply.code(StatusCodes.OK).send({ movieCount, showCount, totalCount });
 		},
 	);
@@ -138,6 +140,7 @@ const libraryRoutes = (app: FastifyInstance) => {
 			}
 
 			const { interval, excludeDefault } = request.body;
+			request.log.info({ interval, excludeDefault }, "updating library settings");
 
 			const existing = app.db
 				.select()
