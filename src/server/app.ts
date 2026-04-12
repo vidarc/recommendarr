@@ -19,19 +19,43 @@ import { plexRoutes } from "./routes/plex.ts";
 import { getKey } from "./services/encryption.ts";
 import { ssrRoutes } from "./ssr.ts";
 
+import type { LoggerOptions } from "pino";
+
 interface BuildServerOptions {
 	skipSSR?: boolean;
 	skipDB?: boolean;
 }
 
+const buildLoggerConfig = (): false | LoggerOptions => {
+	if (process.env["NODE_ENV"] === "test") {
+		return false;
+	}
+
+	const level = process.env["LOG_LEVEL"] ?? "info";
+	const pretty = process.env["LOG_PRETTY"] === "true";
+
+	if (pretty) {
+		return {
+			level,
+			transport: {
+				target: "pino-pretty",
+				options: {
+					translateTime: "HH:MM:ss Z",
+				},
+			},
+		};
+	}
+
+	return {
+		level,
+	};
+};
+
 const buildServer = async (options: BuildServerOptions = {}) => {
 	getKey(); // Validates ENCRYPTION_KEY is set and correctly formatted
 
-	const isTest = process.env["NODE_ENV"] === "test";
-	const logLevel = process.env["LOG_LEVEL"] ?? "info";
-
 	const app = fastify({
-		logger: isTest ? false : { level: logLevel },
+		logger: buildLoggerConfig(),
 		genReqId: () => randomUUID(),
 		trustProxy: "loopback",
 	});

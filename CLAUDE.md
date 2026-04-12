@@ -189,13 +189,14 @@ The app uses a `users` table with scrypt-hashed passwords (via `node:crypto`). T
 
 The app uses wouter for routing. Routes: `/login`, `/register`, `/` (recommendations), `/history`, `/settings`. Auth gates redirect unauthenticated users to `/login`, and if no users exist yet, `/login` redirects to `/register`. The `AppLayout` component provides shared navigation.
 
-**Environment variables** (see `docs/README.md` for full list):
+**Environment variables** (see root `README.md` for full list):
 
 - `PORT` — server port (default: `3000`)
 - `HOST` — bind address (default: `0.0.0.0`)
 - `ENCRYPTION_KEY` — required, 64-character hex string for AES-256-GCM encryption of stored secrets
 - `SESSION_DURATION_DAYS` — session lifetime in days (default: `7`)
 - `LOG_LEVEL` — server log level (default: `info`; options: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`)
+- `LOG_PRETTY` — set to `true` to enable pretty-printed logs via `pino-pretty`
 
 ### Modules
 

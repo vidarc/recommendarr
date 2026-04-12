@@ -54,6 +54,8 @@ volumes:
 | `DEFAULT_ADMIN_USERNAME` | No       | `admin`                  | Username for the auto-created admin (only used with `DEFAULT_ADMIN_PASSWORD`)                                                         |
 | `DEFAULT_ADMIN_PASSWORD` | No       | —                        | If set, creates an admin user on first boot with these credentials                                                                    |
 | `SESSION_DURATION_DAYS`  | No       | `7`                      | How long login sessions last (in days)                                                                                                |
+| `LOG_LEVEL`              | No       | `info`                   | Server log level (`fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`)                                                       |
+| `LOG_PRETTY`             | No       | —                        | Set to `true` to enable pretty-printed logs via `pino-pretty`                                                                         |
 
 ### 🔒 Reverse Proxy / TLS
 
