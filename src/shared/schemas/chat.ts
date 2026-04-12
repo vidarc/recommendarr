@@ -14,6 +14,7 @@ const recommendationSchema = z.object({
 	mediaType: z.string(),
 	synopsis: z.string().optional(),
 	tmdbId: z.number().optional(),
+	tvdbId: z.number().optional(),
 	addedToArr: z.boolean(),
 	feedback: recommendationFeedbackSchema.optional(),
 });
