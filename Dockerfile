@@ -37,6 +37,14 @@ FROM node:24.14.1-bookworm-slim AS runner
 
 WORKDIR /app
 
+LABEL org.opencontainers.image.title="Recommendarr" \
+  org.opencontainers.image.description="AI-powered recommendation engine for the *arr stack (Radarr, Sonarr, Lidarr) and Plex" \
+  org.opencontainers.image.source="https://github.com/vidarc/recommendarr" \
+  org.opencontainers.image.url="https://github.com/vidarc/recommendarr" \
+  org.opencontainers.image.documentation="https://github.com/vidarc/recommendarr#readme" \
+  org.opencontainers.image.licenses="MIT" \
+  org.opencontainers.image.vendor="Recommendarr"
+
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/dist ./dist
