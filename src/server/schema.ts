@@ -95,6 +95,7 @@ const recommendations = sqliteTable(
 		mediaType: text("media_type").notNull(),
 		synopsis: text("synopsis"),
 		tmdbId: integer("tmdb_id"),
+		tvdbId: integer("tvdb_id"),
 		addedToArr: integer("added_to_arr", { mode: "boolean" }).notNull().default(false),
 		feedback: text("feedback"),
 	},
@@ -166,6 +167,30 @@ const userSettings = sqliteTable("user_settings", {
 const selectUserSettingsSchema = createSelectSchema(userSettings);
 const insertUserSettingsSchema = createInsertSchema(userSettings);
 
+const metadataCache = sqliteTable(
+	"metadata_cache",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		externalId: integer("external_id").notNull(),
+		source: text("source").notNull(),
+		mediaType: text("media_type").notNull(),
+		title: text("title").notNull(),
+		overview: text("overview"),
+		posterUrl: text("poster_url"),
+		genres: text("genres"),
+		rating: real("rating"),
+		year: integer("year"),
+		cast: text("cast"),
+		crew: text("crew"),
+		status: text("status"),
+		fetchedAt: integer("fetched_at").notNull(),
+	},
+	(table) => [uniqueIndex("metadata_external_source_idx").on(table.externalId, table.source)],
+);
+
+const selectMetadataCacheSchema = createSelectSchema(metadataCache);
+const insertMetadataCacheSchema = createInsertSchema(metadataCache);
+
 export {
 	aiConfigs,
 	arrConnections,
@@ -175,6 +200,7 @@ export {
 	insertConversationSchema,
 	insertLibraryItemSchema,
 	insertMessageSchema,
+	insertMetadataCacheSchema,
 	insertPlexConnectionSchema,
 	insertRecommendationSchema,
 	insertSessionSchema,
@@ -183,6 +209,7 @@ export {
 	insertUserSettingsSchema,
 	libraryItems,
 	messages,
+	metadataCache,
 	plexConnections,
 	recommendations,
 	selectAiConfigSchema,
@@ -190,6 +217,7 @@ export {
 	selectConversationSchema,
 	selectLibraryItemSchema,
 	selectMessageSchema,
+	selectMetadataCacheSchema,
 	selectPlexConnectionSchema,
 	selectRecommendationSchema,
 	selectSessionSchema,

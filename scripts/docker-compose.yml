@@ -27,6 +27,10 @@ services:
       PORT: "8080"
       ENCRYPTION_KEY: "97edee5ae27e974c3705ef05bd4a11f6cd1e233ee088de4892bf4417fca402f0"
       NODE_ENV: "production"
+      TMDB_API_KEY: "mock-tmdb-key"
+      TMDB_API_BASE_URL: "http://mock-services:5001/3"
+      TVDB_API_KEY: "mock-tvdb-key"
+      TVDB_API_BASE_URL: "http://mock-services:5002/v4"
     tmpfs:
       - /app/data
     healthcheck:

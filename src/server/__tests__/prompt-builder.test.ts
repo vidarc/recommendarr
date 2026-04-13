@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vite-plus/test";
 
-import { buildSystemPrompt } from "../services/prompt-builder.ts";
+import { buildCastCrewSection, buildSystemPrompt } from "../services/prompt-builder.ts";
+
+import type { CastCrewContextItem } from "../services/prompt-builder.ts";
 
 describe("prompt builder", () => {
 	test("builds system prompt with watch history and constraints", () => {
@@ -155,5 +157,31 @@ describe("prompt builder", () => {
 		});
 		expect(prompt).not.toContain("Liked:");
 		expect(prompt).toContain("Disliked:");
+	});
+});
+
+describe("buildCastCrewSection", () => {
+	test("formats cast and crew metadata into prompt section", () => {
+		const items: CastCrewContextItem[] = [
+			{
+				title: "Inception",
+				year: 2010,
+				cast: [
+					{ name: "Leonardo DiCaprio", role: "Actor", character: "Cobb" },
+					{ name: "Joseph Gordon-Levitt", role: "Actor", character: "Arthur" },
+				],
+				crew: [{ name: "Christopher Nolan", role: "Director", character: undefined }],
+			},
+		];
+		const result = buildCastCrewSection(items);
+		expect(result).toContain("Leonardo DiCaprio");
+		expect(result).toContain("Christopher Nolan");
+		expect(result).toContain("Director");
+		expect(result).toContain("Inception");
+	});
+
+	test("returns empty string for empty items", () => {
+		const result = buildCastCrewSection([]);
+		expect(result).toBe("");
 	});
 });

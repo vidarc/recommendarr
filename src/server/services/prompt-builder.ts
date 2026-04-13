@@ -1,4 +1,5 @@
 import type { ExclusionContext } from "./library-sync.ts";
+import type { CreditPerson } from "./metadata-types.ts";
 
 interface WatchHistoryItem {
 	title: string;
@@ -13,12 +14,20 @@ interface FeedbackItem {
 	feedback: "liked" | "disliked";
 }
 
+interface CastCrewContextItem {
+	title: string;
+	year: number | undefined;
+	cast: CreditPerson[];
+	crew: CreditPerson[];
+}
+
 interface BuildSystemPromptOptions {
 	watchHistory: WatchHistoryItem[];
 	mediaType: string;
 	resultCount: number;
 	exclusionContext?: ExclusionContext;
 	feedbackContext?: FeedbackItem[];
+	castCrewContext?: CastCrewContextItem[];
 }
 
 const formatExclusionTitles = (titles: ExclusionContext["titles"]): string =>
@@ -98,13 +107,59 @@ const formatWatchHistory = (watchHistory: WatchHistoryItem[]): string => {
 	return `The user has watched:\n${items}`;
 };
 
+const buildCastCrewSection = (items: CastCrewContextItem[]): string => {
+	if (items.length === EMPTY_LENGTH) {
+		return "";
+	}
+
+	const sections: string[] = [
+		"The following cast/crew information is available for items the user has watched or been recommended:",
+	];
+
+	for (const item of items) {
+		const titleStr = `${item.title}${item.year ? ` (${String(item.year)})` : ""}`;
+		const crewStr =
+			item.crew.length > EMPTY_LENGTH
+				? item.crew.map((person) => `${person.name} (${person.role})`).join(", ")
+				: "";
+		const castStr =
+			item.cast.length > EMPTY_LENGTH
+				? item.cast
+						.map((person) => `${person.name}${person.character ? ` as ${person.character}` : ""}`)
+						.join(", ")
+				: "";
+
+		const parts = [titleStr];
+		if (crewStr) {
+			parts.push(`Crew: ${crewStr}`);
+		}
+		if (castStr) {
+			parts.push(`Cast: ${castStr}`);
+		}
+		sections.push(`- ${parts.join(" | ")}`);
+	}
+
+	sections.push(
+		"Use this information to identify patterns in actors, directors, or writers the user enjoys, and factor that into your recommendations.",
+	);
+
+	return sections.join("\n");
+};
+
 const EMPTY_HISTORY_LENGTH = 0;
 const EMPTY_LENGTH = 0;
 const NO_HISTORY_MESSAGE =
 	"The user has no watch history available. Make general recommendations based on popular and well-regarded titles.";
 
 const buildSystemPrompt = (options: BuildSystemPromptOptions): string => {
-	const { watchHistory, mediaType, resultCount, exclusionContext, feedbackContext } = options;
+	const {
+		watchHistory,
+		mediaType,
+		resultCount,
+		exclusionContext,
+		feedbackContext,
+		castCrewContext,
+	} = options;
 
 	const mediaTypeInstruction =
 		mediaType === "either"
@@ -121,12 +176,16 @@ const buildSystemPrompt = (options: BuildSystemPromptOptions): string => {
 		feedbackContext && feedbackContext.length > EMPTY_LENGTH
 			? `\n\n${buildFeedbackSection(feedbackContext)}`
 			: "";
+	const castCrewSection =
+		castCrewContext && castCrewContext.length > EMPTY_LENGTH
+			? `\n\n${buildCastCrewSection(castCrewContext)}`
+			: "";
 
 	return `You are a media recommendation assistant. Your job is to recommend movies and TV shows based on the user's watch history and preferences.
 
 ${watchHistorySection}
 
-${mediaTypeInstruction}${exclusionSection}${feedbackSection}
+${mediaTypeInstruction}${exclusionSection}${feedbackSection}${castCrewSection}
 
 When making recommendations, return exactly ${String(resultCount)} recommendations.
 
@@ -142,6 +201,6 @@ You MUST include a JSON block in your response with the recommendations in the f
 Include conversational text before and/or after the JSON block explaining your recommendations. The JSON block must be valid JSON wrapped in a markdown code fence.`;
 };
 
-export { buildSystemPrompt };
+export { buildCastCrewSection, buildSystemPrompt };
 
-export type { BuildSystemPromptOptions, FeedbackItem, WatchHistoryItem };
+export type { BuildSystemPromptOptions, CastCrewContextItem, FeedbackItem, WatchHistoryItem };
