@@ -3929,9 +3929,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:6.33.0":
-  version: 6.33.0
-  resolution: "openai@npm:6.33.0"
+"openai@npm:6.34.0":
+  version: 6.34.0
+  resolution: "openai@npm:6.34.0"
   peerDependencies:
     ws: ^8.18.0
     zod: ^3.25 || ^4.0
@@ -3942,7 +3942,7 @@ __metadata:
       optional: true
   bin:
     openai: bin/cli
-  checksum: 10c0/158b6466469d269e944ea64453e32f116193523f0fbe93e73193ebfd84e1be40d5bc2d6dbfada327d8b7c70ede4c6530c5e023e1dfb62a11b8706c46c6dc1889
+  checksum: 10c0/0d9652aea4b07d9be0f48fc30510c1caa05c24891ce5cdd6286df34b4d03f7a39ee289ff507e7c1a4c9cc2727a0ea799f1d545313ececd9979e4b3688583a1b5
   languageName: node
   linkType: hard
 
@@ -4548,7 +4548,7 @@ __metadata:
     happy-dom: "npm:20.8.9"
     http-status-codes: "npm:2.3.0"
     msw: "npm:2.13.2"
-    openai: "npm:6.33.0"
+    openai: "npm:6.34.0"
     openapi-types: "npm:12.1.3"
     oxlint-tsgolint: "npm:0.20.0"
     pino: "npm:10.3.1"
