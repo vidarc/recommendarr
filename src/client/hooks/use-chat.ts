@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
 
 import { useGetConversationQuery, useSendChatMessageMutation } from "../features/chat/api.ts";
@@ -21,6 +21,10 @@ export const useChat = () => {
 
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [conversationId, setConversationId] = useState(urlConversationId);
+	// Tracks the conversation id whose messages are currently authoritative in
+	// Local state; prevents the hydration effect from clobbering fresh local
+	// State after handleSend pushes a new URL it just produced itself.
+	const hydratedIdRef = useRef<string | undefined>(undefined);
 	const [mediaType, handleMediaTypeChange] = useState<MediaType>("any");
 	const [libraryId, handleLibraryIdChange] = useState("");
 	const [resultCount, handleResultCountChange] = useState(DEFAULT_RESULT_COUNT);
@@ -38,19 +42,27 @@ export const useChat = () => {
 		if (urlConversationId !== undefined && urlConversationId !== conversationId) {
 			setMessages([]);
 			setConversationId(urlConversationId);
+			hydratedIdRef.current = undefined;
 		}
 	}, [urlConversationId, conversationId]);
 
-	// Hydrate messages from the fetched conversation once it matches the URL.
+	// Hydrate messages from the fetched conversation once — only if we haven't
+	// Already populated local state for this id (e.g. via handleSend's URL push).
 	useEffect(() => {
-		if (conversationData && conversationData.id === urlConversationId) {
+		if (
+			conversationData &&
+			conversationData.id === urlConversationId &&
+			hydratedIdRef.current !== conversationData.id
+		) {
 			setMessages(conversationData.messages);
+			hydratedIdRef.current = conversationData.id;
 		}
 	}, [conversationData, urlConversationId]);
 
 	const handleNewConversation = useCallback(() => {
 		setMessages([]);
 		setConversationId(undefined);
+		hydratedIdRef.current = undefined;
 		setLocation("/");
 	}, [setLocation]);
 
@@ -81,6 +93,7 @@ export const useChat = () => {
 					...prev.filter((msg) => !msg.id.startsWith("temp-")),
 					result.data.message,
 				]);
+				hydratedIdRef.current = newConversationId;
 				if (urlConversationId !== newConversationId) {
 					setLocation(`/?conversation=${newConversationId}`);
 				}

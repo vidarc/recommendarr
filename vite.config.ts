@@ -80,6 +80,7 @@ export default defineConfig({
 			suspicious: "error",
 		},
 		rules: {
+			"eslint/capitalized-comments": ["error", { ignoreConsecutiveComments: true }],
 			"eslint/no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
 			"import/no-unassigned-import": ["error", { allow: ["**/*.css"] }],
 			"import/prefer-default-export": "off",

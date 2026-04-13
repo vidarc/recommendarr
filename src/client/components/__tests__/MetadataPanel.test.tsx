@@ -122,4 +122,17 @@ describe("MetadataPanel", () => {
 
 		expect(await screen.findByText(/No additional info available/i)).toBeInTheDocument();
 	});
+
+	test("renders empty-state message when upstream provider returns 502", async () => {
+		server.use(
+			http.get("/api/metadata/:recommendationId", () =>
+				HttpResponse.json({ error: "Metadata provider unavailable" }, { status: 502 }),
+			),
+		);
+		renderPanel();
+
+		await userEvent.click(screen.getByRole("button", { name: /show more info/i }));
+
+		expect(await screen.findByText(/No additional info available/i)).toBeInTheDocument();
+	});
 });

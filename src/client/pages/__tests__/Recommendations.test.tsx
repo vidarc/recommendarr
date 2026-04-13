@@ -7,6 +7,7 @@ import {
 	afterAll,
 	afterEach,
 	beforeAll,
+	beforeEach,
 	describe,
 	expect,
 	onTestFinished,
@@ -43,6 +44,10 @@ const server = setupServer(
 
 beforeAll(() => {
 	server.listen();
+});
+
+beforeEach(() => {
+	globalThis.history.replaceState({}, "", "/");
 });
 
 afterEach(() => {
@@ -231,6 +236,103 @@ describe("Recommendations", () => {
 		expect(screen.getByRole("button", { name: "action" })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "comedy" })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "horror" })).toBeInTheDocument();
+	});
+
+	test("hydrates messages from ?conversation=<id> URL param", async () => {
+		globalThis.history.replaceState({}, "", "/?conversation=conv-42");
+		server.use(
+			http.get("/api/conversations/conv-42", () =>
+				HttpResponse.json({
+					id: "conv-42",
+					mediaType: "movie",
+					title: "Past chat",
+					createdAt: new Date().toISOString(),
+					messages: [
+						{
+							id: "msg-past-1",
+							content: "earlier user prompt",
+							role: "user",
+							createdAt: new Date().toISOString(),
+							recommendations: [],
+						},
+						{
+							id: "msg-past-2",
+							content: "earlier assistant reply",
+							role: "assistant",
+							createdAt: new Date().toISOString(),
+							recommendations: [],
+						},
+					],
+				}),
+			),
+		);
+
+		renderRecommendations();
+
+		expect(await screen.findByText("earlier user prompt")).toBeInTheDocument();
+		expect(screen.getByText("earlier assistant reply")).toBeInTheDocument();
+	});
+
+	test("pushes ?conversation=<newId> to the URL after first send", async () => {
+		server.use(
+			http.post("/api/chat", () =>
+				HttpResponse.json({
+					conversationId: "conv-new",
+					message: {
+						id: "msg-1",
+						content: "Fresh reply",
+						role: "assistant",
+						createdAt: new Date().toISOString(),
+						recommendations: [],
+					},
+				}),
+			),
+			http.get("/api/conversations/conv-new", () =>
+				HttpResponse.json({
+					id: "conv-new",
+					mediaType: "movie",
+					title: "new",
+					createdAt: new Date().toISOString(),
+					messages: [],
+				}),
+			),
+		);
+
+		renderRecommendations();
+		const user = userEvent.setup();
+
+		await user.type(screen.getByPlaceholderText(/ask for recommendations/i), "first message");
+		await user.click(screen.getByRole("button", { name: /send/i }));
+
+		await screen.findByText("Fresh reply");
+		await waitFor(() => {
+			expect(globalThis.location.search).toBe("?conversation=conv-new");
+		});
+	});
+
+	test("resets URL to / when new conversation is clicked", async () => {
+		globalThis.history.replaceState({}, "", "/?conversation=conv-42");
+		server.use(
+			http.get("/api/conversations/conv-42", () =>
+				HttpResponse.json({
+					id: "conv-42",
+					mediaType: "movie",
+					title: "Past chat",
+					createdAt: new Date().toISOString(),
+					messages: [],
+				}),
+			),
+		);
+
+		renderRecommendations();
+		const user = userEvent.setup();
+
+		await user.click(screen.getByRole("button", { name: /new conversation/i }));
+
+		await waitFor(() => {
+			expect(globalThis.location.search).toBe("");
+		});
+		expect(globalThis.location.pathname).toBe("/");
 	});
 
 	test("sends message when genre chip is clicked", async () => {
