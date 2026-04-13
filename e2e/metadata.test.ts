@@ -1,4 +1,3 @@
-import { chatResponseSchema } from "../src/shared/schemas/chat.ts";
 import { metadataStatusResponseSchema } from "../src/shared/schemas/metadata.ts";
 import { expect, test } from "./fixtures.ts";
 
@@ -18,8 +17,6 @@ test.describe.configure({ mode: "serial" });
 test.describe("metadata enrichment flow", () => {
 	// eslint-disable-next-line init-declarations -- initialized in beforeAll
 	let page: Page;
-	// eslint-disable-next-line init-declarations -- set in "send message" test, read later
-	let conversationId: string;
 
 	test.beforeAll(async ({ browser }) => {
 		const context = await browser.newContext({ storageState: "e2e/.auth/user.json" });
@@ -72,12 +69,11 @@ test.describe("metadata enrichment flow", () => {
 		await page.getByRole("button", { name: /send/i }).click();
 		const chatResponse = await chatResponsePromise;
 		expect(chatResponse.status()).toBe(200);
-		const { conversationId: newConversationId } = chatResponseSchema.parse(
-			await chatResponse.json(),
-		);
-		conversationId = newConversationId;
-		expect(conversationId).toBeTruthy();
 
+		// Wait for the "Thinking..." loading bubble to disappear before asserting the card.
+		// WebKit is slow to flush React updates after the mutation resolves; this gives it
+		// A deterministic signal that the messages state has been updated.
+		await expect(page.getByText("Thinking...")).not.toBeVisible({ timeout: 15_000 });
 		await expect(page.getByText(RECOMMENDATION_TITLE)).toBeVisible({ timeout: 15_000 });
 
 		// With TMDB_API_KEY configured, the "Show more info" button should render
@@ -122,37 +118,10 @@ test.describe("metadata enrichment flow", () => {
 		await expect(page.getByText(/Denis Villeneuve \(Director\)/)).toBeVisible();
 	});
 
-	test("second metadata fetch hits the cache (no new upstream call)", async () => {
-		// The panel is already expanded from the previous test. Navigate away and
-		// Back, then re-expand a fresh panel. The server should serve from
-		// Metadata_cache rather than re-hit the mock TMDB upstream. We can't
-		// Directly observe the upstream call count, but the endpoint must still
-		// Return 200 with the same payload, which is what we verify here.
-		await page.goto("/history");
-		await expect(page.getByRole("heading", { level: 1, name: "History" })).toBeVisible();
-
-		// Navigate back to the exact conversation created in this suite. We use
-		// The captured conversationId rather than clicking "first" by title,
-		// Because earlier test files (feedback.test.ts) also leave
-		// "Sci-Fi Recommendations" conversations in the shared DB.
-		const conversationDetailPromise = page.waitForResponse(
-			(resp) =>
-				resp.url().includes(`/api/conversations/${conversationId}`) &&
-				resp.request().method() === "GET",
-		);
-		await page.goto(`/?conversation=${conversationId}`);
-		const convResponse = await conversationDetailPromise;
-		expect(convResponse.status()).toBe(200);
-
-		await expect(page.getByText(RECOMMENDATION_TITLE)).toBeVisible();
-
-		const metadataResponse = page.waitForResponse(
-			(resp) => resp.url().includes("/api/metadata/") && resp.request().method() === "GET",
-		);
-		await page.getByRole("button", { name: "Show more info" }).first().click();
-		const resp = await metadataResponse;
-		expect(resp.status()).toBe(200);
-
-		await expect(page.getByText(/Thirty years after the events of the first film/i)).toBeVisible();
-	});
+	// Note: server-side cache behavior is covered by
+	// Src/server/__tests__/metadata.test.ts ("returns cached metadata on second request").
+	// We intentionally don't e2e-test the cache by navigating away and back, because
+	// The Recommendations page doesn't yet load a conversation from the URL, so there's
+	// No reliable way to re-open a conversation in-browser without reloading state we'd
+	// Have to rebuild from scratch. Adding that flow is a separate follow-up.
 });
