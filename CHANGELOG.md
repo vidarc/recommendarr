@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.4.0 (2026-04-13)
+
+- fix: issue with plex response and zod schema
+- feat: adding plenty of debug/info/warn/error server logs
+- feat: support some pretty logging with LOGGING_PRETTY (#43)
+- docs: add TVDB/TMDB metadata integration design spec
+- docs: add TVDB/TMDB metadata implementation plan
+- feat: add shared metadata types and Zod schemas
+- feat: add metadata_cache table and tvdbId to recommendations
+- feat: add TMDB API client with search, details, and credits
+- feat: add TVDB v4 API client with search, details, and extended info
+- feat: add metadata routes for fetching enriched recommendation data
+- feat: add metadata panel to recommendation cards
+- test: mock /api/metadata/status in card and recommendations tests
+- feat: enrich AI prompts with cast/crew metadata when user asks about actors/directors
+- docs: add TVDB/TMDB API keys and metadata routes to documentation
+- test(e2e): add metadata enrichment e2e coverage
+- fix(metadata): enforce ownership, backfill tmdbId, add panel tests
+- test(e2e): fix flaky metadata tests on WebKit
+- test(e2e): drop metadata cache e2e test, harden send-message wait
+- fix: clearing up some tech debt (#45)
+
 ## v0.3.0 (2026-04-11)
 
 - fix: security, accessibility, and reliability improvements across the stack
