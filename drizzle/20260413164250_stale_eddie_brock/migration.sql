@@ -1,0 +1,1 @@
+ALTER TABLE `metadata_cache` DROP COLUMN `media_type`;
