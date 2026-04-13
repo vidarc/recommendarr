@@ -1,3 +1,4 @@
+import { chatResponseSchema } from "../src/shared/schemas/chat.ts";
 import { metadataStatusResponseSchema } from "../src/shared/schemas/metadata.ts";
 import { expect, test } from "./fixtures.ts";
 
@@ -17,6 +18,8 @@ test.describe.configure({ mode: "serial" });
 test.describe("metadata enrichment flow", () => {
 	// eslint-disable-next-line init-declarations -- initialized in beforeAll
 	let page: Page;
+	// eslint-disable-next-line init-declarations -- set in "send message" test, read later
+	let conversationId: string;
 
 	test.beforeAll(async ({ browser }) => {
 		const context = await browser.newContext({ storageState: "e2e/.auth/user.json" });
@@ -61,7 +64,20 @@ test.describe("metadata enrichment flow", () => {
 		await page
 			.getByRole("textbox", { name: /ask for recommendations/i })
 			.fill("Recommend me some sci-fi movies");
+
+		// Wait for the chat response so WebKit has time to render the card before asserting
+		const chatResponsePromise = page.waitForResponse(
+			(resp) => resp.url().includes("/api/chat") && resp.request().method() === "POST",
+		);
 		await page.getByRole("button", { name: /send/i }).click();
+		const chatResponse = await chatResponsePromise;
+		expect(chatResponse.status()).toBe(200);
+		const { conversationId: newConversationId } = chatResponseSchema.parse(
+			await chatResponse.json(),
+		);
+		conversationId = newConversationId;
+		expect(conversationId).toBeTruthy();
+
 		await expect(page.getByText(RECOMMENDATION_TITLE)).toBeVisible({ timeout: 15_000 });
 
 		// With TMDB_API_KEY configured, the "Show more info" button should render
@@ -115,13 +131,18 @@ test.describe("metadata enrichment flow", () => {
 		await page.goto("/history");
 		await expect(page.getByRole("heading", { level: 1, name: "History" })).toBeVisible();
 
-		// Navigate back to recommendations via the saved conversation
-		const convRow = page
-			.getByRole("button", {
-				name: /Sci-Fi Recommendations|Untitled/i,
-			})
-			.first();
-		await convRow.click();
+		// Navigate back to the exact conversation created in this suite. We use
+		// The captured conversationId rather than clicking "first" by title,
+		// Because earlier test files (feedback.test.ts) also leave
+		// "Sci-Fi Recommendations" conversations in the shared DB.
+		const conversationDetailPromise = page.waitForResponse(
+			(resp) =>
+				resp.url().includes(`/api/conversations/${conversationId}`) &&
+				resp.request().method() === "GET",
+		);
+		await page.goto(`/?conversation=${conversationId}`);
+		const convResponse = await conversationDetailPromise;
+		expect(convResponse.status()).toBe(200);
 
 		await expect(page.getByText(RECOMMENDATION_TITLE)).toBeVisible();
 
