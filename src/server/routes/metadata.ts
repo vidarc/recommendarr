@@ -57,7 +57,6 @@ const isCacheExpired = (fetchedAt: number): boolean => {
 const serializeMetadata = (metadata: MediaMetadata) => ({
 	externalId: metadata.externalId,
 	source: metadata.source,
-	mediaType: metadata.source === "tmdb" ? "movie" : "show",
 	title: metadata.title,
 	overview: metadata.overview,
 	posterUrl: metadata.posterUrl,
@@ -156,13 +155,12 @@ interface ResolvedMetadata {
 	resolvedTvdbId: number | undefined;
 }
 
-const resolveMetadata = async (rec: {
-	mediaType: string;
-	tmdbId: number | null;
-	tvdbId: number | null;
-	title: string;
-	year: number | null;
-}): Promise<ResolvedMetadata> => {
+type RecommendationForMetadata = Pick<
+	typeof recommendations.$inferSelect,
+	"mediaType" | "tmdbId" | "tvdbId" | "title" | "year"
+>;
+
+const resolveMetadata = async (rec: RecommendationForMetadata): Promise<ResolvedMetadata> => {
 	const isMovie = rec.mediaType === "movie";
 	if (isMovie) {
 		const { metadata, resolvedTmdbId } = await fetchMovieMetadata(
@@ -212,6 +210,7 @@ const metadataRoutes = (app: FastifyInstance) => {
 				response: {
 					[StatusCodes.OK]: metadataResponseSchema,
 					[StatusCodes.UNAUTHORIZED]: errorResponseSchema,
+					[StatusCodes.BAD_GATEWAY]: errorResponseSchema,
 				},
 			},
 		},
@@ -326,8 +325,13 @@ const metadataRoutes = (app: FastifyInstance) => {
 				);
 				return reply.code(StatusCodes.OK).send({ available: true as const, ...metadata });
 			} catch (error) {
-				request.log.error({ error, title: rec.title, source }, "failed to fetch metadata");
-				return reply.code(StatusCodes.OK).send({ available: false });
+				const message = error instanceof Error ? error.message : String(error);
+				const name = error instanceof Error ? error.name : "UnknownError";
+				request.log.error(
+					{ err: error, errorName: name, errorMessage: message, title: rec.title, source },
+					"metadata upstream fetch failed",
+				);
+				return reply.code(StatusCodes.BAD_GATEWAY).send({ error: "Metadata provider unavailable" });
 			}
 		},
 	);

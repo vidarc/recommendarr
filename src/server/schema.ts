@@ -173,7 +173,6 @@ const metadataCache = sqliteTable(
 		id: integer("id").primaryKey({ autoIncrement: true }),
 		externalId: integer("external_id").notNull(),
 		source: text("source").notNull(),
-		mediaType: text("media_type").notNull(),
 		title: text("title").notNull(),
 		overview: text("overview"),
 		posterUrl: text("poster_url"),
