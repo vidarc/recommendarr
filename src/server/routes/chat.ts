@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import {
 	chatRequestSchema,
@@ -37,19 +37,20 @@ import type { CastCrewContextItem, FeedbackItem } from "../services/prompt-build
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
-const creditPersonSchema = z
-	.object({
+const creditPersonSchema = z.pipe(
+	z.object({
 		name: z.string(),
 		role: z.string(),
-		character: z.string().optional(),
-	})
-	.transform(
+		character: z.optional(z.string()),
+	}),
+	z.transform(
 		(val): CreditPerson => ({
 			name: val.name,
 			role: val.role,
 			character: val.character,
 		}),
-	);
+	),
+);
 const creditPersonArraySchema = z.array(creditPersonSchema);
 
 const MAX_TITLE_WORDS = 6;

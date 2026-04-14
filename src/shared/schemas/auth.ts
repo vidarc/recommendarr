@@ -1,11 +1,11 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 const MIN_USERNAME_LENGTH = 1;
 const MIN_PASSWORD_LENGTH = 8;
 
 const credentialsSchema = z.object({
-	username: z.string().min(MIN_USERNAME_LENGTH),
-	password: z.string().min(MIN_PASSWORD_LENGTH),
+	username: z.string().check(z.minLength(MIN_USERNAME_LENGTH)),
+	password: z.string().check(z.minLength(MIN_PASSWORD_LENGTH)),
 });
 
 const userResponseSchema = z.object({

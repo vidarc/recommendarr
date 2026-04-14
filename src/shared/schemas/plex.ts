@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 const MIN_STRING_LENGTH = 1;
 
@@ -16,9 +16,9 @@ const plexAuthCheckResponseSchema = z.object({
 });
 
 const plexManualAuthBodySchema = z.object({
-	authToken: z.string().min(MIN_STRING_LENGTH),
-	serverUrl: z.string().url(),
-	serverName: z.string().min(MIN_STRING_LENGTH),
+	authToken: z.string().check(z.minLength(MIN_STRING_LENGTH)),
+	serverUrl: z.url(),
+	serverName: z.string().check(z.minLength(MIN_STRING_LENGTH)),
 });
 
 const plexServerSchema = z.object({
@@ -36,7 +36,7 @@ const plexServersResponseSchema = z.object({
 });
 
 const plexSelectServerBodySchema = z.object({
-	serverUrl: z.string().url(),
+	serverUrl: z.url(),
 	serverName: z.string(),
 	machineIdentifier: z.string(),
 });

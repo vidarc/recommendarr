@@ -1,7 +1,7 @@
 import { uptime } from "node:process";
 
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";

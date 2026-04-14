@@ -1,5 +1,5 @@
 import { expect, test as setup } from "@playwright/test";
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import { adminPassword, adminUsername, storageStatePath } from "./constants.ts";
 

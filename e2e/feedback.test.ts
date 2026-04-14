@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import { expect, test } from "./fixtures.ts";
 
@@ -17,7 +17,7 @@ const RECOMMENDATION_TITLE = "Blade Runner 2049";
 // Zod schemas for API response validation — avoids unsafe type assertions.
 const feedbackPatchResponseSchema = z.object({
 	id: z.string(),
-	feedback: z.enum(["liked", "disliked"]).nullable(),
+	feedback: z.nullable(z.enum(["liked", "disliked"])),
 });
 
 const conversationsResponseSchema = z.object({
@@ -30,7 +30,7 @@ const conversationDetailSchema = z.object({
 			recommendations: z.array(
 				z.object({
 					id: z.string(),
-					feedback: z.enum(["liked", "disliked"]).nullable().optional(),
+					feedback: z.optional(z.nullable(z.enum(["liked", "disliked"]))),
 				}),
 			),
 		}),
