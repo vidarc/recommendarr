@@ -187,6 +187,15 @@ describe("Recommendations", () => {
 					},
 				}),
 			),
+			http.get("/api/conversations/conv-1", () =>
+				HttpResponse.json({
+					id: "conv-1",
+					mediaType: "movie",
+					title: "chat",
+					createdAt: new Date().toISOString(),
+					messages: [],
+				}),
+			),
 		);
 
 		renderRecommendations();
@@ -211,6 +220,15 @@ describe("Recommendations", () => {
 						createdAt: new Date().toISOString(),
 						recommendations: [],
 					},
+				}),
+			),
+			http.get("/api/conversations/conv-1", () =>
+				HttpResponse.json({
+					id: "conv-1",
+					mediaType: "movie",
+					title: "chat",
+					createdAt: new Date().toISOString(),
+					messages: [],
 				}),
 			),
 		);
