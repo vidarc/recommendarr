@@ -81,6 +81,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 				upgradeInsecureRequests: null,
 			},
 		},
+		crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
 	});
 
 	if (!options.skipDB) {
