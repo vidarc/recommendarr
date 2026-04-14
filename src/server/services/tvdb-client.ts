@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import type { CreditPerson, MediaMetadata } from "./metadata-types.ts";
 
@@ -64,15 +64,17 @@ const tvdbFetch = async (path: string, params: Record<string, string> = {}): Pro
 	return response;
 };
 
+const nullishString = z.optional(z.nullable(z.string()));
+
 const searchResponseSchema = z.object({
 	data: z.array(
 		z.object({
 			tvdb_id: z.string(),
 			name: z.string(),
-			overview: z.string().nullable().optional(),
-			image_url: z.string().nullable().optional(),
-			year: z.string().nullable().optional(),
-			type: z.string().optional(),
+			overview: nullishString,
+			image_url: nullishString,
+			year: nullishString,
+			type: z.optional(z.string()),
 		}),
 	),
 });
@@ -81,32 +83,32 @@ const seriesDetailsSchema = z.object({
 	data: z.object({
 		id: z.number(),
 		name: z.string(),
-		overview: z.string().nullable().optional(),
-		image: z.string().nullable().optional(),
-		year: z.string().nullable().optional(),
-		genres: z.array(z.object({ name: z.string() })).optional(),
-		score: z.number().optional(),
-		status: z.object({ name: z.string() }).nullable().optional(),
+		overview: nullishString,
+		image: nullishString,
+		year: nullishString,
+		genres: z.optional(z.array(z.object({ name: z.string() }))),
+		score: z.optional(z.number()),
+		status: z.optional(z.nullable(z.object({ name: z.string() }))),
 	}),
 });
 
 const characterSchema = z.object({
-	name: z.string().nullable().optional(),
-	peopleType: z.string().optional(),
-	personName: z.string().optional(),
+	name: nullishString,
+	peopleType: z.optional(z.string()),
+	personName: z.optional(z.string()),
 });
 
 const seriesExtendedSchema = z.object({
 	data: z.object({
 		id: z.number(),
 		name: z.string(),
-		overview: z.string().nullable().optional(),
-		image: z.string().nullable().optional(),
-		year: z.string().nullable().optional(),
-		genres: z.array(z.object({ name: z.string() })).optional(),
-		score: z.number().optional(),
-		status: z.object({ name: z.string() }).nullable().optional(),
-		characters: z.array(characterSchema).optional(),
+		overview: nullishString,
+		image: nullishString,
+		year: nullishString,
+		genres: z.optional(z.array(z.object({ name: z.string() }))),
+		score: z.optional(z.number()),
+		status: z.optional(z.nullable(z.object({ name: z.string() }))),
+		characters: z.optional(z.array(characterSchema)),
 	}),
 });
 

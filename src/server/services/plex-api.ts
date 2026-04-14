@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 const PLEX_API_BASE = "https://plex.tv/api/v2";
 const CLIENT_IDENTIFIER = "recommendarr";
@@ -81,7 +81,9 @@ const plexHeaders = (authToken?: string): Record<string, string> => {
 
 const plexPinResponseSchema = z.object({ id: z.number(), code: z.string() });
 
-const plexPinCheckResponseSchema = z.object({ authToken: z.string().nullable().optional() });
+const plexPinCheckResponseSchema = z.object({
+	authToken: z.optional(z.nullable(z.string())),
+});
 
 const plexResourceSchema = z.array(
 	z.object({
@@ -115,37 +117,37 @@ const plexLibrariesResponseSchema = z.object({
 
 const plexWatchHistoryResponseSchema = z.object({
 	MediaContainer: z.object({
-		Metadata: z
-			.array(
+		Metadata: z.optional(
+			z.array(
 				z.object({
 					title: z.string(),
 					type: z.string(),
-					year: z.number().optional(),
+					year: z.optional(z.number()),
 					ratingKey: z.string(),
-					grandparentTitle: z.string().optional(),
-					parentIndex: z.number().optional(),
-					index: z.number().optional(),
+					grandparentTitle: z.optional(z.string()),
+					parentIndex: z.optional(z.number()),
+					index: z.optional(z.number()),
 					viewedAt: z.number(),
 				}),
-			)
-			.optional(),
+			),
+		),
 	}),
 });
 
 const plexLibraryContentsResponseSchema = z.object({
 	MediaContainer: z.object({
 		totalSize: z.number(),
-		Metadata: z
-			.array(
+		Metadata: z.optional(
+			z.array(
 				z.object({
 					title: z.string(),
 					type: z.string(),
-					year: z.number().optional(),
+					year: z.optional(z.number()),
 					ratingKey: z.string(),
-					Genre: z.array(z.object({ tag: z.string() })).optional(),
+					Genre: z.optional(z.array(z.object({ tag: z.string() }))),
 				}),
-			)
-			.optional(),
+			),
+		),
 	}),
 });
 

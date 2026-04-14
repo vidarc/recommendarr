@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 const MIN_STRING_LENGTH = 1;
 
@@ -12,8 +12,8 @@ const arrConnectionResponseSchema = z.object({
 });
 
 const arrConfigBodySchema = z.object({
-	url: z.string().url(),
-	apiKey: z.string().min(MIN_STRING_LENGTH),
+	url: z.url(),
+	apiKey: z.string().check(z.minLength(MIN_STRING_LENGTH)),
 });
 
 const arrTestConnectionBodySchema = z.object({
@@ -22,8 +22,8 @@ const arrTestConnectionBodySchema = z.object({
 
 const arrTestConnectionResponseSchema = z.object({
 	success: z.boolean(),
-	version: z.string().optional(),
-	error: z.string().optional(),
+	version: z.optional(z.string()),
+	error: z.optional(z.string()),
 });
 
 const arrRootFolderSchema = z.object({
@@ -44,15 +44,15 @@ const arrOptionsResponseSchema = z.object({
 
 const arrLookupBodySchema = z.object({
 	serviceType: arrServiceTypeSchema,
-	title: z.string().min(MIN_STRING_LENGTH),
-	year: z.number().optional(),
+	title: z.string().check(z.minLength(MIN_STRING_LENGTH)),
+	year: z.optional(z.number()),
 });
 
 const arrLookupResultSchema = z.object({
 	title: z.string(),
 	year: z.number(),
-	tmdbId: z.number().optional(),
-	tvdbId: z.number().optional(),
+	tmdbId: z.optional(z.number()),
+	tvdbId: z.optional(z.number()),
 	overview: z.string(),
 	existsInLibrary: z.boolean(),
 	arrId: z.number(),
@@ -61,17 +61,17 @@ const arrLookupResultSchema = z.object({
 const arrAddBodySchema = z.object({
 	serviceType: arrServiceTypeSchema,
 	recommendationId: z.string(),
-	tmdbId: z.number().optional(),
-	tvdbId: z.number().optional(),
-	title: z.string().min(MIN_STRING_LENGTH),
+	tmdbId: z.optional(z.number()),
+	tvdbId: z.optional(z.number()),
+	title: z.string().check(z.minLength(MIN_STRING_LENGTH)),
 	year: z.number(),
 	qualityProfileId: z.number(),
-	rootFolderPath: z.string().min(MIN_STRING_LENGTH),
+	rootFolderPath: z.string().check(z.minLength(MIN_STRING_LENGTH)),
 });
 
 const arrAddResponseSchema = z.object({
 	success: z.boolean(),
-	error: z.string().optional(),
+	error: z.optional(z.string()),
 });
 
 const arrServiceTypeParamsSchema = z.object({

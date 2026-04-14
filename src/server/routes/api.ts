@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import { settings } from "../schema.ts";
 

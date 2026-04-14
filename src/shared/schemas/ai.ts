@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 const MIN_STRING_LENGTH = 1;
 const MIN_TEMPERATURE = 0;
@@ -6,11 +6,11 @@ const MAX_TEMPERATURE = 2;
 const MIN_TOKENS = 1;
 
 const aiConfigBodySchema = z.object({
-	endpointUrl: z.string().url(),
-	apiKey: z.string().min(MIN_STRING_LENGTH),
-	modelName: z.string().min(MIN_STRING_LENGTH),
-	temperature: z.number().min(MIN_TEMPERATURE).max(MAX_TEMPERATURE),
-	maxTokens: z.number().int().min(MIN_TOKENS),
+	endpointUrl: z.url(),
+	apiKey: z.string().check(z.minLength(MIN_STRING_LENGTH)),
+	modelName: z.string().check(z.minLength(MIN_STRING_LENGTH)),
+	temperature: z.number().check(z.gte(MIN_TEMPERATURE), z.lte(MAX_TEMPERATURE)),
+	maxTokens: z.int().check(z.gte(MIN_TOKENS)),
 });
 
 const aiConfigResponseSchema = z.object({
@@ -23,7 +23,7 @@ const aiConfigResponseSchema = z.object({
 
 const aiTestResultSchema = z.object({
 	success: z.boolean(),
-	error: z.string().optional(),
+	error: z.optional(z.string()),
 });
 
 type AiConfigBody = z.infer<typeof aiConfigBodySchema>;

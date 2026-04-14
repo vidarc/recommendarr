@@ -1,9 +1,9 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 const creditPersonSchema = z.object({
 	name: z.string(),
 	role: z.string(),
-	character: z.string().optional(),
+	character: z.optional(z.string()),
 });
 
 const mediaMetadataResponseSchema = z.object({
@@ -11,14 +11,14 @@ const mediaMetadataResponseSchema = z.object({
 	externalId: z.number(),
 	source: z.enum(["tvdb", "tmdb"]),
 	title: z.string(),
-	overview: z.string().optional(),
-	posterUrl: z.string().optional(),
+	overview: z.optional(z.string()),
+	posterUrl: z.optional(z.string()),
 	genres: z.array(z.string()),
-	rating: z.number().optional(),
-	year: z.number().optional(),
+	rating: z.optional(z.number()),
+	year: z.optional(z.number()),
 	cast: z.array(creditPersonSchema),
 	crew: z.array(creditPersonSchema),
-	status: z.string().optional(),
+	status: z.optional(z.string()),
 });
 
 const metadataUnavailableResponseSchema = z.object({

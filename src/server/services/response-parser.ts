@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 interface ParsedRecommendation {
 	title: string;
@@ -18,9 +18,9 @@ const FULL_MATCH_INDEX = 0;
 
 const recommendationItemSchema = z.object({
 	title: z.string(),
-	year: z.number().optional(),
+	year: z.optional(z.number()),
 	mediaType: z.string(),
-	synopsis: z.string().optional(),
+	synopsis: z.optional(z.string()),
 });
 
 const parseRecommendations = (response: string): ParsedResponse => {

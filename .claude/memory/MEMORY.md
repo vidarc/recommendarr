@@ -17,6 +17,7 @@
 - [feedback_encryption_cache.md](feedback_encryption_cache.md) — Encryption key is cached; tests must call resetKeyCache() after stubbing env vars
 - [feedback_lint_patterns.md](feedback_lint_patterns.md) — Oxlint strict rules: magic numbers, init-declarations, jsx-props-no-spreading, react-perf
 - [feedback_db_transactions.md](feedback_db_transactions.md) — Multi-step DB mutations must be wrapped in transactions
+- [feedback_zod_mini.md](feedback_zod_mini.md) — Always `import * as z from "zod/mini"` and use its functional API for best tree-shaking
 
 ## Decisions
 

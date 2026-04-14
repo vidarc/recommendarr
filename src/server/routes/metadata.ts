@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import { errorResponseSchema } from "../../shared/schemas/common.ts";
 import {
@@ -32,7 +32,7 @@ const metadataSourceSchema = z.enum(["tvdb", "tmdb"]);
 const creditPersonSchema = z.object({
 	name: z.string(),
 	role: z.string(),
-	character: z.string().optional(),
+	character: z.optional(z.string()),
 });
 const creditPersonArraySchema = z.array(creditPersonSchema);
 const stringArraySchema = z.array(z.string());

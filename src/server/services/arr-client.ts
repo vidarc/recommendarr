@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 type ServiceType = "radarr" | "sonarr";
 
@@ -82,8 +82,8 @@ const lookupItemSchema = z.array(
 		id: z.number(),
 		title: z.string(),
 		year: z.number(),
-		tmdbId: z.number().optional(),
-		tvdbId: z.number().optional(),
+		tmdbId: z.optional(z.number()),
+		tvdbId: z.optional(z.number()),
 		overview: z.string(),
 	}),
 );

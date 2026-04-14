@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import type { CreditPerson, MediaMetadata } from "./metadata-types.ts";
 
@@ -34,11 +34,11 @@ const searchResultSchema = z.object({
 		z.object({
 			id: z.number(),
 			title: z.string(),
-			overview: z.string().optional(),
-			poster_path: z.string().nullable().optional(),
-			genre_ids: z.array(z.number()).optional(),
-			vote_average: z.number().optional(),
-			release_date: z.string().optional(),
+			overview: z.optional(z.string()),
+			poster_path: z.optional(z.nullable(z.string())),
+			genre_ids: z.optional(z.array(z.number())),
+			vote_average: z.optional(z.number()),
+			release_date: z.optional(z.string()),
 		}),
 	),
 });
@@ -46,27 +46,27 @@ const searchResultSchema = z.object({
 const movieDetailsSchema = z.object({
 	id: z.number(),
 	title: z.string(),
-	overview: z.string().optional(),
-	poster_path: z.string().nullable().optional(),
+	overview: z.optional(z.string()),
+	poster_path: z.optional(z.nullable(z.string())),
 	genres: z.array(z.object({ id: z.number(), name: z.string() })),
-	vote_average: z.number().optional(),
-	release_date: z.string().optional(),
-	status: z.string().optional(),
+	vote_average: z.optional(z.number()),
+	release_date: z.optional(z.string()),
+	status: z.optional(z.string()),
 });
 
 const creditsSchema = z.object({
 	cast: z.array(
 		z.object({
 			name: z.string(),
-			known_for_department: z.string().optional(),
-			character: z.string().optional(),
-			order: z.number().optional(),
+			known_for_department: z.optional(z.string()),
+			character: z.optional(z.string()),
+			order: z.optional(z.number()),
 		}),
 	),
 	crew: z.array(
 		z.object({
 			name: z.string(),
-			department: z.string().optional(),
+			department: z.optional(z.string()),
 			job: z.string(),
 		}),
 	),

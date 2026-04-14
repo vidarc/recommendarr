@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import {
 	aiConfigBodySchema,
@@ -21,7 +21,7 @@ const MASK_VISIBLE_CHARS = 4;
 const PREFIX_START = 0;
 const SEPARATOR_OFFSET = 1;
 
-const testConnectionBodySchema = aiConfigBodySchema.or(z.null()).or(z.undefined());
+const testConnectionBodySchema = z.optional(z.nullable(aiConfigBodySchema));
 
 const maskApiKey = (key: string): string => {
 	if (key.length <= MASK_VISIBLE_CHARS) {

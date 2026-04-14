@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 const MIN_STRING_LENGTH = 1;
 const MIN_RESULT_COUNT = 1;
@@ -10,13 +10,13 @@ const recommendationFeedbackSchema = z.enum(["liked", "disliked"]);
 const recommendationSchema = z.object({
 	id: z.string(),
 	title: z.string(),
-	year: z.number().optional(),
+	year: z.optional(z.number()),
 	mediaType: z.string(),
-	synopsis: z.string().optional(),
-	tmdbId: z.number().optional(),
-	tvdbId: z.number().optional(),
+	synopsis: z.optional(z.string()),
+	tmdbId: z.optional(z.number()),
+	tvdbId: z.optional(z.number()),
 	addedToArr: z.boolean(),
-	feedback: recommendationFeedbackSchema.optional(),
+	feedback: z.optional(recommendationFeedbackSchema),
 });
 
 const chatMessageSchema = z.object({
@@ -28,17 +28,15 @@ const chatMessageSchema = z.object({
 });
 
 const chatRequestSchema = z.object({
-	message: z.string().min(MIN_STRING_LENGTH),
-	mediaType: z.string().min(MIN_STRING_LENGTH),
-	resultCount: z
-		.number()
-		.int()
-		.min(MIN_RESULT_COUNT)
-		.max(MAX_RESULT_COUNT)
-		.default(DEFAULT_RESULT_COUNT),
-	conversationId: z.string().optional(),
-	libraryIds: z.array(z.string()).optional(),
-	excludeLibrary: z.boolean().optional(),
+	message: z.string().check(z.minLength(MIN_STRING_LENGTH)),
+	mediaType: z.string().check(z.minLength(MIN_STRING_LENGTH)),
+	resultCount: z._default(
+		z.int().check(z.gte(MIN_RESULT_COUNT), z.lte(MAX_RESULT_COUNT)),
+		DEFAULT_RESULT_COUNT,
+	),
+	conversationId: z.optional(z.string()),
+	libraryIds: z.optional(z.array(z.string())),
+	excludeLibrary: z.optional(z.boolean()),
 });
 
 const chatResponseSchema = z.object({
@@ -49,7 +47,7 @@ const chatResponseSchema = z.object({
 const conversationListItemSchema = z.object({
 	id: z.string(),
 	mediaType: z.string(),
-	title: z.string().optional(),
+	title: z.optional(z.string()),
 	createdAt: z.string(),
 });
 
@@ -60,18 +58,18 @@ const conversationsResponseSchema = z.object({
 const conversationDetailSchema = z.object({
 	id: z.string(),
 	mediaType: z.string(),
-	title: z.string().optional(),
+	title: z.optional(z.string()),
 	createdAt: z.string(),
 	messages: z.array(chatMessageSchema),
 });
 
 const feedbackBodySchema = z.object({
-	feedback: recommendationFeedbackSchema.nullable(),
+	feedback: z.nullable(recommendationFeedbackSchema),
 });
 
 const feedbackResponseSchema = z.object({
 	id: z.string(),
-	feedback: recommendationFeedbackSchema.nullable(),
+	feedback: z.nullable(recommendationFeedbackSchema),
 });
 
 type RecommendationFeedback = z.infer<typeof recommendationFeedbackSchema>;

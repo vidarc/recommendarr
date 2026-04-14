@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
+import * as z from "zod/mini";
 
 import { feedbackBodySchema, feedbackResponseSchema } from "../../shared/schemas/chat.ts";
 import { errorResponseSchema } from "../../shared/schemas/common.ts";

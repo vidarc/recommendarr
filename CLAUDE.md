@@ -14,7 +14,7 @@ This project is an AI based recommendation engine for use of the \*arr stack (ra
 - Backend: Fastify v5
 - Frontend: React + wouter (routing)
 - Database: SQLite via better-sqlite3 + Drizzle ORM (v1 beta)
-- Validation: Zod (integrated with Drizzle via `drizzle-orm/zod` and Fastify via `fastify-type-provider-zod`)
+- Validation: Zod — always import via `import * as z from "zod/mini"` for best tree-shaking. The `zod/mini` API is functional (e.g. `z.optional(schema)`, `z.string().check(z.minLength(1))`, `z.url()`, `z.int()`, `z._default(schema, v)`, `z.pipe(schema, z.transform(...))`) — do not use chained methods like `.min()`, `.url()`, `.optional()`, `.default()`, or `.transform()`. Integrated with Drizzle via `drizzle-orm/zod` and Fastify via `fastify-type-provider-zod`; both interop with zod/mini schemas through the shared `$ZodType` base.
 - Build/Test/Lint: Vite+ (`yarn vp`)
 - Docker: This project is built into a docker image
 - Formatting: tabs (enforced by Oxfmt in `vite.config.ts`)

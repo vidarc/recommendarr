@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 const errorResponseSchema = z.object({
 	error: z.string(),

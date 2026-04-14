@@ -1,9 +1,9 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 const librarySyncIntervalSchema = z.enum(["manual", "6h", "12h", "24h", "7d"]);
 
 const libraryStatusSchema = z.object({
-	lastSynced: z.string().optional(),
+	lastSynced: z.optional(z.string()),
 	interval: librarySyncIntervalSchema,
 	itemCount: z.number(),
 	movieCount: z.number(),
