@@ -1,5 +1,5 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
 	useDisconnectPlexMutation,
@@ -27,6 +27,8 @@ import type { PlexServer } from "@shared/schemas/plex";
 import type { ChangeEvent } from "react";
 
 const NO_SERVERS = 0;
+const FIRST_SERVER = 0;
+const SINGLE_SERVER = 1;
 
 const connectedRow = css`
 	display: flex;
@@ -279,7 +281,9 @@ const PlexConnectedCard = ({ serverName, onDisconnect, isDisconnecting }: PlexCo
 
 const PlexServerSelection = () => {
 	const { data, isLoading } = useGetPlexServersQuery();
-	const [selectServer, { isLoading: isSelecting }] = useSelectPlexServerMutation();
+	const [selectServer, { isLoading: isSelecting, error: selectError }] =
+		useSelectPlexServerMutation();
+	const autoSelectedRef = useRef(false);
 
 	const handleSelect = useCallback(
 		async (server: PlexServer) => {
@@ -287,12 +291,32 @@ const PlexServerSelection = () => {
 				serverUrl: server.uri,
 				serverName: server.name,
 				machineIdentifier: server.clientIdentifier,
-			});
+			}).unwrap();
 		},
 		[selectServer],
 	);
 
 	const servers = useMemo(() => data?.servers ?? [], [data?.servers]);
+	const autoSelectFailed = autoSelectedRef.current && selectError !== undefined;
+
+	useEffect(() => {
+		if (autoSelectedRef.current || servers.length !== SINGLE_SERVER) {
+			return;
+		}
+		const onlyServer = servers[FIRST_SERVER];
+		if (!onlyServer) {
+			return;
+		}
+		autoSelectedRef.current = true;
+		const runAutoSelect = async () => {
+			try {
+				await handleSelect(onlyServer);
+			} catch {
+				// Error surfaces via selectError; user can retry with the dropdown.
+			}
+		};
+		void runAutoSelect();
+	}, [servers, handleSelect]);
 
 	if (isLoading) {
 		return (
@@ -303,10 +327,22 @@ const PlexServerSelection = () => {
 		);
 	}
 
+	if (servers.length === SINGLE_SERVER && !autoSelectFailed) {
+		return (
+			<div className={sectionCard}>
+				<h3 className={sectionTitle}>Select Plex Server</h3>
+				<p className={statusText}>Connecting to {servers[FIRST_SERVER]?.name}...</p>
+			</div>
+		);
+	}
+
 	return (
 		<div className={sectionCard}>
 			<h3 className={sectionTitle}>Select Plex Server</h3>
 			<ServerSelect servers={servers} onSelect={handleSelect} isLoading={isSelecting} />
+			{selectError !== undefined && (
+				<p className={errorText}>Failed to select server. Please try again.</p>
+			)}
 		</div>
 	);
 };
@@ -330,16 +366,17 @@ export const PlexTab = () => {
 	}
 
 	const servers = data?.servers ?? [];
-	const selectedServer = servers.find((server) => server.owned);
+	const isSelected = data?.selected === true;
+	const persistedServer = isSelected ? servers[FIRST_SERVER] : undefined;
 
-	if (servers.length > NO_SERVERS && !selectedServer) {
+	if (!isSelected && servers.length > NO_SERVERS) {
 		return <PlexServerSelection />;
 	}
 
-	if (selectedServer) {
+	if (persistedServer) {
 		return (
 			<PlexConnectedCard
-				serverName={selectedServer.name}
+				serverName={persistedServer.name}
 				onDisconnect={handleDisconnect}
 				isDisconnecting={isDisconnecting}
 			/>

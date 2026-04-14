@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -86,10 +86,11 @@ describe("PlexTab", () => {
 		).toBeInTheDocument();
 	});
 
-	test("shows server selection when servers available but none selected", async () => {
+	test("shows server selection when multiple servers available but none selected", async () => {
 		server.use(
 			http.get("/api/plex/servers", () =>
 				HttpResponse.json({
+					selected: false,
 					servers: [
 						{
 							name: "My Plex Server",
@@ -100,6 +101,15 @@ describe("PlexTab", () => {
 							clientIdentifier: "abc123",
 							owned: false,
 						},
+						{
+							name: "Other Server",
+							address: "192.168.1.2",
+							port: 32_400,
+							scheme: "http",
+							uri: "http://192.168.1.2:32400",
+							clientIdentifier: "def456",
+							owned: false,
+						},
 					],
 				}),
 			),
@@ -108,13 +118,85 @@ describe("PlexTab", () => {
 		renderTab();
 
 		expect(await screen.findByText(/select plex server/i)).toBeInTheDocument();
-		expect(screen.getByText("My Plex Server")).toBeInTheDocument();
+		expect(screen.getByRole("option", { name: "My Plex Server" })).toBeInTheDocument();
+		expect(screen.getByRole("option", { name: "Other Server" })).toBeInTheDocument();
+	});
+
+	test("auto-selects the only server when exactly one is available", async () => {
+		// oxlint-disable-next-line init-declarations
+		let selectedServer: unknown;
+		server.use(
+			http.get("/api/plex/servers", () =>
+				HttpResponse.json({
+					selected: false,
+					servers: [
+						{
+							name: "Only Server",
+							address: "192.168.1.1",
+							port: 32_400,
+							scheme: "http",
+							uri: "http://192.168.1.1:32400",
+							clientIdentifier: "only-server",
+							owned: true,
+						},
+					],
+				}),
+			),
+			http.post("/api/plex/servers/select", async ({ request }) => {
+				selectedServer = await request.json();
+				return HttpResponse.json({ success: true });
+			}),
+		);
+
+		renderTab();
+
+		await screen.findByText(/connecting to only server/i);
+		await waitFor(() => {
+			expect(selectedServer).toStrictEqual({
+				serverUrl: "http://192.168.1.1:32400",
+				serverName: "Only Server",
+				machineIdentifier: "only-server",
+			});
+		});
+	});
+
+	test("falls back to dropdown with error when auto-select fails", async () => {
+		const internalServerError = 500;
+		server.use(
+			http.get("/api/plex/servers", () =>
+				HttpResponse.json({
+					selected: false,
+					servers: [
+						{
+							name: "Flaky Server",
+							address: "192.168.1.1",
+							port: 32_400,
+							scheme: "http",
+							uri: "http://192.168.1.1:32400",
+							clientIdentifier: "flaky",
+							owned: true,
+						},
+					],
+				}),
+			),
+			http.post("/api/plex/servers/select", () =>
+				HttpResponse.json({ error: "boom" }, { status: internalServerError }),
+			),
+		);
+
+		renderTab();
+
+		expect(
+			await screen.findByText(/failed to select server. please try again/i),
+		).toBeInTheDocument();
+		expect(screen.getByRole("combobox")).toBeInTheDocument();
 	});
 
 	test("shows connected state with server name when server is selected", async () => {
 		server.use(
 			http.get("/api/plex/servers", () =>
 				HttpResponse.json({
+					selected: true,
 					servers: [
 						{
 							name: "Home Server",
@@ -142,6 +224,7 @@ describe("PlexTab", () => {
 		server.use(
 			http.get("/api/plex/servers", () =>
 				HttpResponse.json({
+					selected: true,
 					servers: [
 						{
 							name: "Home Server",
@@ -177,6 +260,7 @@ describe("PlexTab", () => {
 		server.use(
 			http.get("/api/plex/servers", () =>
 				HttpResponse.json({
+					selected: false,
 					servers: [
 						{
 							name: "Server A",

@@ -32,6 +32,7 @@ const plexServerSchema = z.object({
 });
 
 const plexServersResponseSchema = z.object({
+	selected: z.boolean(),
 	servers: z.array(plexServerSchema),
 });
 

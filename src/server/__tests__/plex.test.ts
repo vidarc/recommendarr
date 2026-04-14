@@ -472,8 +472,29 @@ describe("GET /api/plex/servers", () => {
 
 		expect(response.statusCode).toBe(StatusCodes.OK);
 		const body = response.json();
+		expect(body.selected).toBe(true);
 		expect(body.servers).toHaveLength(ONE_SERVER);
 		expect(body.servers[FIRST].name).toBe("My Plex Server");
+	});
+
+	test("returns unselected server list when connection has no stored serverUrl", async () => {
+		const app = await setupDb();
+		const { sessionId, userId } = await getSessionCookie(app);
+		insertPlexConnection(app, userId, {
+			serverUrl: undefined,
+			serverName: undefined,
+			machineIdentifier: undefined,
+		});
+
+		const response = await app.inject({
+			method: "GET",
+			url: "/api/plex/servers",
+			cookies: { session: sessionId },
+		});
+
+		expect(response.statusCode).toBe(StatusCodes.OK);
+		const body = response.json();
+		expect(body.selected).toBe(false);
 	});
 
 	test("returns 404 when no Plex connection exists", async () => {
@@ -517,6 +538,7 @@ describe("GET /api/plex/servers", () => {
 
 		expect(response.statusCode).toBe(StatusCodes.OK);
 		const body = response.json();
+		expect(body.selected).toBe(true);
 		expect(body.servers).toHaveLength(ONE_SERVER);
 		expect(body.servers[FIRST].name).toBe("My Manual Server");
 		expect(body.servers[FIRST].uri).toBe("http://my-plex:32400");
