@@ -281,7 +281,8 @@ const PlexConnectedCard = ({ serverName, onDisconnect, isDisconnecting }: PlexCo
 
 const PlexServerSelection = () => {
 	const { data, isLoading } = useGetPlexServersQuery();
-	const [selectServer, { isLoading: isSelecting }] = useSelectPlexServerMutation();
+	const [selectServer, { isLoading: isSelecting, error: selectError }] =
+		useSelectPlexServerMutation();
 	const autoSelectedRef = useRef(false);
 
 	const handleSelect = useCallback(
@@ -290,12 +291,13 @@ const PlexServerSelection = () => {
 				serverUrl: server.uri,
 				serverName: server.name,
 				machineIdentifier: server.clientIdentifier,
-			});
+			}).unwrap();
 		},
 		[selectServer],
 	);
 
 	const servers = useMemo(() => data?.servers ?? [], [data?.servers]);
+	const autoSelectFailed = autoSelectedRef.current && selectError !== undefined;
 
 	useEffect(() => {
 		if (autoSelectedRef.current || servers.length !== SINGLE_SERVER) {
@@ -306,7 +308,14 @@ const PlexServerSelection = () => {
 			return;
 		}
 		autoSelectedRef.current = true;
-		void handleSelect(onlyServer);
+		const runAutoSelect = async () => {
+			try {
+				await handleSelect(onlyServer);
+			} catch {
+				// Error surfaces via selectError; user can retry with the dropdown.
+			}
+		};
+		void runAutoSelect();
 	}, [servers, handleSelect]);
 
 	if (isLoading) {
@@ -318,7 +327,7 @@ const PlexServerSelection = () => {
 		);
 	}
 
-	if (servers.length === SINGLE_SERVER) {
+	if (servers.length === SINGLE_SERVER && !autoSelectFailed) {
 		return (
 			<div className={sectionCard}>
 				<h3 className={sectionTitle}>Select Plex Server</h3>
@@ -331,6 +340,9 @@ const PlexServerSelection = () => {
 		<div className={sectionCard}>
 			<h3 className={sectionTitle}>Select Plex Server</h3>
 			<ServerSelect servers={servers} onSelect={handleSelect} isLoading={isSelecting} />
+			{selectError !== undefined && (
+				<p className={errorText}>Failed to select server. Please try again.</p>
+			)}
 		</div>
 	);
 };

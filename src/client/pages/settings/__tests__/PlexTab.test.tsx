@@ -160,6 +160,38 @@ describe("PlexTab", () => {
 		});
 	});
 
+	test("falls back to dropdown with error when auto-select fails", async () => {
+		const internalServerError = 500;
+		server.use(
+			http.get("/api/plex/servers", () =>
+				HttpResponse.json({
+					selected: false,
+					servers: [
+						{
+							name: "Flaky Server",
+							address: "192.168.1.1",
+							port: 32_400,
+							scheme: "http",
+							uri: "http://192.168.1.1:32400",
+							clientIdentifier: "flaky",
+							owned: true,
+						},
+					],
+				}),
+			),
+			http.post("/api/plex/servers/select", () =>
+				HttpResponse.json({ error: "boom" }, { status: internalServerError }),
+			),
+		);
+
+		renderTab();
+
+		expect(
+			await screen.findByText(/failed to select server. please try again/i),
+		).toBeInTheDocument();
+		expect(screen.getByRole("combobox")).toBeInTheDocument();
+	});
+
 	test("shows connected state with server name when server is selected", async () => {
 		server.use(
 			http.get("/api/plex/servers", () =>

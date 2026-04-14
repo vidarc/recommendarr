@@ -8,7 +8,7 @@ const POLL_INTERVAL_MS = 2000;
 const MAX_POLLS = 150;
 const POLL_INCREMENT = 1;
 const POPUP_WIDTH = 600;
-const POPUP_HEIGHT = 700;
+const POPUP_HEIGHT = 600;
 const HALF = 2;
 
 const openPlexPopup = (authUrl: string): Window | undefined => {
@@ -21,10 +21,6 @@ const openPlexPopup = (authUrl: string): Window | undefined => {
 		`top=${String(top)}`,
 		"resizable=yes",
 		"scrollbars=yes",
-		"status=no",
-		"toolbar=no",
-		"menubar=no",
-		"location=no",
 	].join(",");
 	return window.open(authUrl, "plex-auth", features) ?? undefined;
 };
