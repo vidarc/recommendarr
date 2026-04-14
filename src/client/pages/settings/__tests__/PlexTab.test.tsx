@@ -90,6 +90,7 @@ describe("PlexTab", () => {
 		server.use(
 			http.get("/api/plex/servers", () =>
 				HttpResponse.json({
+					selected: false,
 					servers: [
 						{
 							name: "My Plex Server",
@@ -115,6 +116,7 @@ describe("PlexTab", () => {
 		server.use(
 			http.get("/api/plex/servers", () =>
 				HttpResponse.json({
+					selected: true,
 					servers: [
 						{
 							name: "Home Server",
@@ -142,6 +144,7 @@ describe("PlexTab", () => {
 		server.use(
 			http.get("/api/plex/servers", () =>
 				HttpResponse.json({
+					selected: true,
 					servers: [
 						{
 							name: "Home Server",
@@ -177,6 +180,7 @@ describe("PlexTab", () => {
 		server.use(
 			http.get("/api/plex/servers", () =>
 				HttpResponse.json({
+					selected: false,
 					servers: [
 						{
 							name: "Server A",

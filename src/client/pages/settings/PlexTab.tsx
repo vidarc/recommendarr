@@ -27,6 +27,7 @@ import type { PlexServer } from "@shared/schemas/plex";
 import type { ChangeEvent } from "react";
 
 const NO_SERVERS = 0;
+const FIRST_SERVER = 0;
 
 const connectedRow = css`
 	display: flex;
@@ -330,16 +331,17 @@ export const PlexTab = () => {
 	}
 
 	const servers = data?.servers ?? [];
-	const selectedServer = servers.find((server) => server.owned);
+	const isSelected = data?.selected === true;
+	const persistedServer = isSelected ? servers[FIRST_SERVER] : undefined;
 
-	if (servers.length > NO_SERVERS && !selectedServer) {
+	if (!isSelected && servers.length > NO_SERVERS) {
 		return <PlexServerSelection />;
 	}
 
-	if (selectedServer) {
+	if (persistedServer) {
 		return (
 			<PlexConnectedCard
-				serverName={selectedServer.name}
+				serverName={persistedServer.name}
 				onDisconnect={handleDisconnect}
 				isDisconnecting={isDisconnecting}
 			/>

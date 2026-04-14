@@ -198,6 +198,7 @@ const plexRoutes = (app: FastifyInstance) => {
 			if (connection.serverUrl && connection.serverName) {
 				const parsed = new URL(connection.serverUrl);
 				return reply.code(StatusCodes.OK).send({
+					selected: true,
 					servers: [
 						{
 							name: connection.serverName,
@@ -215,7 +216,7 @@ const plexRoutes = (app: FastifyInstance) => {
 			const authToken = decrypt(connection.authToken);
 			const servers = await getPlexServers(authToken);
 
-			return reply.code(StatusCodes.OK).send({ servers });
+			return reply.code(StatusCodes.OK).send({ selected: false, servers });
 		},
 	);
 
