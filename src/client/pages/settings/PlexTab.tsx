@@ -1,5 +1,5 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
 	useDisconnectPlexMutation,
@@ -28,6 +28,7 @@ import type { ChangeEvent } from "react";
 
 const NO_SERVERS = 0;
 const FIRST_SERVER = 0;
+const SINGLE_SERVER = 1;
 
 const connectedRow = css`
 	display: flex;
@@ -281,6 +282,7 @@ const PlexConnectedCard = ({ serverName, onDisconnect, isDisconnecting }: PlexCo
 const PlexServerSelection = () => {
 	const { data, isLoading } = useGetPlexServersQuery();
 	const [selectServer, { isLoading: isSelecting }] = useSelectPlexServerMutation();
+	const autoSelectedRef = useRef(false);
 
 	const handleSelect = useCallback(
 		async (server: PlexServer) => {
@@ -295,11 +297,32 @@ const PlexServerSelection = () => {
 
 	const servers = useMemo(() => data?.servers ?? [], [data?.servers]);
 
+	useEffect(() => {
+		if (autoSelectedRef.current || servers.length !== SINGLE_SERVER) {
+			return;
+		}
+		const onlyServer = servers[FIRST_SERVER];
+		if (!onlyServer) {
+			return;
+		}
+		autoSelectedRef.current = true;
+		void handleSelect(onlyServer);
+	}, [servers, handleSelect]);
+
 	if (isLoading) {
 		return (
 			<div className={sectionCard}>
 				<h3 className={sectionTitle}>Select Plex Server</h3>
 				<p className={statusText}>Loading servers...</p>
+			</div>
+		);
+	}
+
+	if (servers.length === SINGLE_SERVER) {
+		return (
+			<div className={sectionCard}>
+				<h3 className={sectionTitle}>Select Plex Server</h3>
+				<p className={statusText}>Connecting to {servers[FIRST_SERVER]?.name}...</p>
 			</div>
 		);
 	}

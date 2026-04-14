@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 
+import { api } from "../api.ts";
 import { useLazyCheckPlexAuthQuery, useStartPlexAuthMutation } from "../features/plex/api.ts";
 
 const POLL_INTERVAL_MS = 2000;
@@ -28,6 +30,7 @@ const openPlexPopup = (authUrl: string): Window | undefined => {
 };
 
 export const usePlexAuth = () => {
+	const dispatch = useDispatch();
 	const [startAuth, { isLoading: isStarting }] = useStartPlexAuthMutation();
 	const [triggerCheck] = useLazyCheckPlexAuthQuery();
 	const [polling, setPolling] = useState(false);
@@ -96,13 +99,14 @@ export const usePlexAuth = () => {
 			if (check.data?.claimed) {
 				setPolling(false);
 				closePopup();
+				dispatch(api.util.invalidateTags(["PlexConnection"]));
 				return;
 			}
 			pollRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
 		};
 
 		await poll();
-	}, [startAuth, triggerCheck, closePopup]);
+	}, [startAuth, triggerCheck, closePopup, dispatch]);
 
 	return { connect, isStarting, polling, error };
 };
