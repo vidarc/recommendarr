@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4.1 (2026-04-15)
+
+- chore(deps): Bump the production-patch group with 2 updates (#46)
+- chore(deps): Bump openai in the production-minor group (#47)
+- chore(deps-dev): Bump @vitest/coverage-v8 in the dev-patch group (#48)
+- docker labels and a MIT license (#52)
+- fix: refactor zod usage for consistency and bundle size (#53)
+- fix: issue with plex server never getting set for syncing
+- fix: better plex popup/oauth flow + auto-close it
+- fix: auto update the plex server settings UI after auth
+- fix: some review based fixes
+- missing msw handler
+- fix: upgrade to fastify 5.8.5 (#56)
+
 ## v0.4.0 (2026-04-13)
 
 - fix: issue with plex response and zod schema
