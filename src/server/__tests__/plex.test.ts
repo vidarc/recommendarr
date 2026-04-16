@@ -147,8 +147,7 @@ const handlers = [
 	),
 	http.get("https://plex.tv/api/v2/resources", () => HttpResponse.json(mockResourcesResponse)),
 	http.get(`${testServerUrl}/library/sections`, () => HttpResponse.json(mockLibrariesResponse)),
-	http.get(`${testServerUrl}/library/all`, () => HttpResponse.json(mockHistoryResponse)),
-	http.get(`${testServerUrl}/library/sections/1/allLeaves`, () =>
+	http.get(`${testServerUrl}/status/sessions/history/all`, () =>
 		HttpResponse.json(mockHistoryResponse),
 	),
 ];
@@ -293,7 +292,9 @@ describe("getWatchHistory", () => {
 
 	test("returns empty array when no metadata present", async () => {
 		mswServer.use(
-			http.get(`${testServerUrl}/library/all`, () => HttpResponse.json({ MediaContainer: {} })),
+			http.get(`${testServerUrl}/status/sessions/history/all`, () =>
+				HttpResponse.json({ MediaContainer: {} }),
+			),
 		);
 
 		const items = await getWatchHistory({
@@ -306,7 +307,10 @@ describe("getWatchHistory", () => {
 
 	test("throws on non-ok response", async () => {
 		mswServer.use(
-			http.get(`${testServerUrl}/library/all`, () => new HttpResponse(undefined, { status: 500 })),
+			http.get(
+				`${testServerUrl}/status/sessions/history/all`,
+				() => new HttpResponse(undefined, { status: 500 }),
+			),
 		);
 
 		await expect(

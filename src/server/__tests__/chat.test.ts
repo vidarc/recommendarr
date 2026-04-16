@@ -81,8 +81,7 @@ const handlers = [
 			choices: [{ message: { role: "assistant", content: mockAiResponse } }],
 		}),
 	),
-	http.get(`${MOCK_PLEX_SERVER}/library/all*`, () => HttpResponse.json(mockPlexWatchHistory)),
-	http.get(`${MOCK_PLEX_SERVER}/library/sections/*/allLeaves*`, () =>
+	http.get(`${MOCK_PLEX_SERVER}/status/sessions/history/all`, () =>
 		HttpResponse.json(mockPlexWatchHistory),
 	),
 ];
