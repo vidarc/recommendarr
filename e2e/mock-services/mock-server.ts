@@ -275,8 +275,6 @@ const createPlexMock = async () => {
 
 	plex.get("/library/sections", async () => plexLibraries);
 
-	plex.get("/library/sections/:id/allLeaves", async () => plexWatchHistory);
-
 	plex.get<{ Params: { id: string } }>("/library/sections/:id/all", async (request) => {
 		const { id } = request.params;
 		if (id === "1") {
@@ -288,7 +286,7 @@ const createPlexMock = async () => {
 		return { MediaContainer: { totalSize: 0, Metadata: [] } };
 	});
 
-	plex.get("/library/all", async () => plexWatchHistory);
+	plex.get("/status/sessions/history/all", async () => plexWatchHistory);
 
 	await plex.listen({ port: PLEX_PORT, host: "0.0.0.0" });
 	console.log(`Mock Plex server listening on port ${String(PLEX_PORT)}`);

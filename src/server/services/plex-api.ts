@@ -5,6 +5,7 @@ const CLIENT_IDENTIFIER = "recommendarr";
 const PRODUCT_NAME = "Recommendarr";
 const DEFAULT_HISTORY_LIMIT = 200;
 const FIRST_CONNECTION = 0;
+const UNKNOWN_VIEWED_AT = 0;
 
 interface PlexPin {
 	id: number;
@@ -127,7 +128,7 @@ const plexWatchHistoryResponseSchema = z.object({
 					grandparentTitle: z.optional(z.string()),
 					parentIndex: z.optional(z.number()),
 					index: z.optional(z.number()),
-					viewedAt: z.number(),
+					viewedAt: z.optional(z.number()),
 				}),
 			),
 		),
@@ -252,9 +253,11 @@ const getWatchHistory = async (options: WatchHistoryOptions): Promise<PlexWatche
 		"X-Plex-Container-Size": limit.toString(),
 	});
 
-	params.set("viewedAt>>", "0");
-	const basePath = libraryId ? `/library/sections/${libraryId}/allLeaves` : "/library/all";
-	const url = `${serverUrl}${basePath}?type=4&${params.toString()}`;
+	if (libraryId) {
+		params.set("librarySectionID", libraryId);
+	}
+
+	const url = `${serverUrl}/status/sessions/history/all?${params.toString()}`;
 
 	const response = await fetch(url, {
 		method: "GET",
@@ -275,7 +278,7 @@ const getWatchHistory = async (options: WatchHistoryOptions): Promise<PlexWatche
 		grandparentTitle: item.grandparentTitle,
 		parentIndex: item.parentIndex,
 		index: item.index,
-		viewedAt: item.viewedAt,
+		viewedAt: item.viewedAt ?? UNKNOWN_VIEWED_AT,
 	}));
 };
 
