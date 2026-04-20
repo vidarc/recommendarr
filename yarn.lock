@@ -4689,6 +4689,9 @@ __metadata:
     vitest: "npm:@voidzero-dev/vite-plus-core@0.1.18"
     wouter: "npm:3.9.0"
     zod: "npm:4.3.6"
+  dependenciesMeta:
+    better-sqlite3:
+      built: true
   languageName: unknown
   linkType: soft
 
