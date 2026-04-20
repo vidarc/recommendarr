@@ -90,7 +90,8 @@ describe("Login", () => {
 		await user.type(screen.getByLabelText(/password/i), "wrongpassword");
 		await user.click(screen.getByRole("button", { name: /log in/i }));
 
-		expect(await screen.findByText(/invalid username or password/i)).toBeInTheDocument();
+		const alert = await screen.findByRole("alert");
+		expect(alert).toHaveTextContent(/invalid username or password/i);
 	});
 
 	test("submit button is present and accessible", () => {

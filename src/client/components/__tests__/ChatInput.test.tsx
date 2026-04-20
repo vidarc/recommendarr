@@ -18,7 +18,7 @@ describe("ChatInput", () => {
 	test("renders the text input with placeholder", () => {
 		renderInput();
 
-		expect(screen.getByPlaceholderText(/ask for recommendations/i)).toBeInTheDocument();
+		expect(screen.getByRole("textbox", { name: /ask for recommendations/i })).toBeInTheDocument();
 	});
 
 	test("renders send button", () => {
@@ -37,7 +37,7 @@ describe("ChatInput", () => {
 		renderInput();
 		const user = userEvent.setup();
 
-		await user.type(screen.getByPlaceholderText(/ask for recommendations/i), "hello");
+		await user.type(screen.getByRole("textbox", { name: /ask for recommendations/i }), "hello");
 
 		expect(screen.getByRole("button", { name: /send/i })).toBeEnabled();
 	});
@@ -46,7 +46,10 @@ describe("ChatInput", () => {
 		const { onSend } = renderInput();
 		const user = userEvent.setup();
 
-		await user.type(screen.getByPlaceholderText(/ask for recommendations/i), "  hello world  ");
+		await user.type(
+			screen.getByRole("textbox", { name: /ask for recommendations/i }),
+			"  hello world  ",
+		);
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
 		expect(onSend).toHaveBeenCalledWith("hello world");
@@ -56,7 +59,7 @@ describe("ChatInput", () => {
 		renderInput();
 		const user = userEvent.setup();
 
-		const input = screen.getByPlaceholderText(/ask for recommendations/i);
+		const input = screen.getByRole("textbox", { name: /ask for recommendations/i });
 		await user.type(input, "test message");
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
@@ -67,7 +70,10 @@ describe("ChatInput", () => {
 		const { onSend } = renderInput();
 		const user = userEvent.setup();
 
-		await user.type(screen.getByPlaceholderText(/ask for recommendations/i), "enter test{enter}");
+		await user.type(
+			screen.getByRole("textbox", { name: /ask for recommendations/i }),
+			"enter test{enter}",
+		);
 
 		expect(onSend).toHaveBeenCalledWith("enter test");
 	});
@@ -77,7 +83,7 @@ describe("ChatInput", () => {
 		const user = userEvent.setup();
 
 		await user.type(
-			screen.getByPlaceholderText(/ask for recommendations/i),
+			screen.getByRole("textbox", { name: /ask for recommendations/i }),
 			"line one{shift>}{enter}{/shift}",
 		);
 
@@ -88,7 +94,10 @@ describe("ChatInput", () => {
 		const { onSend } = renderInput();
 		const user = userEvent.setup();
 
-		await user.type(screen.getByPlaceholderText(/ask for recommendations/i), "   {enter}");
+		await user.type(
+			screen.getByRole("textbox", { name: /ask for recommendations/i }),
+			"   {enter}",
+		);
 
 		expect(onSend).not.toHaveBeenCalled();
 	});
@@ -96,7 +105,7 @@ describe("ChatInput", () => {
 	test("disables input when isLoading is true", () => {
 		renderInput(true);
 
-		expect(screen.getByPlaceholderText(/ask for recommendations/i)).toBeDisabled();
+		expect(screen.getByRole("textbox", { name: /ask for recommendations/i })).toBeDisabled();
 	});
 
 	test("shows thinking text when loading", () => {

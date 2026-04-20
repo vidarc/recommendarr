@@ -177,7 +177,7 @@ describe("History", () => {
 
 		renderHistory();
 
-		expect(await screen.findByText("Delete")).toBeInTheDocument();
+		expect(await screen.findByRole("button", { name: /^delete$/i })).toBeInTheDocument();
 	});
 
 	test("shows confirm/cancel buttons when delete is clicked", async () => {
@@ -199,11 +199,11 @@ describe("History", () => {
 		renderHistory();
 		const user = userEvent.setup();
 
-		const deleteButton = await screen.findByText("Delete");
+		const deleteButton = await screen.findByRole("button", { name: /^delete$/i });
 		await user.click(deleteButton);
 
-		expect(screen.getByText("Cancel")).toBeInTheDocument();
-		expect(screen.getByText("Delete")).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^cancel$/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^delete$/i })).toBeInTheDocument();
 	});
 
 	test("cancels delete and goes back to single delete button", async () => {
@@ -225,14 +225,14 @@ describe("History", () => {
 		renderHistory();
 		const user = userEvent.setup();
 
-		const deleteButton = await screen.findByText("Delete");
+		const deleteButton = await screen.findByRole("button", { name: /^delete$/i });
 		await user.click(deleteButton);
 
-		const cancelButton = screen.getByText("Cancel");
+		const cancelButton = screen.getByRole("button", { name: /^cancel$/i });
 		await user.click(cancelButton);
 
-		expect(screen.queryByText("Cancel")).not.toBeInTheDocument();
-		expect(screen.getByText("Delete")).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: /^cancel$/i })).not.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^delete$/i })).toBeInTheDocument();
 	});
 
 	test("sends delete request when confirmed", async () => {

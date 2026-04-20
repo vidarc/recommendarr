@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -80,16 +80,16 @@ describe("ChatControls", () => {
 	test("renders media type buttons", () => {
 		renderControls();
 
-		expect(screen.getByRole("button", { name: /movies/i })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: /tv shows/i })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: /either/i })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: /movies/i })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: /tv shows/i })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: /either/i })).toBeInTheDocument();
 	});
 
 	test("calls onMediaTypeChange when a media type button is clicked", async () => {
 		const { onMediaTypeChange } = renderControls();
 		const user = userEvent.setup();
 
-		await user.click(screen.getByRole("button", { name: /movies/i }));
+		await user.click(screen.getByRole("radio", { name: /movies/i }));
 
 		expect(onMediaTypeChange).toHaveBeenCalledWith("movie");
 	});
@@ -98,7 +98,7 @@ describe("ChatControls", () => {
 		const { onMediaTypeChange } = renderControls();
 		const user = userEvent.setup();
 
-		await user.click(screen.getByRole("button", { name: /tv shows/i }));
+		await user.click(screen.getByRole("radio", { name: /tv shows/i }));
 
 		expect(onMediaTypeChange).toHaveBeenCalledWith("tv");
 	});
@@ -106,22 +106,23 @@ describe("ChatControls", () => {
 	test("renders library select with loaded libraries", async () => {
 		renderControls();
 
-		const select = await screen.findByRole("combobox");
+		const select = await screen.findByRole("combobox", { name: /library/i });
 		const optionCount = 3;
-		expect(select.querySelectorAll("option")).toHaveLength(optionCount);
+		expect(within(select).getAllByRole("option")).toHaveLength(optionCount);
 	});
 
-	test("has whole library as default option", () => {
+	test("has whole library as default option", async () => {
 		renderControls();
 
-		expect(screen.getByText("Whole library")).toBeInTheDocument();
+		const select = await screen.findByRole("combobox", { name: /library/i });
+		expect(within(select).getByRole("option", { name: /whole library/i })).toBeInTheDocument();
 	});
 
 	test("calls onLibraryIdChange when a library is selected", async () => {
 		const { onLibraryIdChange } = renderControls();
 		const user = userEvent.setup();
 
-		const select = await screen.findByRole("combobox");
+		const select = await screen.findByRole("combobox", { name: /library/i });
 		await user.selectOptions(select, "lib-1");
 
 		expect(onLibraryIdChange).toHaveBeenCalledWith("lib-1");
@@ -130,7 +131,7 @@ describe("ChatControls", () => {
 	test("renders result count input with default value", () => {
 		renderControls();
 
-		const input = screen.getByRole("spinbutton");
+		const input = screen.getByRole("spinbutton", { name: /results/i });
 		expect(input).toHaveValue(defaultResultCount);
 	});
 
@@ -138,7 +139,7 @@ describe("ChatControls", () => {
 		const { onResultCountChange } = renderControls();
 		const user = userEvent.setup();
 
-		const input = screen.getByRole("spinbutton");
+		const input = screen.getByRole("spinbutton", { name: /results/i });
 		await user.clear(input);
 		await user.type(input, "5");
 

@@ -58,7 +58,7 @@ describe("AiTab", () => {
 	test("renders the AI configuration heading", () => {
 		renderTab();
 
-		expect(screen.getByText("AI Configuration")).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: /ai configuration/i })).toBeInTheDocument();
 	});
 
 	test("renders endpoint, API key, and model name fields", () => {
@@ -101,7 +101,7 @@ describe("AiTab", () => {
 
 		expect(screen.queryByLabelText(/temperature/i)).not.toBeInTheDocument();
 
-		await user.click(screen.getByText(/show advanced settings/i));
+		await user.click(screen.getByRole("button", { name: /show advanced settings/i }));
 
 		expect(screen.getByLabelText(/temperature/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/max tokens/i)).toBeInTheDocument();
@@ -111,10 +111,10 @@ describe("AiTab", () => {
 		renderTab();
 		const user = userEvent.setup();
 
-		await user.click(screen.getByText(/show advanced settings/i));
+		await user.click(screen.getByRole("button", { name: /show advanced settings/i }));
 		expect(screen.getByLabelText(/temperature/i)).toBeInTheDocument();
 
-		await user.click(screen.getByText(/hide advanced settings/i));
+		await user.click(screen.getByRole("button", { name: /hide advanced settings/i }));
 		expect(screen.queryByLabelText(/temperature/i)).not.toBeInTheDocument();
 	});
 

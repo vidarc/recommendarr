@@ -86,7 +86,7 @@ test.describe("recommendation feedback flow", () => {
 	// Send one chat message — all subsequent tests reuse this page with the recommendation visible.
 	test("send message and get recommendation", async () => {
 		await page.goto("/");
-		const excludeToggle = page.getByRole("checkbox", { name: /on/i });
+		const excludeToggle = page.getByRole("checkbox", { name: /exclude library/i });
 		if (await excludeToggle.isChecked()) {
 			await excludeToggle.click();
 		}

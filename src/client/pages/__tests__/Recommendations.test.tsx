@@ -99,15 +99,15 @@ describe("Recommendations", () => {
 	test("renders media type toggle buttons", () => {
 		renderRecommendations();
 
-		expect(screen.getByRole("button", { name: /movies/i })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: /tv shows/i })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: /either/i })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: /movies/i })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: /tv shows/i })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: /either/i })).toBeInTheDocument();
 	});
 
 	test("renders the message input", () => {
 		renderRecommendations();
 
-		expect(screen.getByPlaceholderText(/ask for recommendations/i)).toBeInTheDocument();
+		expect(screen.getByRole("textbox", { name: /ask for recommendations/i })).toBeInTheDocument();
 	});
 
 	test("renders send button", () => {
@@ -127,7 +127,7 @@ describe("Recommendations", () => {
 		const user = userEvent.setup();
 
 		await user.type(
-			screen.getByPlaceholderText(/ask for recommendations/i),
+			screen.getByRole("textbox", { name: /ask for recommendations/i }),
 			"suggest horror movies",
 		);
 
@@ -142,7 +142,7 @@ describe("Recommendations", () => {
 		const user = userEvent.setup();
 
 		await user.type(
-			screen.getByPlaceholderText(/ask for recommendations/i),
+			screen.getByRole("textbox", { name: /ask for recommendations/i }),
 			"recommend action movies",
 		);
 		await user.click(screen.getByRole("button", { name: /send/i }));
@@ -157,7 +157,10 @@ describe("Recommendations", () => {
 		renderRecommendations();
 		const user = userEvent.setup();
 
-		await user.type(screen.getByPlaceholderText(/ask for recommendations/i), "suggest something");
+		await user.type(
+			screen.getByRole("textbox", { name: /ask for recommendations/i }),
+			"suggest something",
+		);
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
 		const thinkingCount = 2;
@@ -201,7 +204,10 @@ describe("Recommendations", () => {
 		renderRecommendations();
 		const user = userEvent.setup();
 
-		await user.type(screen.getByPlaceholderText(/ask for recommendations/i), "action movies");
+		await user.type(
+			screen.getByRole("textbox", { name: /ask for recommendations/i }),
+			"action movies",
+		);
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
 		expect(await screen.findByText("Here are some great action movies:")).toBeInTheDocument();
@@ -236,7 +242,7 @@ describe("Recommendations", () => {
 		renderRecommendations();
 		const user = userEvent.setup();
 
-		await user.type(screen.getByPlaceholderText(/ask for recommendations/i), "test");
+		await user.type(screen.getByRole("textbox", { name: /ask for recommendations/i }), "test");
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
 		await screen.findByText("AI response");
@@ -319,7 +325,10 @@ describe("Recommendations", () => {
 		renderRecommendations();
 		const user = userEvent.setup();
 
-		await user.type(screen.getByPlaceholderText(/ask for recommendations/i), "first message");
+		await user.type(
+			screen.getByRole("textbox", { name: /ask for recommendations/i }),
+			"first message",
+		);
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
 		await screen.findByText("Fresh reply");
