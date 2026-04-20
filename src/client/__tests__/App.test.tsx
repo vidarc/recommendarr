@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Provider } from "react-redux";
@@ -96,14 +96,13 @@ describe("App", () => {
 		server.use(setupStatusHandler(), meHandler(true));
 		const { store } = renderApp("/");
 		await waitFor(() => {
-			expect(screen.getByText("Recommendarr")).toBeInTheDocument();
+			expect(screen.getByRole("navigation")).toBeInTheDocument();
 		});
-		expect(screen.getByRole("navigation")).toBeInTheDocument();
-		const navAndHeading = 2;
-		expect(screen.getAllByText("Recommendations")).toHaveLength(navAndHeading);
-		expect(screen.getByText("History")).toBeInTheDocument();
-		expect(screen.getByText("Settings")).toBeInTheDocument();
-		expect(screen.getByText("Log out")).toBeInTheDocument();
+		const nav = screen.getByRole("navigation");
+		expect(within(nav).getByRole("link", { name: /recommendations/i })).toBeInTheDocument();
+		expect(within(nav).getByRole("link", { name: /history/i })).toBeInTheDocument();
+		expect(within(nav).getByRole("link", { name: /settings/i })).toBeInTheDocument();
+		expect(within(nav).getByRole("button", { name: /log out/i })).toBeInTheDocument();
 		store.dispatch(api.util.resetApiState());
 	});
 
@@ -111,7 +110,7 @@ describe("App", () => {
 		server.use(setupStatusHandler(), meHandler(true));
 		const { store } = renderApp("/login");
 		await waitFor(() => {
-			expect(screen.getByText("Recommendarr")).toBeInTheDocument();
+			expect(screen.getByRole("navigation")).toBeInTheDocument();
 		});
 		store.dispatch(api.util.resetApiState());
 	});

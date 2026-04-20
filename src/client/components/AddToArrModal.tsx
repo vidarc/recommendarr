@@ -23,6 +23,10 @@ interface AddToArrModalProps {
 
 const DISABLED_TAB_INDEX = -1;
 const EMPTY_LENGTH = 0;
+const FIRST_INDEX = 0;
+const LAST_INDEX = -1;
+const FOCUSABLE_SELECTOR =
+	'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /* ── Styles ─────────────────────────────────────────────────── */
 
@@ -494,7 +498,14 @@ const ModalOverlay = ({ onClose, children }: ModalOverlayProps) => {
 	const cardRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		cardRef.current?.focus();
+		const active = document.activeElement;
+		const previouslyFocused = active instanceof HTMLElement ? active : undefined;
+		const firstFocusable = cardRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+		(firstFocusable ?? cardRef.current)?.focus();
+
+		return () => {
+			previouslyFocused?.focus();
+		};
 	}, []);
 
 	const handleOverlayClick = useCallback(
@@ -506,10 +517,30 @@ const ModalOverlay = ({ onClose, children }: ModalOverlayProps) => {
 		[onClose],
 	);
 
-	const handleOverlayKeyDown = useCallback(
+	const handleKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLDivElement>) => {
 			if (event.key === "Escape") {
 				onClose();
+				return;
+			}
+			if (event.key !== "Tab" || !cardRef.current) {
+				return;
+			}
+			const focusables = [...cardRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)];
+			if (focusables.length === EMPTY_LENGTH) {
+				event.preventDefault();
+				cardRef.current.focus();
+				return;
+			}
+			const first = focusables[FIRST_INDEX];
+			const last = focusables.at(LAST_INDEX);
+			const active = document.activeElement;
+			if (event.shiftKey && (active === first || active === cardRef.current)) {
+				event.preventDefault();
+				last?.focus();
+			} else if (!event.shiftKey && active === last) {
+				event.preventDefault();
+				first?.focus();
 			}
 		},
 		[onClose],
@@ -518,11 +549,11 @@ const ModalOverlay = ({ onClose, children }: ModalOverlayProps) => {
 	return (
 		<div
 			className={overlayStyle}
-			onClick={handleOverlayClick}
-			onKeyDown={handleOverlayKeyDown}
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="arr-modal-title"
+			onClick={handleOverlayClick}
+			onKeyDown={handleKeyDown}
 		>
 			<div className={cardStyle} ref={cardRef} tabIndex={DISABLED_TAB_INDEX}>
 				{children}

@@ -54,8 +54,8 @@ describe("IntegrationsTab", () => {
 	test("renders Radarr and Sonarr section headings", () => {
 		renderTab();
 
-		expect(screen.getByText("Radarr")).toBeInTheDocument();
-		expect(screen.getByText("Sonarr")).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: /^radarr$/i })).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: /^sonarr$/i })).toBeInTheDocument();
 	});
 
 	test("renders URL and API Key fields for both services", () => {

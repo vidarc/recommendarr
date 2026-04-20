@@ -1,10 +1,18 @@
 import { css } from "@linaria/atomic";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 
 import { useGetPlexLibrariesQuery } from "../features/plex/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, KeyboardEvent } from "react";
+
+const NOT_FOUND = -1;
+const STEP = 1;
+const ACTIVE_TAB_INDEX = 0;
+const MEDIA_TYPE_GROUP_LABEL_ID = "chat-controls-media-type-label";
+const LIBRARY_SELECT_ID = "chat-controls-library-select";
+const RESULT_COUNT_ID = "chat-controls-result-count";
+const EXCLUDE_LIBRARY_ID = "chat-controls-exclude-library";
 
 const controlsBar = css`
 	display: flex;
@@ -105,12 +113,6 @@ const checkboxStyle = css`
 	cursor: pointer;
 `;
 
-const checkboxLabel = css`
-	font-size: 0.85rem;
-	color: ${colors.textMuted};
-	cursor: pointer;
-`;
-
 const MEDIA_TYPES = [
 	{ value: "movie", label: "Movies" },
 	{ value: "tv", label: "TV Shows" },
@@ -124,35 +126,95 @@ interface MediaTypeToggleProps {
 	onChange: (value: MediaType) => void;
 }
 
-const MediaTypeToggle = ({ value, onChange }: MediaTypeToggleProps) => (
-	<div className={toggleGroup}>
-		{MEDIA_TYPES.map((item) => (
-			<MediaTypeButton
-				key={item.value}
-				itemValue={item.value}
-				label={item.label}
-				isActive={value === item.value}
-				onChange={onChange}
-			/>
-		))}
-	</div>
-);
+const MediaTypeToggle = ({ value, onChange }: MediaTypeToggleProps) => {
+	const buttonRefs = useRef(new Map());
+
+	const registerRef = useCallback((mediaValue: MediaType, node: HTMLButtonElement | null) => {
+		if (node) {
+			buttonRefs.current.set(mediaValue, node);
+		} else {
+			buttonRefs.current.delete(mediaValue);
+		}
+	}, []);
+
+	const handleKeyDown = useCallback(
+		(event: KeyboardEvent<HTMLDivElement>) => {
+			const currentIndex = MEDIA_TYPES.findIndex((item) => item.value === value);
+			if (currentIndex === NOT_FOUND) {
+				return;
+			}
+			let nextIndex = currentIndex;
+			if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+				nextIndex = (currentIndex + STEP) % MEDIA_TYPES.length;
+			} else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+				nextIndex = (currentIndex - STEP + MEDIA_TYPES.length) % MEDIA_TYPES.length;
+			} else {
+				return;
+			}
+			event.preventDefault();
+			const nextValue = MEDIA_TYPES[nextIndex]?.value;
+			if (nextValue !== undefined) {
+				onChange(nextValue);
+				buttonRefs.current.get(nextValue)?.focus();
+			}
+		},
+		[value, onChange],
+	);
+
+	return (
+		<div
+			role="radiogroup"
+			aria-labelledby={MEDIA_TYPE_GROUP_LABEL_ID}
+			className={toggleGroup}
+			onKeyDown={handleKeyDown}
+		>
+			{MEDIA_TYPES.map((item) => (
+				<MediaTypeButton
+					key={item.value}
+					itemValue={item.value}
+					label={item.label}
+					isActive={value === item.value}
+					onChange={onChange}
+					registerRef={registerRef}
+				/>
+			))}
+		</div>
+	);
+};
 
 interface MediaTypeButtonProps {
 	itemValue: MediaType;
 	label: string;
 	isActive: boolean;
 	onChange: (value: MediaType) => void;
+	registerRef: (value: MediaType, node: HTMLButtonElement | null) => void;
 }
 
-const MediaTypeButton = ({ itemValue, label, isActive, onChange }: MediaTypeButtonProps) => {
+const MediaTypeButton = ({
+	itemValue,
+	label,
+	isActive,
+	onChange,
+	registerRef,
+}: MediaTypeButtonProps) => {
 	const handleClick = useCallback(() => {
 		onChange(itemValue);
 	}, [itemValue, onChange]);
 
+	const handleRef = useCallback(
+		(node: HTMLButtonElement | null) => {
+			registerRef(itemValue, node);
+		},
+		[itemValue, registerRef],
+	);
+
 	return (
 		<button
+			ref={handleRef}
 			type="button"
+			role="radio"
+			aria-checked={isActive}
+			tabIndex={isActive ? ACTIVE_TAB_INDEX : NOT_FOUND}
 			className={`${toggleButtonBase} ${isActive ? toggleButtonActive : ""}`}
 			onClick={handleClick}
 		>
@@ -178,7 +240,7 @@ const LibraryScopeSelect = ({ value, onChange }: LibraryScopeSelectProps) => {
 	);
 
 	return (
-		<select className={selectStyle} value={value} onChange={handleChange}>
+		<select id={LIBRARY_SELECT_ID} className={selectStyle} value={value} onChange={handleChange}>
 			<option value="">Whole library</option>
 			{libraries.map((lib) => (
 				<option key={lib.key} value={lib.key}>
@@ -203,10 +265,13 @@ const ExcludeLibraryCheckbox = ({ checked, onChange }: ExcludeLibraryCheckboxPro
 	);
 
 	return (
-		<label className={checkboxLabel}>
-			<input type="checkbox" className={checkboxStyle} checked={checked} onChange={handleChange} />{" "}
-			On
-		</label>
+		<input
+			id={EXCLUDE_LIBRARY_ID}
+			type="checkbox"
+			className={checkboxStyle}
+			checked={checked}
+			onChange={handleChange}
+		/>
 	);
 };
 
@@ -241,16 +306,23 @@ const ChatControls = ({
 	return (
 		<div className={controlsBar}>
 			<div className={controlGroup}>
-				<span className={controlLabel}>Media Type</span>
+				<span id={MEDIA_TYPE_GROUP_LABEL_ID} className={controlLabel}>
+					Media Type
+				</span>
 				<MediaTypeToggle value={mediaType} onChange={onMediaTypeChange} />
 			</div>
 			<div className={controlGroup}>
-				<span className={controlLabel}>Library</span>
+				<label htmlFor={LIBRARY_SELECT_ID} className={controlLabel}>
+					Library
+				</label>
 				<LibraryScopeSelect value={libraryId} onChange={onLibraryIdChange} />
 			</div>
 			<div className={controlGroup}>
-				<span className={controlLabel}>Results</span>
+				<label htmlFor={RESULT_COUNT_ID} className={controlLabel}>
+					Results
+				</label>
 				<input
+					id={RESULT_COUNT_ID}
 					type="number"
 					min={1}
 					max={50}
@@ -260,7 +332,9 @@ const ChatControls = ({
 				/>
 			</div>
 			<div className={controlGroup}>
-				<span className={controlLabel}>Exclude Library</span>
+				<label htmlFor={EXCLUDE_LIBRARY_ID} className={controlLabel}>
+					Exclude Library
+				</label>
 				<ExcludeLibraryCheckbox checked={excludeLibrary} onChange={onExcludeLibraryChange} />
 			</div>
 		</div>

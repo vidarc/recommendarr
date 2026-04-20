@@ -40,17 +40,27 @@ export const Login = () => {
 		setPassword(event.target.value);
 	}, []);
 
+	const hasError = error !== undefined;
+	const errorId = "login-error";
+
 	return (
 		<div className={formWrapper}>
 			<form onSubmit={handleSubmit} className={formCard}>
 				<h1 className={formTitle}>Login</h1>
-				{error && <p className={errorMessage}>Invalid username or password</p>}
+				{hasError && (
+					<p id={errorId} role="alert" className={errorMessage}>
+						Invalid username or password
+					</p>
+				)}
 				<FormField
 					id="username"
 					label="Username"
 					value={username}
 					onChange={handleUsernameChange}
 					required
+					autoComplete="username"
+					invalid={hasError}
+					describedBy={hasError ? errorId : undefined}
 				/>
 				<FormField
 					id="password"
@@ -59,6 +69,9 @@ export const Login = () => {
 					value={password}
 					onChange={handlePasswordChange}
 					required
+					autoComplete="current-password"
+					invalid={hasError}
+					describedBy={hasError ? errorId : undefined}
 				/>
 				<button type="submit" disabled={isLoading} className={submitButton}>
 					{isLoading ? "Logging in..." : "Log in"}

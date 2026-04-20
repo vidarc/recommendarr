@@ -12,7 +12,7 @@ describe("AccountTab", () => {
 	test("renders the change password heading", () => {
 		renderTab();
 
-		expect(screen.getByText("Change Password")).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: /change password/i })).toBeInTheDocument();
 	});
 
 	test("shows coming soon badge", () => {

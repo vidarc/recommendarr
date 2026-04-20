@@ -16,6 +16,7 @@ import { useRegisterMutation } from "../features/auth/api.ts";
 import type { ChangeEvent, SubmitEvent } from "react";
 
 const minPasswordLength = 8;
+const EMPTY_LENGTH = 0;
 
 export const Register = () => {
 	const [username, setUsername] = useState("");
@@ -55,14 +56,24 @@ export const Register = () => {
 		setConfirmPassword(event.target.value);
 	}, []);
 
+	const hasValidationError = validationError.length > EMPTY_LENGTH;
+	const isUsernameTakenError = error !== undefined && "data" in error;
+	const hasServerError = error !== undefined;
+	const errorId = "register-error";
+	const describedBy = hasValidationError || hasServerError ? errorId : undefined;
+
 	return (
 		<div className={formWrapper}>
 			<form onSubmit={handleSubmit} className={formCard}>
 				<h1 className={formTitle}>Register</h1>
-				{validationError && <p className={errorMessage}>{validationError}</p>}
-				{error && (
-					<p className={errorMessage}>
-						{"data" in error ? "Username already taken" : "Registration failed"}
+				{hasValidationError && (
+					<p id={errorId} role="alert" className={errorMessage}>
+						{validationError}
+					</p>
+				)}
+				{!hasValidationError && hasServerError && (
+					<p id={errorId} role="alert" className={errorMessage}>
+						{isUsernameTakenError ? "Username already taken" : "Registration failed"}
 					</p>
 				)}
 				<FormField
@@ -71,6 +82,9 @@ export const Register = () => {
 					value={username}
 					onChange={handleUsernameChange}
 					required
+					autoComplete="username"
+					invalid={isUsernameTakenError}
+					describedBy={describedBy}
 				/>
 				<FormField
 					id="password"
@@ -80,6 +94,9 @@ export const Register = () => {
 					onChange={handlePasswordChange}
 					required
 					minLength={minPasswordLength}
+					autoComplete="new-password"
+					invalid={hasValidationError}
+					describedBy={describedBy}
 				/>
 				<FormField
 					id="confirmPassword"
@@ -89,6 +106,9 @@ export const Register = () => {
 					onChange={handleConfirmPasswordChange}
 					required
 					minLength={minPasswordLength}
+					autoComplete="new-password"
+					invalid={hasValidationError}
+					describedBy={describedBy}
 				/>
 				<button type="submit" disabled={isLoading} className={submitButton}>
 					{isLoading ? "Registering..." : "Register"}

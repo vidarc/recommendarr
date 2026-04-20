@@ -46,6 +46,9 @@ export const FormField = ({
 	onChange,
 	required,
 	minLength,
+	autoComplete,
+	invalid,
+	describedBy,
 }: {
 	id: string;
 	label: string;
@@ -54,6 +57,9 @@ export const FormField = ({
 	onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 	required?: boolean;
 	minLength?: number;
+	autoComplete?: string;
+	invalid?: boolean;
+	describedBy?: string | undefined;
 }) => (
 	<div className={fieldGroup}>
 		<label htmlFor={id} className={labelStyle}>
@@ -66,6 +72,9 @@ export const FormField = ({
 			onChange={onChange}
 			required={required}
 			minLength={minLength}
+			autoComplete={autoComplete}
+			aria-invalid={invalid || undefined}
+			aria-describedby={describedBy}
 			className={inputStyle}
 		/>
 	</div>

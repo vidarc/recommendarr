@@ -210,6 +210,7 @@ const MessageInputRow = ({
 	<div className={inputRow}>
 		<input
 			type="text"
+			aria-label="Ask for recommendations"
 			placeholder="Ask for recommendations..."
 			value={text}
 			onChange={onChange}

@@ -26,5 +26,14 @@ export const globals = css`
 			background-color: ${colors.bgLighter};
 			color: ${colors.text};
 		}
+
+		:focus {
+			outline: none;
+		}
+
+		:focus-visible {
+			outline: 2px solid ${colors.borderFocus};
+			outline-offset: 2px;
+		}
 	}
 `;

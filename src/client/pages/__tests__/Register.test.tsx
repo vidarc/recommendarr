@@ -88,7 +88,8 @@ describe("Register", () => {
 		await user.type(screen.getByLabelText(/confirm password/i), "password2");
 		await user.click(screen.getByRole("button", { name: /register/i }));
 
-		expect(await screen.findByText(/passwords do not match/i)).toBeInTheDocument();
+		const alert = await screen.findByRole("alert");
+		expect(alert).toHaveTextContent(/passwords do not match/i);
 	});
 
 	test("shows error when username is already taken", async () => {
@@ -107,7 +108,8 @@ describe("Register", () => {
 		await user.type(screen.getByLabelText(/confirm password/i), "password123");
 		await user.click(screen.getByRole("button", { name: /register/i }));
 
-		expect(await screen.findByText(/username already taken/i)).toBeInTheDocument();
+		const alert = await screen.findByRole("alert");
+		expect(alert).toHaveTextContent(/username already taken/i);
 	});
 
 	test("shows generic error on server failure", async () => {
@@ -121,7 +123,8 @@ describe("Register", () => {
 		await user.type(screen.getByLabelText(/confirm password/i), "password123");
 		await user.click(screen.getByRole("button", { name: /register/i }));
 
-		expect(await screen.findByText(/registration failed/i)).toBeInTheDocument();
+		const alert = await screen.findByRole("alert");
+		expect(alert).toHaveTextContent(/registration failed/i);
 	});
 
 	test("submit button has correct type", () => {
