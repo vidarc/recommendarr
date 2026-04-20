@@ -54,7 +54,7 @@ test.describe("metadata enrichment flow", () => {
 
 	test("send message and get recommendation with metadata available", async () => {
 		await page.goto("/");
-		const excludeToggle = page.getByRole("checkbox", { name: /on/i });
+		const excludeToggle = page.getByRole("checkbox", { name: /exclude library/i });
 		if (await excludeToggle.isChecked()) {
 			await excludeToggle.click();
 		}
