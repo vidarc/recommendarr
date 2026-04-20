@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "vite-plus/test";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vite-plus/test";
 
 import { getLibraryContents } from "../services/plex-api.ts";
 
@@ -58,20 +58,20 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
+describe(getLibraryContents, () => {
+	beforeAll(() => {
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
 
-afterEach(() => {
-	mswServer.resetHandlers();
-});
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
 
-afterAll(() => {
-	mswServer.close();
-});
+	afterAll(() => {
+		mswServer.close();
+	});
 
-describe("getLibraryContents", () => {
-	test("fetches all items from a library", async () => {
+	it("fetches all items from a library", async () => {
 		const items = await getLibraryContents({
 			serverUrl: testServerUrl,
 			authToken: testAuthToken,
@@ -87,7 +87,7 @@ describe("getLibraryContents", () => {
 		expect(items[THIRD]!.title).toBe("Interstellar");
 	});
 
-	test("paginates through results with pageSize of 2 for 3 items", async () => {
+	it("paginates through results with pageSize of 2 for 3 items", async () => {
 		const requests: { start: number; size: number }[] = [];
 
 		mswServer.use(
@@ -120,7 +120,7 @@ describe("getLibraryContents", () => {
 		expect(requests[SECOND]).toStrictEqual({ start: 2, size: 2 });
 	});
 
-	test("handles empty library", async () => {
+	it("handles empty library", async () => {
 		mswServer.use(
 			http.get(`${testServerUrl}/library/sections/${testLibraryId}/all`, () =>
 				HttpResponse.json({
@@ -140,7 +140,7 @@ describe("getLibraryContents", () => {
 		expect(items).toStrictEqual([]);
 	});
 
-	test("extracts genres from Plex Genre tag format", async () => {
+	it("extracts genres from Plex Genre tag format", async () => {
 		const items = await getLibraryContents({
 			serverUrl: testServerUrl,
 			authToken: testAuthToken,
@@ -152,7 +152,7 @@ describe("getLibraryContents", () => {
 		expect(items[THIRD]!.genres).toBe("Sci-Fi,Drama");
 	});
 
-	test("handles items with no genres", async () => {
+	it("handles items with no genres", async () => {
 		mswServer.use(
 			http.get(`${testServerUrl}/library/sections/${testLibraryId}/all`, () =>
 				HttpResponse.json({
@@ -181,7 +181,7 @@ describe("getLibraryContents", () => {
 		expect(items[FIRST]!.genres).toBe("");
 	});
 
-	test("throws on non-ok response", async () => {
+	it("throws on non-ok response", async () => {
 		mswServer.use(
 			http.get(
 				`${testServerUrl}/library/sections/${testLibraryId}/all`,

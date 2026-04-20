@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { eq } from "drizzle-orm";
-import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
+import { describe, expect, onTestFinished, it, vi } from "vite-plus/test";
 
 import { buildServer } from "../app.ts";
 import { settings, users } from "../schema.ts";
@@ -49,8 +49,8 @@ const getSessionCookie = async (app: Awaited<ReturnType<typeof buildServer>>) =>
 	return session.id;
 };
 
-describe("GET /api/settings", () => {
-	test("returns settings as key-value object", async () => {
+describe("gET /api/settings", () => {
+	it("returns settings as key-value object", async () => {
 		const expectedStatusCode = 200;
 		const app = await setupDb();
 		const sessionId = await getSessionCookie(app);
@@ -67,7 +67,7 @@ describe("GET /api/settings", () => {
 		});
 	});
 
-	test("returns additional settings when inserted", async () => {
+	it("returns additional settings when inserted", async () => {
 		const app = await setupDb();
 		const sessionId = await getSessionCookie(app);
 
@@ -85,7 +85,7 @@ describe("GET /api/settings", () => {
 		});
 	});
 
-	test("returns empty object when no settings exist", async () => {
+	it("returns empty object when no settings exist", async () => {
 		const app = await setupDb();
 		const sessionId = await getSessionCookie(app);
 
@@ -100,7 +100,7 @@ describe("GET /api/settings", () => {
 		expect(response.json()).toStrictEqual({});
 	});
 
-	test("returns 404 for unknown API routes", async () => {
+	it("returns 404 for unknown API routes", async () => {
 		const expectedStatusCode = 404;
 		const app = await setupDb();
 		const sessionId = await getSessionCookie(app);
@@ -116,7 +116,7 @@ describe("GET /api/settings", () => {
 });
 
 describe("skipDB option", () => {
-	test("does not register /api/settings when skipDB is true", async () => {
+	it("does not register /api/settings when skipDB is true", async () => {
 		const expectedStatusCode = 404;
 		vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
 		const app = await buildServer({ skipSSR: true, skipDB: true });

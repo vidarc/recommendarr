@@ -13,7 +13,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 	vi,
 } from "vite-plus/test";
 
@@ -58,18 +58,6 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
-
-afterEach(() => {
-	mswServer.resetHandlers();
-});
-
-afterAll(() => {
-	mswServer.close();
-});
-
 const setupDb = async () => {
 	vi.stubEnv("DATABASE_PATH", testDbPath);
 	vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
@@ -103,8 +91,20 @@ const getSessionCookie = async (app: Awaited<ReturnType<typeof buildServer>>) =>
 	return { sessionId: session.id, userId: user.id };
 };
 
-describe("GET /api/arr/config", () => {
-	test("returns empty array when no connections", async () => {
+describe("gET /api/arr/config", () => {
+	beforeAll(() => {
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
+
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
+
+	afterAll(() => {
+		mswServer.close();
+	});
+
+	it("returns empty array when no connections", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -118,7 +118,7 @@ describe("GET /api/arr/config", () => {
 		expect(response.json()).toStrictEqual([]);
 	});
 
-	test("returns connections with masked API keys", async () => {
+	it("returns connections with masked API keys", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -152,7 +152,7 @@ describe("GET /api/arr/config", () => {
 		expect(decrypt(dbConn!.apiKey)).toBe("myapikey1234");
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -164,8 +164,8 @@ describe("GET /api/arr/config", () => {
 	});
 });
 
-describe("PUT /api/arr/config/:serviceType", () => {
-	test("creates new radarr connection with encrypted API key", async () => {
+describe("pUT /api/arr/config/:serviceType", () => {
+	it("creates new radarr connection with encrypted API key", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -191,7 +191,7 @@ describe("PUT /api/arr/config/:serviceType", () => {
 		expect(decrypt(dbConn!.apiKey)).toBe("testradarrkey1234");
 	});
 
-	test("updates existing connection", async () => {
+	it("updates existing connection", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -228,7 +228,7 @@ describe("PUT /api/arr/config/:serviceType", () => {
 		expect(allConns).toHaveLength(ONE);
 	});
 
-	test("rejects invalid serviceType with 400", async () => {
+	it("rejects invalid serviceType with 400", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -243,8 +243,8 @@ describe("PUT /api/arr/config/:serviceType", () => {
 	});
 });
 
-describe("DELETE /api/arr/config/:serviceType", () => {
-	test("removes a connection", async () => {
+describe("dELETE /api/arr/config/:serviceType", () => {
+	it("removes a connection", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -272,7 +272,7 @@ describe("DELETE /api/arr/config/:serviceType", () => {
 		expect(dbConn).toBeUndefined();
 	});
 
-	test("returns 404 when no connection exists", async () => {
+	it("returns 404 when no connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -286,8 +286,8 @@ describe("DELETE /api/arr/config/:serviceType", () => {
 	});
 });
 
-describe("POST /api/arr/test", () => {
-	test("returns success on valid connection", async () => {
+describe("pOST /api/arr/test", () => {
+	it("returns success on valid connection", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -311,7 +311,7 @@ describe("POST /api/arr/test", () => {
 		expect(body.version).toBe("5.3.6");
 	});
 
-	test("returns 404 when no connection exists", async () => {
+	it("returns 404 when no connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -326,8 +326,8 @@ describe("POST /api/arr/test", () => {
 	});
 });
 
-describe("GET /api/arr/options/:serviceType", () => {
-	test("returns root folders and quality profiles", async () => {
+describe("gET /api/arr/options/:serviceType", () => {
+	it("returns root folders and quality profiles", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -350,7 +350,7 @@ describe("GET /api/arr/options/:serviceType", () => {
 		expect(body.qualityProfiles).toStrictEqual(mockQualityProfiles);
 	});
 
-	test("returns 404 when no connection exists", async () => {
+	it("returns 404 when no connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -364,8 +364,8 @@ describe("GET /api/arr/options/:serviceType", () => {
 	});
 });
 
-describe("POST /api/arr/lookup", () => {
-	test("returns lookup results", async () => {
+describe("pOST /api/arr/lookup", () => {
+	it("returns lookup results", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -391,7 +391,7 @@ describe("POST /api/arr/lookup", () => {
 		expect(body[FIRST]?.tmdbId).toBe(INCEPTION_TMDB_ID);
 	});
 
-	test("returns 404 when no connection exists", async () => {
+	it("returns 404 when no connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -406,8 +406,8 @@ describe("POST /api/arr/lookup", () => {
 	});
 });
 
-describe("POST /api/arr/add", () => {
-	test("adds media and updates recommendation addedToArr and tmdbId", async () => {
+describe("pOST /api/arr/add", () => {
+	it("adds media and updates recommendation addedToArr and tmdbId", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -485,7 +485,7 @@ describe("POST /api/arr/add", () => {
 		expect(dbRec!.tmdbId).toBe(INCEPTION_TMDB_ID);
 	});
 
-	test("returns 404 when no connection exists", async () => {
+	it("returns 404 when no connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 

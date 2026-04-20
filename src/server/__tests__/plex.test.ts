@@ -14,7 +14,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 	vi,
 } from "vite-plus/test";
 
@@ -154,22 +154,22 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
-
-afterEach(() => {
-	mswServer.resetHandlers();
-});
-
-afterAll(() => {
-	mswServer.close();
-});
-
 // --- Plex API client tests ---
 
-describe("createPlexPin", () => {
-	test("creates a PIN and returns id, code, and authUrl", async () => {
+describe(createPlexPin, () => {
+	beforeAll(() => {
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
+
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
+
+	afterAll(() => {
+		mswServer.close();
+	});
+
+	it("creates a PIN and returns id, code, and authUrl", async () => {
 		const result = await createPlexPin();
 
 		expect(result.id).toBe(MOCK_PIN_ID);
@@ -178,7 +178,7 @@ describe("createPlexPin", () => {
 		expect(result.authUrl).toContain("ABCD1234");
 	});
 
-	test("throws on non-ok response", async () => {
+	it("throws on non-ok response", async () => {
 		mswServer.use(
 			http.post("https://plex.tv/api/v2/pins", () => new HttpResponse(undefined, { status: 500 })),
 		);
@@ -187,20 +187,20 @@ describe("createPlexPin", () => {
 	});
 });
 
-describe("checkPlexPin", () => {
-	test("returns auth token when PIN is claimed", async () => {
+describe(checkPlexPin, () => {
+	it("returns auth token when PIN is claimed", async () => {
 		const result = await checkPlexPin(MOCK_PIN_ID);
 
 		expect(result.authToken).toBe("plex-auth-token-xyz");
 	});
 
-	test("returns undefined when PIN is not yet claimed", async () => {
+	it("returns undefined when PIN is not yet claimed", async () => {
 		const result = await checkPlexPin(MOCK_PENDING_PIN_ID);
 
 		expect(result.authToken).toBeUndefined();
 	});
 
-	test("throws on non-ok response", async () => {
+	it("throws on non-ok response", async () => {
 		mswServer.use(
 			http.get(
 				`https://plex.tv/api/v2/pins/${MOCK_PIN_ID.toString()}`,
@@ -212,8 +212,8 @@ describe("checkPlexPin", () => {
 	});
 });
 
-describe("getPlexServers", () => {
-	test("returns only server resources with remote connections preferred", async () => {
+describe(getPlexServers, () => {
+	it("returns only server resources with remote connections preferred", async () => {
 		const servers = await getPlexServers("test-token");
 
 		expect(servers).toHaveLength(ONE_SERVER);
@@ -223,7 +223,7 @@ describe("getPlexServers", () => {
 		expect(servers[FIRST]!.owned).toBe(true);
 	});
 
-	test("throws on non-ok response", async () => {
+	it("throws on non-ok response", async () => {
 		mswServer.use(
 			http.get(
 				"https://plex.tv/api/v2/resources",
@@ -235,8 +235,8 @@ describe("getPlexServers", () => {
 	});
 });
 
-describe("getPlexLibraries", () => {
-	test("returns libraries from server", async () => {
+describe(getPlexLibraries, () => {
+	it("returns libraries from server", async () => {
 		const libraries = await getPlexLibraries(testServerUrl, "test-token");
 
 		expect(libraries).toHaveLength(THREE_LIBRARIES);
@@ -252,7 +252,7 @@ describe("getPlexLibraries", () => {
 		});
 	});
 
-	test("throws on non-ok response", async () => {
+	it("throws on non-ok response", async () => {
 		mswServer.use(
 			http.get(
 				`${testServerUrl}/library/sections`,
@@ -266,8 +266,8 @@ describe("getPlexLibraries", () => {
 	});
 });
 
-describe("getWatchHistory", () => {
-	test("returns watch history items", async () => {
+describe(getWatchHistory, () => {
+	it("returns watch history items", async () => {
 		const items = await getWatchHistory({
 			serverUrl: testServerUrl,
 			authToken: "test-token",
@@ -280,7 +280,7 @@ describe("getWatchHistory", () => {
 		expect(items[SECOND]!.type).toBe("movie");
 	});
 
-	test("returns history for a specific library", async () => {
+	it("returns history for a specific library", async () => {
 		const items = await getWatchHistory({
 			serverUrl: testServerUrl,
 			authToken: "test-token",
@@ -290,7 +290,7 @@ describe("getWatchHistory", () => {
 		expect(items).toHaveLength(TWO_ITEMS);
 	});
 
-	test("returns empty array when no metadata present", async () => {
+	it("returns empty array when no metadata present", async () => {
 		mswServer.use(
 			http.get(`${testServerUrl}/status/sessions/history/all`, () =>
 				HttpResponse.json({ MediaContainer: {} }),
@@ -305,7 +305,7 @@ describe("getWatchHistory", () => {
 		expect(items).toStrictEqual([]);
 	});
 
-	test("throws on non-ok response", async () => {
+	it("throws on non-ok response", async () => {
 		mswServer.use(
 			http.get(
 				`${testServerUrl}/status/sessions/history/all`,
@@ -382,8 +382,8 @@ const insertPlexConnection = (
 		.run();
 };
 
-describe("POST /api/plex/auth/start", () => {
-	test("returns pinId and authUrl", async () => {
+describe("pOST /api/plex/auth/start", () => {
+	it("returns pinId and authUrl", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -399,7 +399,7 @@ describe("POST /api/plex/auth/start", () => {
 		expect(body.authUrl).toContain("app.plex.tv/auth");
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -411,8 +411,8 @@ describe("POST /api/plex/auth/start", () => {
 	});
 });
 
-describe("GET /api/plex/auth/check", () => {
-	test("returns claimed status with auth token", async () => {
+describe("gET /api/plex/auth/check", () => {
+	it("returns claimed status with auth token", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -435,7 +435,7 @@ describe("GET /api/plex/auth/check", () => {
 		expect(connection).toBeDefined();
 	});
 
-	test("returns pending status when PIN not yet claimed", async () => {
+	it("returns pending status when PIN not yet claimed", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -450,7 +450,7 @@ describe("GET /api/plex/auth/check", () => {
 		expect(body.claimed).toBe(false);
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -462,8 +462,8 @@ describe("GET /api/plex/auth/check", () => {
 	});
 });
 
-describe("GET /api/plex/servers", () => {
-	test("returns server list when Plex connection exists", async () => {
+describe("gET /api/plex/servers", () => {
+	it("returns server list when Plex connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		insertPlexConnection(app, userId);
@@ -481,7 +481,7 @@ describe("GET /api/plex/servers", () => {
 		expect(body.servers[FIRST].name).toBe("My Plex Server");
 	});
 
-	test("returns unselected server list when connection has no stored serverUrl", async () => {
+	it("returns unselected server list when connection has no stored serverUrl", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		insertPlexConnection(app, userId, {
@@ -501,7 +501,7 @@ describe("GET /api/plex/servers", () => {
 		expect(body.selected).toBe(false);
 	});
 
-	test("returns 404 when no Plex connection exists", async () => {
+	it("returns 404 when no Plex connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -514,7 +514,7 @@ describe("GET /api/plex/servers", () => {
 		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
 	});
 
-	test("returns stored server when serverUrl is set (skips Plex API)", async () => {
+	it("returns stored server when serverUrl is set (skips Plex API)", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -550,8 +550,8 @@ describe("GET /api/plex/servers", () => {
 	});
 });
 
-describe("POST /api/plex/auth/manual", () => {
-	test("stores connection and returns success", async () => {
+describe("pOST /api/plex/auth/manual", () => {
+	it("stores connection and returns success", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -576,7 +576,7 @@ describe("POST /api/plex/auth/manual", () => {
 		expect(connections[FIRST]?.serverName).toBe("My Local Server");
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -593,8 +593,8 @@ describe("POST /api/plex/auth/manual", () => {
 	});
 });
 
-describe("POST /api/plex/servers/select", () => {
-	test("saves selected server to plex connection", async () => {
+describe("pOST /api/plex/servers/select", () => {
+	it("saves selected server to plex connection", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		insertPlexConnection(app, userId, {
@@ -626,7 +626,7 @@ describe("POST /api/plex/servers/select", () => {
 		expect(connection?.machineIdentifier).toBe("new-machine-id");
 	});
 
-	test("returns 404 when no Plex connection exists", async () => {
+	it("returns 404 when no Plex connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -645,8 +645,8 @@ describe("POST /api/plex/servers/select", () => {
 	});
 });
 
-describe("DELETE /api/plex/connection", () => {
-	test("removes Plex connection", async () => {
+describe("dELETE /api/plex/connection", () => {
+	it("removes Plex connection", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		insertPlexConnection(app, userId);
@@ -668,7 +668,7 @@ describe("DELETE /api/plex/connection", () => {
 		expect(connection).toBeUndefined();
 	});
 
-	test("returns 404 when no connection exists", async () => {
+	it("returns 404 when no connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -682,8 +682,8 @@ describe("DELETE /api/plex/connection", () => {
 	});
 });
 
-describe("GET /api/plex/libraries", () => {
-	test("returns libraries when server is selected", async () => {
+describe("gET /api/plex/libraries", () => {
+	it("returns libraries when server is selected", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		insertPlexConnection(app, userId);
@@ -700,7 +700,7 @@ describe("GET /api/plex/libraries", () => {
 		expect(body.libraries[FIRST].title).toBe("Movies");
 	});
 
-	test("returns 404 when no connection exists", async () => {
+	it("returns 404 when no connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -713,7 +713,7 @@ describe("GET /api/plex/libraries", () => {
 		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
 	});
 
-	test("returns 400 when no server is selected", async () => {
+	it("returns 400 when no server is selected", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		insertPlexConnection(app, userId, {

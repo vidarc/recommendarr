@@ -14,7 +14,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 	vi,
 } from "vite-plus/test";
 
@@ -88,18 +88,6 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
-
-afterEach(() => {
-	mswServer.resetHandlers();
-});
-
-afterAll(() => {
-	mswServer.close();
-});
-
 const setupDb = async () => {
 	vi.stubEnv("DATABASE_PATH", testDbPath);
 	vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
@@ -166,8 +154,20 @@ const setupAiAndPlex = (app: Awaited<ReturnType<typeof buildServer>>, userId: st
 		.run();
 };
 
-describe("POST /api/chat", () => {
-	test("creates new conversation and returns recommendations", async () => {
+describe("pOST /api/chat", () => {
+	beforeAll(() => {
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
+
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
+
+	afterAll(() => {
+		mswServer.close();
+	});
+
+	it("creates new conversation and returns recommendations", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupAiAndPlex(app, userId);
@@ -194,7 +194,7 @@ describe("POST /api/chat", () => {
 		expect(body.message.recommendations[FIRST_INDEX].title).toBe("The Matrix");
 	});
 
-	test("appends to existing conversation", async () => {
+	it("appends to existing conversation", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupAiAndPlex(app, userId);
@@ -257,7 +257,7 @@ describe("POST /api/chat", () => {
 		expect(allMessages).toHaveLength(EXPECTED_MESSAGE_COUNT);
 	});
 
-	test("returns 404 when no AI config exists", async () => {
+	it("returns 404 when no AI config exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -275,7 +275,7 @@ describe("POST /api/chat", () => {
 		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -291,7 +291,7 @@ describe("POST /api/chat", () => {
 		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
 	});
 
-	test("returns 404 for non-existent conversation", async () => {
+	it("returns 404 for non-existent conversation", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupAiAndPlex(app, userId);
@@ -312,8 +312,8 @@ describe("POST /api/chat", () => {
 	});
 });
 
-describe("GET /api/conversations", () => {
-	test("lists user conversations", async () => {
+describe("gET /api/conversations", () => {
+	it("lists user conversations", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupAiAndPlex(app, userId);
@@ -342,7 +342,7 @@ describe("GET /api/conversations", () => {
 		expect(body.conversations[FIRST_INDEX].mediaType).toBe("movie");
 	});
 
-	test("returns empty list for new user", async () => {
+	it("returns empty list for new user", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -358,7 +358,7 @@ describe("GET /api/conversations", () => {
 		expect(body.conversations).toHaveLength(EMPTY_LENGTH);
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -370,8 +370,8 @@ describe("GET /api/conversations", () => {
 	});
 });
 
-describe("GET /api/conversations/:id", () => {
-	test("returns conversation with messages and recommendations", async () => {
+describe("gET /api/conversations/:id", () => {
+	it("returns conversation with messages and recommendations", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupAiAndPlex(app, userId);
@@ -408,7 +408,7 @@ describe("GET /api/conversations/:id", () => {
 		expect(assistantMsg.recommendations).toHaveLength(EXPECTED_REC_COUNT);
 	});
 
-	test("returns 404 for non-existent conversation", async () => {
+	it("returns 404 for non-existent conversation", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -422,8 +422,8 @@ describe("GET /api/conversations/:id", () => {
 	});
 });
 
-describe("DELETE /api/conversations/:id", () => {
-	test("deletes conversation with messages and recommendations", async () => {
+describe("dELETE /api/conversations/:id", () => {
+	it("deletes conversation with messages and recommendations", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupAiAndPlex(app, userId);
@@ -468,7 +468,7 @@ describe("DELETE /api/conversations/:id", () => {
 		expect(remainingMessages).toHaveLength(EMPTY_LENGTH);
 	});
 
-	test("returns 404 for non-existent conversation", async () => {
+	it("returns 404 for non-existent conversation", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -481,7 +481,7 @@ describe("DELETE /api/conversations/:id", () => {
 		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -493,8 +493,8 @@ describe("DELETE /api/conversations/:id", () => {
 	});
 });
 
-describe("POST /api/chat with library exclusion", () => {
-	test("sends exclusion context when excludeLibrary is true", async () => {
+describe("pOST /api/chat with library exclusion", () => {
+	it("sends exclusion context when excludeLibrary is true", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupAiAndPlex(app, userId);
@@ -573,7 +573,7 @@ describe("POST /api/chat with library exclusion", () => {
 		expect(capturedSystemPrompt).toContain("Inception");
 	});
 
-	test("skips exclusion when excludeLibrary is false", async () => {
+	it("skips exclusion when excludeLibrary is false", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupAiAndPlex(app, userId);
@@ -642,8 +642,8 @@ describe("POST /api/chat with library exclusion", () => {
 	});
 });
 
-describe("POST /api/chat with feedback context", () => {
-	test("includes feedback context in system prompt", async () => {
+describe("pOST /api/chat with feedback context", () => {
+	it("includes feedback context in system prompt", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupAiAndPlex(app, userId);

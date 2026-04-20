@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
+import { describe, expect, onTestFinished, it, vi } from "vite-plus/test";
 
 import { buildServer } from "../app.ts";
 import { users } from "../schema.ts";
@@ -55,16 +55,20 @@ const getSessionCookie = async (
 };
 
 describe("auth middleware", () => {
-	test("returns 401 without session cookie on /api/settings", async () => {
+	it("returns 401 without session cookie on /api/settings", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({ method: "GET", url: "/api/settings" });
 
 		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
-		expect(response.json()).toStrictEqual({ error: "Authentication required" });
+		expect(response.json()).toStrictEqual({
+			error: "Unauthorized",
+			message: "Authentication required",
+			statusCode: 401,
+		});
 	});
 
-	test("returns 200 with valid session cookie on /api/settings", async () => {
+	it("returns 200 with valid session cookie on /api/settings", async () => {
 		const app = await setupDb();
 		const sessionId = await getSessionCookie(app);
 
@@ -77,7 +81,7 @@ describe("auth middleware", () => {
 		expect(response.statusCode).toBe(StatusCodes.OK);
 	});
 
-	test("public auth routes work without session", async () => {
+	it("public auth routes work without session", async () => {
 		const app = await setupDb();
 
 		const setupResponse = await app.inject({
@@ -101,7 +105,7 @@ describe("auth middleware", () => {
 		expect(loginResponse.statusCode).toBe(StatusCodes.OK);
 	});
 
-	test("returns 401 with invalid session cookie", async () => {
+	it("returns 401 with invalid session cookie", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -111,12 +115,16 @@ describe("auth middleware", () => {
 		});
 
 		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
-		expect(response.json()).toStrictEqual({ error: "Invalid or expired session" });
+		expect(response.json()).toStrictEqual({
+			error: "Unauthorized",
+			message: "Invalid or expired session",
+			statusCode: 401,
+		});
 	});
 });
 
 describe("auth routes with sessions", () => {
-	test("login sets a session cookie", async () => {
+	it("login sets a session cookie", async () => {
 		const app = await setupDb();
 
 		await app.inject({
@@ -138,7 +146,7 @@ describe("auth routes with sessions", () => {
 		expect(sessionCookie?.httpOnly).toBe(true);
 	});
 
-	test("register sets a session cookie", async () => {
+	it("register sets a session cookie", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -154,7 +162,7 @@ describe("auth routes with sessions", () => {
 		expect(sessionCookie?.httpOnly).toBe(true);
 	});
 
-	test("GET /api/auth/me returns user with valid session", async () => {
+	it("gET /api/auth/me returns user with valid session", async () => {
 		const app = await setupDb();
 		const sessionId = await getSessionCookie(app);
 
@@ -171,7 +179,7 @@ describe("auth routes with sessions", () => {
 		expect(body.isAdmin).toBe(true);
 	});
 
-	test("GET /api/auth/me returns 401 without session", async () => {
+	it("gET /api/auth/me returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -182,7 +190,7 @@ describe("auth routes with sessions", () => {
 		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
 	});
 
-	test("POST /api/auth/logout clears session and cookie", async () => {
+	it("pOST /api/auth/logout clears session and cookie", async () => {
 		const app = await setupDb();
 		const sessionId = await getSessionCookie(app);
 

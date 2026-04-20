@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { fastifyCookie } from "@fastify/cookie";
 import { fastifyHelmet } from "@fastify/helmet";
+import { fastifySensible } from "@fastify/sensible";
 import { fastify } from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 
@@ -67,6 +68,7 @@ const buildServer = async (options: BuildServerOptions = {}) => {
 	healthRoutes(app);
 
 	await app.register(fastifyCookie);
+	await app.register(fastifySensible);
 	const isDev = process.env["NODE_ENV"] === "development";
 	await app.register(fastifyHelmet, {
 		contentSecurityPolicy: {

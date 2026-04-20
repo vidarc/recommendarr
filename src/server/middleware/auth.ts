@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { StatusCodes } from "http-status-codes";
 
 import { users } from "../schema.ts";
 import { getSession } from "../services/session.ts";
@@ -31,7 +30,8 @@ const authMiddleware = (app: FastifyInstance) => {
 		if (!sessionId) {
 			request.log.debug({ url: request.url }, "no session cookie, rejecting");
 			reply.clearCookie("session", { path: "/" });
-			return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Authentication required" });
+
+			throw app.httpErrors.unauthorized("Authentication required");
 		}
 
 		const session = getSession(app.db, sessionId);
@@ -39,7 +39,8 @@ const authMiddleware = (app: FastifyInstance) => {
 		if (!session) {
 			request.log.warn({ url: request.url }, "invalid or expired session");
 			reply.clearCookie("session", { path: "/" });
-			return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "Invalid or expired session" });
+
+			throw app.httpErrors.unauthorized("Invalid or expired session");
 		}
 
 		const user = app.db.select().from(users).where(eq(users.id, session.userId)).get();
@@ -47,7 +48,8 @@ const authMiddleware = (app: FastifyInstance) => {
 		if (!user) {
 			request.log.warn({ sessionUserId: session.userId }, "session references missing user");
 			reply.clearCookie("session", { path: "/" });
-			return reply.code(StatusCodes.UNAUTHORIZED).send({ error: "User not found" });
+
+			throw app.httpErrors.unauthorized("User not found");
 		}
 
 		request.user = {

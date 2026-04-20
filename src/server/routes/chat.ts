@@ -126,7 +126,7 @@ const chatRoutes = (app: FastifyInstance) => {
 			});
 
 			if (!activeConversationId) {
-				return;
+				return reply.code(StatusCodes.NOT_FOUND).send({ error: "No active conversation ID found" });
 			}
 
 			// Save user message
@@ -436,7 +436,10 @@ const chatRoutes = (app: FastifyInstance) => {
 			}
 
 			request.log.info(
-				{ conversationId: activeConversationId, recommendationCount: savedRecommendations.length },
+				{
+					conversationId: activeConversationId,
+					recommendationCount: savedRecommendations.length,
+				},
 				"chat response sent",
 			);
 			return reply.code(StatusCodes.OK).send({
@@ -627,7 +630,9 @@ interface ResolveConversationOptions {
 	userId: string;
 	mediaType: string;
 	now: string;
-	reply: { code: (code: number) => { send: (body: { error: string }) => void } };
+	reply: {
+		code: (code: number) => { send: (body: { error: string }) => void };
+	};
 }
 
 const resolveConversation = async (

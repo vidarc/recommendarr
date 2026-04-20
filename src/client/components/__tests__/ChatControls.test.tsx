@@ -10,7 +10,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 	vi,
 } from "vite-plus/test";
 
@@ -31,27 +31,15 @@ const server = setupServer(
 	),
 );
 
-beforeAll(() => {
-	server.listen();
-});
-
-afterEach(() => {
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
-
 const defaultResultCount = 10;
 
 const renderControls = () => {
 	const testStore = createStore();
 
-	const onMediaTypeChange = vi.fn();
-	const onLibraryIdChange = vi.fn();
-	const onResultCountChange = vi.fn();
-	const onExcludeLibraryChange = vi.fn();
+	const onMediaTypeChange = vi.fn<(value: MediaType) => void>();
+	const onLibraryIdChange = vi.fn<(value: string) => void>();
+	const onResultCountChange = vi.fn<(value: number) => void>();
+	const onExcludeLibraryChange = vi.fn<(value: boolean) => void>();
 
 	onTestFinished(() => {
 		cleanup();
@@ -73,11 +61,28 @@ const renderControls = () => {
 		</Provider>,
 	);
 
-	return { onMediaTypeChange, onLibraryIdChange, onResultCountChange, onExcludeLibraryChange };
+	return {
+		onMediaTypeChange,
+		onLibraryIdChange,
+		onResultCountChange,
+		onExcludeLibraryChange,
+	};
 };
 
-describe("ChatControls", () => {
-	test("renders media type buttons", () => {
+describe(ChatControls, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("renders media type buttons", () => {
 		renderControls();
 
 		expect(screen.getByRole("radio", { name: /movies/i })).toBeInTheDocument();
@@ -85,7 +90,7 @@ describe("ChatControls", () => {
 		expect(screen.getByRole("radio", { name: /either/i })).toBeInTheDocument();
 	});
 
-	test("calls onMediaTypeChange when a media type button is clicked", async () => {
+	it("calls onMediaTypeChange when a media type button is clicked", async () => {
 		const { onMediaTypeChange } = renderControls();
 		const user = userEvent.setup();
 
@@ -94,7 +99,7 @@ describe("ChatControls", () => {
 		expect(onMediaTypeChange).toHaveBeenCalledWith("movie");
 	});
 
-	test("calls onMediaTypeChange with tv when TV Shows is clicked", async () => {
+	it("calls onMediaTypeChange with tv when TV Shows is clicked", async () => {
 		const { onMediaTypeChange } = renderControls();
 		const user = userEvent.setup();
 
@@ -103,7 +108,7 @@ describe("ChatControls", () => {
 		expect(onMediaTypeChange).toHaveBeenCalledWith("tv");
 	});
 
-	test("renders library select with loaded libraries", async () => {
+	it("renders library select with loaded libraries", async () => {
 		renderControls();
 
 		const select = await screen.findByRole("combobox", { name: /library/i });
@@ -111,14 +116,14 @@ describe("ChatControls", () => {
 		expect(within(select).getAllByRole("option")).toHaveLength(optionCount);
 	});
 
-	test("has whole library as default option", async () => {
+	it("has whole library as default option", async () => {
 		renderControls();
 
 		const select = await screen.findByRole("combobox", { name: /library/i });
 		expect(within(select).getByRole("option", { name: /whole library/i })).toBeInTheDocument();
 	});
 
-	test("calls onLibraryIdChange when a library is selected", async () => {
+	it("calls onLibraryIdChange when a library is selected", async () => {
 		const { onLibraryIdChange } = renderControls();
 		const user = userEvent.setup();
 
@@ -128,14 +133,14 @@ describe("ChatControls", () => {
 		expect(onLibraryIdChange).toHaveBeenCalledWith("lib-1");
 	});
 
-	test("renders result count input with default value", () => {
+	it("renders result count input with default value", () => {
 		renderControls();
 
 		const input = screen.getByRole("spinbutton", { name: /results/i });
 		expect(input).toHaveValue(defaultResultCount);
 	});
 
-	test("calls onResultCountChange when result count is changed", async () => {
+	it("calls onResultCountChange when result count is changed", async () => {
 		const { onResultCountChange } = renderControls();
 		const user = userEvent.setup();
 
@@ -143,10 +148,10 @@ describe("ChatControls", () => {
 		await user.clear(input);
 		await user.type(input, "5");
 
-		expect(onResultCountChange).toHaveBeenCalled();
+		expect(onResultCountChange).toHaveBeenCalledWith(expect.any(Number));
 	});
 
-	test("renders labels for each control group", () => {
+	it("renders labels for each control group", () => {
 		renderControls();
 
 		expect(screen.getByText("Media Type")).toBeInTheDocument();

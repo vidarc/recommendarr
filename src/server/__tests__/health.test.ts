@@ -1,15 +1,15 @@
-import { afterEach, describe, expect, onTestFinished, test, vi } from "vite-plus/test";
+import { afterEach, describe, expect, onTestFinished, it, vi } from "vite-plus/test";
 
 import { buildServer } from "../app.ts";
 
 const HEX_KEY_LENGTH = 64;
 
-describe("GET /health", () => {
+describe("gET /health", () => {
 	afterEach(() => {
 		vi.unstubAllEnvs();
 	});
 
-	test("returns status ok and uptimeSeconds", async () => {
+	it("returns status ok and uptimeSeconds", async () => {
 		const expectedStatusCode = 200;
 		vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
 		const app = await buildServer({ skipSSR: true, skipDB: true });
@@ -27,7 +27,7 @@ describe("GET /health", () => {
 		});
 	});
 
-	test("ping route", async () => {
+	it("ping route", async () => {
 		vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
 		const app = await buildServer({ skipSSR: true, skipDB: true });
 

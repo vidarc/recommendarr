@@ -102,8 +102,21 @@ export default defineConfig({
 					},
 				},
 			],
+			"vitest/max-expects": ["off"],
+			"vitest/no-hooks": "off",
+			"vitest/prefer-called-times": "off",
+			"vitest/prefer-importing-vitest-globals": ["off"],
+			"vitest/prefer-to-be-falsy": ["off"],
+			"vitest/prefer-to-be-truthy": ["off"],
+			"vitest/valid-title": ["error", { ignoreTypeOfDescribeName: true }],
 		},
 		overrides: [
+			{
+				files: ["!**/__tests__/**"],
+				rules: {
+					"vitest/require-hook": ["off"],
+				},
+			},
 			{
 				files: ["src/server/**", "vite.config.ts"],
 				rules: { "import/no-nodejs-modules": "off" },

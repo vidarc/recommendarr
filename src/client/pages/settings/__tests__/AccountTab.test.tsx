@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { describe, expect, onTestFinished, test } from "vite-plus/test";
+import { describe, expect, onTestFinished, it } from "vite-plus/test";
 
 import { AccountTab } from "../AccountTab.tsx";
 
@@ -8,20 +8,20 @@ const renderTab = () => {
 	render(<AccountTab />);
 };
 
-describe("AccountTab", () => {
-	test("renders the change password heading", () => {
+describe(AccountTab, () => {
+	it("renders the change password heading", () => {
 		renderTab();
 
 		expect(screen.getByRole("heading", { name: /change password/i })).toBeInTheDocument();
 	});
 
-	test("shows coming soon badge", () => {
+	it("shows coming soon badge", () => {
 		renderTab();
 
 		expect(screen.getByText("Coming Soon")).toBeInTheDocument();
 	});
 
-	test("renders all password fields as disabled", () => {
+	it("renders all password fields as disabled", () => {
 		renderTab();
 
 		expect(screen.getByLabelText(/current password/i)).toBeDisabled();
@@ -29,7 +29,7 @@ describe("AccountTab", () => {
 		expect(screen.getByLabelText(/confirm password/i)).toBeDisabled();
 	});
 
-	test("renders update password button as disabled", () => {
+	it("renders update password button as disabled", () => {
 		renderTab();
 
 		expect(screen.getByRole("button", { name: /update password/i })).toBeDisabled();

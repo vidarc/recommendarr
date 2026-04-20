@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 import { eq } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
+import { describe, expect, onTestFinished, it, vi } from "vite-plus/test";
 
 import { buildServer } from "../app.ts";
 import { conversations, messages, recommendations, users } from "../schema.ts";
@@ -95,8 +95,8 @@ const seedRecommendation = (app: Awaited<ReturnType<typeof buildServer>>, userId
 	return { conversationId, messageId, recId };
 };
 
-describe("PATCH /api/recommendations/:id/feedback", () => {
-	test("sets feedback to liked", async () => {
+describe("pATCH /api/recommendations/:id/feedback", () => {
+	it("sets feedback to liked", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		const { recId } = seedRecommendation(app, userId);
@@ -118,7 +118,7 @@ describe("PATCH /api/recommendations/:id/feedback", () => {
 		expect(rec?.feedback).toBe("liked");
 	});
 
-	test("sets feedback to disliked", async () => {
+	it("sets feedback to disliked", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		const { recId } = seedRecommendation(app, userId);
@@ -134,7 +134,7 @@ describe("PATCH /api/recommendations/:id/feedback", () => {
 		expect(response.json().feedback).toBe("disliked");
 	});
 
-	test("clears feedback by sending null", async () => {
+	it("clears feedback by sending null", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		const { recId } = seedRecommendation(app, userId);
@@ -166,7 +166,7 @@ describe("PATCH /api/recommendations/:id/feedback", () => {
 		expect(rec?.feedback).toBeNull();
 	});
 
-	test("toggles feedback from liked to disliked", async () => {
+	it("toggles feedback from liked to disliked", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		const { recId } = seedRecommendation(app, userId);
@@ -195,7 +195,7 @@ describe("PATCH /api/recommendations/:id/feedback", () => {
 		expect(rec?.feedback).toBe("disliked");
 	});
 
-	test("returns 404 for non-existent recommendation", async () => {
+	it("returns 404 for non-existent recommendation", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -210,7 +210,7 @@ describe("PATCH /api/recommendations/:id/feedback", () => {
 		expect(response.json().error).toBe("Recommendation not found");
 	});
 
-	test("returns 404 for recommendation belonging to another user", async () => {
+	it("returns 404 for recommendation belonging to another user", async () => {
 		const app = await setupDb();
 		const { userId } = await getSessionCookie(app);
 		const { recId } = seedRecommendation(app, userId);
@@ -241,7 +241,7 @@ describe("PATCH /api/recommendations/:id/feedback", () => {
 		expect(response.json().error).toBe("Recommendation not found");
 	});
 
-	test("returns 401 without session cookie", async () => {
+	it("returns 401 without session cookie", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -253,7 +253,7 @@ describe("PATCH /api/recommendations/:id/feedback", () => {
 		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
 	});
 
-	test("rejects invalid feedback values", async () => {
+	it("rejects invalid feedback values", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		const { recId } = seedRecommendation(app, userId);

@@ -11,7 +11,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 } from "vite-plus/test";
 import { Router } from "wouter";
 
@@ -42,22 +42,6 @@ const server = setupServer(
 	http.get("/api/metadata/status", () => HttpResponse.json({ tvdb: false, tmdb: false })),
 );
 
-beforeAll(() => {
-	server.listen();
-});
-
-beforeEach(() => {
-	globalThis.history.replaceState({}, "", "/");
-});
-
-afterEach(() => {
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
-
 const renderRecommendations = () => {
 	const testStore = createStore();
 
@@ -77,26 +61,42 @@ const renderRecommendations = () => {
 	return { store: testStore };
 };
 
-describe("Recommendations", () => {
-	test("renders the page header", () => {
+describe(Recommendations, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	beforeEach(() => {
+		globalThis.history.replaceState({}, "", "/");
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("renders the page header", () => {
 		renderRecommendations();
 
 		expect(screen.getByRole("heading", { name: /recommendations/i })).toBeInTheDocument();
 	});
 
-	test("renders new conversation button", () => {
+	it("renders new conversation button", () => {
 		renderRecommendations();
 
 		expect(screen.getByRole("button", { name: /new conversation/i })).toBeInTheDocument();
 	});
 
-	test("shows empty state message initially", () => {
+	it("shows empty state message initially", () => {
 		renderRecommendations();
 
 		expect(screen.getByText(/send a message to get recommendations/i)).toBeInTheDocument();
 	});
 
-	test("renders media type toggle buttons", () => {
+	it("renders media type toggle buttons", () => {
 		renderRecommendations();
 
 		expect(screen.getByRole("radio", { name: /movies/i })).toBeInTheDocument();
@@ -104,25 +104,25 @@ describe("Recommendations", () => {
 		expect(screen.getByRole("radio", { name: /either/i })).toBeInTheDocument();
 	});
 
-	test("renders the message input", () => {
+	it("renders the message input", () => {
 		renderRecommendations();
 
 		expect(screen.getByRole("textbox", { name: /ask for recommendations/i })).toBeInTheDocument();
 	});
 
-	test("renders send button", () => {
+	it("renders send button", () => {
 		renderRecommendations();
 
 		expect(screen.getByRole("button", { name: /send/i })).toBeInTheDocument();
 	});
 
-	test("disables send button when input is empty", () => {
+	it("disables send button when input is empty", () => {
 		renderRecommendations();
 
 		expect(screen.getByRole("button", { name: /send/i })).toBeDisabled();
 	});
 
-	test("enables send button when text is entered", async () => {
+	it("enables send button when text is entered", async () => {
 		renderRecommendations();
 		const user = userEvent.setup();
 
@@ -134,7 +134,7 @@ describe("Recommendations", () => {
 		expect(screen.getByRole("button", { name: /send/i })).toBeEnabled();
 	});
 
-	test("shows user message after sending", async () => {
+	it("shows user message after sending", async () => {
 		// oxlint-disable-next-line promise/avoid-new
 		server.use(http.post("/api/chat", () => new Promise(() => {})));
 
@@ -150,7 +150,7 @@ describe("Recommendations", () => {
 		expect(screen.getByText("recommend action movies")).toBeInTheDocument();
 	});
 
-	test("shows thinking indicator while loading", async () => {
+	it("shows thinking indicator while loading", async () => {
 		// oxlint-disable-next-line promise/avoid-new
 		server.use(http.post("/api/chat", () => new Promise(() => {})));
 
@@ -167,7 +167,7 @@ describe("Recommendations", () => {
 		expect(screen.getAllByText("Thinking...")).toHaveLength(thinkingCount);
 	});
 
-	test("displays AI response after sending message", async () => {
+	it("displays AI response after sending message", async () => {
 		server.use(
 			http.post("/api/chat", () =>
 				HttpResponse.json({
@@ -210,11 +210,13 @@ describe("Recommendations", () => {
 		);
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
-		expect(await screen.findByText("Here are some great action movies:")).toBeInTheDocument();
+		await expect(
+			screen.findByText("Here are some great action movies:"),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText("Die Hard")).toBeInTheDocument();
 	});
 
-	test("clears messages on new conversation", async () => {
+	it("clears messages on new conversation", async () => {
 		server.use(
 			http.post("/api/chat", () =>
 				HttpResponse.json({
@@ -249,12 +251,13 @@ describe("Recommendations", () => {
 
 		await user.click(screen.getByRole("button", { name: /new conversation/i }));
 
-		await waitFor(() => {
-			expect(screen.getByText(/send a message to get recommendations/i)).toBeInTheDocument();
-		});
+		const emptyState = await waitFor(() =>
+			screen.getByText(/send a message to get recommendations/i),
+		);
+		expect(emptyState).toBeInTheDocument();
 	});
 
-	test("renders genre chips", () => {
+	it("renders genre chips", () => {
 		renderRecommendations();
 
 		expect(screen.getByRole("button", { name: "action" })).toBeInTheDocument();
@@ -262,7 +265,7 @@ describe("Recommendations", () => {
 		expect(screen.getByRole("button", { name: "horror" })).toBeInTheDocument();
 	});
 
-	test("hydrates messages from ?conversation=<id> URL param", async () => {
+	it("hydrates messages from ?conversation=<id> URL param", async () => {
 		globalThis.history.replaceState({}, "", "/?conversation=conv-42");
 		server.use(
 			http.get("/api/conversations/conv-42", () =>
@@ -293,11 +296,11 @@ describe("Recommendations", () => {
 
 		renderRecommendations();
 
-		expect(await screen.findByText("earlier user prompt")).toBeInTheDocument();
+		await expect(screen.findByText("earlier user prompt")).resolves.toBeInTheDocument();
 		expect(screen.getByText("earlier assistant reply")).toBeInTheDocument();
 	});
 
-	test("pushes ?conversation=<newId> to the URL after first send", async () => {
+	it("pushes ?conversation=<newId> to the URL after first send", async () => {
 		server.use(
 			http.post("/api/chat", () =>
 				HttpResponse.json({
@@ -332,12 +335,17 @@ describe("Recommendations", () => {
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
 		await screen.findByText("Fresh reply");
-		await waitFor(() => {
-			expect(globalThis.location.search).toBe("?conversation=conv-new");
+		const search = await waitFor(() => {
+			const current = globalThis.location.search;
+			if (current !== "?conversation=conv-new") {
+				throw new Error(`expected ?conversation=conv-new, got ${current}`);
+			}
+			return current;
 		});
+		expect(search).toBe("?conversation=conv-new");
 	});
 
-	test("resets URL to / when new conversation is clicked", async () => {
+	it("resets URL to / when new conversation is clicked", async () => {
 		globalThis.history.replaceState({}, "", "/?conversation=conv-42");
 		server.use(
 			http.get("/api/conversations/conv-42", () =>
@@ -362,7 +370,7 @@ describe("Recommendations", () => {
 		expect(globalThis.location.pathname).toBe("/");
 	});
 
-	test("sends message when genre chip is clicked", async () => {
+	it("sends message when genre chip is clicked", async () => {
 		// oxlint-disable-next-line init-declarations
 		let sentBody: unknown;
 
@@ -379,8 +387,12 @@ describe("Recommendations", () => {
 
 		await user.click(screen.getByRole("button", { name: "horror" }));
 
-		await waitFor(() => {
-			expect(sentBody).toMatchObject({ message: "horror" });
+		const body = await waitFor(() => {
+			if (sentBody === undefined) {
+				throw new Error("chat request not sent yet");
+			}
+			return sentBody;
 		});
+		expect(body).toMatchObject({ message: "horror" });
 	});
 });

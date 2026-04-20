@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from "vite-plus/test";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 
 import { getSeriesById, getSeriesExtended, searchSeries } from "../services/tvdb-client.ts";
 
@@ -104,22 +104,22 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	vi.stubEnv("TVDB_API_KEY", MOCK_API_KEY);
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
+describe(searchSeries, () => {
+	beforeAll(() => {
+		vi.stubEnv("TVDB_API_KEY", MOCK_API_KEY);
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
 
-afterEach(() => {
-	mswServer.resetHandlers();
-});
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
 
-afterAll(() => {
-	mswServer.close();
-	vi.unstubAllEnvs();
-});
+	afterAll(() => {
+		mswServer.close();
+		vi.unstubAllEnvs();
+	});
 
-describe("searchSeries", () => {
-	test("authenticates and returns normalized metadata", async () => {
+	it("authenticates and returns normalized metadata", async () => {
 		const results = await searchSeries("Breaking Bad", BREAKING_BAD_YEAR);
 		expect(results.length).toBeGreaterThan(ZERO);
 		const result = results[FIRST];
@@ -129,17 +129,31 @@ describe("searchSeries", () => {
 		expect(result?.posterUrl).toContain("81189");
 	});
 
-	test("returns empty array when no results", async () => {
+	it("returns empty array when no results", async () => {
 		mswServer.use(
 			http.get(`${TVDB_API_BASE}/search`, () => HttpResponse.json({ status: "success", data: [] })),
 		);
 		const results = await searchSeries("Nonexistent Show 12345");
-		expect(results).toEqual([]);
+		expect(results).toStrictEqual([]);
 	});
 });
 
-describe("getSeriesById", () => {
-	test("returns full metadata for a series", async () => {
+describe(getSeriesById, () => {
+	beforeAll(() => {
+		vi.stubEnv("TVDB_API_KEY", MOCK_API_KEY);
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
+
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
+
+	afterAll(() => {
+		mswServer.close();
+		vi.unstubAllEnvs();
+	});
+
+	it("returns full metadata for a series", async () => {
 		const result = await getSeriesById(BREAKING_BAD_TVDB_ID);
 		expect(result).toBeDefined();
 		expect(result?.title).toBe("Breaking Bad");
@@ -149,18 +163,17 @@ describe("getSeriesById", () => {
 		expect(result?.source).toBe("tvdb");
 	});
 
-	test("returns undefined for 404", async () => {
+	it("returns undefined for 404", async () => {
 		mswServer.use(
-			// oxlint-disable-next-line unicorn/no-null -- HttpResponse requires null for empty body
-			http.get(`${TVDB_API_BASE}/series/*`, () => new HttpResponse(null, { status: 404 })),
+			http.get(`${TVDB_API_BASE}/series/*`, () => new HttpResponse(undefined, { status: 404 })),
 		);
 		const result = await getSeriesById(UNKNOWN_SERIES_ID);
 		expect(result).toBeUndefined();
 	});
 });
 
-describe("getSeriesExtended", () => {
-	test("returns metadata with cast and crew", async () => {
+describe(getSeriesExtended, () => {
+	it("returns metadata with cast and crew", async () => {
 		const result = await getSeriesExtended(BREAKING_BAD_TVDB_ID);
 		expect(result).toBeDefined();
 		expect(result?.cast.length).toBeGreaterThan(ZERO);

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "vite-plus/test";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vite-plus/test";
 
 import {
 	addMedia,
@@ -94,20 +94,20 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
+describe(testConnection, () => {
+	beforeAll(() => {
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
 
-afterEach(() => {
-	mswServer.resetHandlers();
-});
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
 
-afterAll(() => {
-	mswServer.close();
-});
+	afterAll(() => {
+		mswServer.close();
+	});
 
-describe("testConnection", () => {
-	test("returns success with version when service responds 200", async () => {
+	it("returns success with version when service responds 200", async () => {
 		const result = await testConnection(MOCK_RADARR_URL, MOCK_API_KEY);
 
 		expect(result.success).toBe(true);
@@ -115,7 +115,7 @@ describe("testConnection", () => {
 		expect(result.error).toBeUndefined();
 	});
 
-	test("returns failure on network error", async () => {
+	it("returns failure on network error", async () => {
 		mswServer.use(http.get(`${MOCK_RADARR_URL}/api/v3/system/status`, () => HttpResponse.error()));
 
 		const result = await testConnection(MOCK_RADARR_URL, MOCK_API_KEY);
@@ -124,7 +124,7 @@ describe("testConnection", () => {
 		expect(result.error).toBeDefined();
 	});
 
-	test("returns failure on 401 unauthorized", async () => {
+	it("returns failure on 401 unauthorized", async () => {
 		mswServer.use(
 			http.get(
 				`${MOCK_RADARR_URL}/api/v3/system/status`,
@@ -139,16 +139,24 @@ describe("testConnection", () => {
 	});
 });
 
-describe("getRootFolders", () => {
-	test("returns root folders array on success", async () => {
+describe(getRootFolders, () => {
+	it("returns root folders array on success", async () => {
 		const folders = await getRootFolders(MOCK_RADARR_URL, MOCK_API_KEY);
 
 		expect(folders).toHaveLength(TWO_ITEMS);
-		expect(folders[FIRST]).toStrictEqual({ id: 1, path: "/movies", freeSpace: 1_000_000_000 });
-		expect(folders[SECOND]).toStrictEqual({ id: 2, path: "/tv", freeSpace: 2_000_000_000 });
+		expect(folders[FIRST]).toStrictEqual({
+			id: 1,
+			path: "/movies",
+			freeSpace: 1_000_000_000,
+		});
+		expect(folders[SECOND]).toStrictEqual({
+			id: 2,
+			path: "/tv",
+			freeSpace: 2_000_000_000,
+		});
 	});
 
-	test("throws on failed request (401)", async () => {
+	it("throws on failed request (401)", async () => {
 		mswServer.use(
 			http.get(
 				`${MOCK_RADARR_URL}/api/v3/rootfolder`,
@@ -162,8 +170,8 @@ describe("getRootFolders", () => {
 	});
 });
 
-describe("getQualityProfiles", () => {
-	test("returns quality profiles array on success", async () => {
+describe(getQualityProfiles, () => {
+	it("returns quality profiles array on success", async () => {
 		const profiles = await getQualityProfiles(MOCK_RADARR_URL, MOCK_API_KEY);
 
 		expect(profiles).toHaveLength(THREE_ITEMS);
@@ -172,8 +180,8 @@ describe("getQualityProfiles", () => {
 	});
 });
 
-describe("lookupMedia", () => {
-	test("searches Radarr movie/lookup with correct term", async () => {
+describe(lookupMedia, () => {
+	it("searches Radarr movie/lookup with correct term", async () => {
 		let capturedUrl: URL = new URL("http://placeholder");
 		mswServer.use(
 			http.get(`${MOCK_RADARR_URL}/api/v3/movie/lookup`, ({ request }) => {
@@ -192,7 +200,7 @@ describe("lookupMedia", () => {
 		expect(capturedUrl.searchParams.get("term")).toBe("Inception");
 	});
 
-	test("searches Sonarr series/lookup with correct term", async () => {
+	it("searches Sonarr series/lookup with correct term", async () => {
 		let capturedUrl: URL = new URL("http://placeholder");
 		mswServer.use(
 			http.get(`${MOCK_SONARR_URL}/api/v3/series/lookup`, ({ request }) => {
@@ -211,7 +219,7 @@ describe("lookupMedia", () => {
 		expect(capturedUrl.searchParams.get("term")).toBe("Breaking Bad");
 	});
 
-	test("marks items with id > 0 as existsInLibrary: true", async () => {
+	it("marks items with id > 0 as existsInLibrary: true", async () => {
 		const results = await lookupMedia({
 			url: MOCK_RADARR_URL,
 			apiKey: MOCK_API_KEY,
@@ -223,7 +231,7 @@ describe("lookupMedia", () => {
 		expect(results[FIRST]!.arrId).toBe(INCEPTION_ARR_ID);
 	});
 
-	test("marks items with id: 0 as existsInLibrary: false", async () => {
+	it("marks items with id: 0 as existsInLibrary: false", async () => {
 		const results = await lookupMedia({
 			url: MOCK_RADARR_URL,
 			apiKey: MOCK_API_KEY,
@@ -235,7 +243,7 @@ describe("lookupMedia", () => {
 		expect(results[SECOND]!.arrId).toBe(NOT_IN_LIBRARY_ARR_ID);
 	});
 
-	test("appends year to search term when provided", async () => {
+	it("appends year to search term when provided", async () => {
 		let capturedUrl: URL = new URL("http://placeholder");
 		mswServer.use(
 			http.get(`${MOCK_RADARR_URL}/api/v3/movie/lookup`, ({ request }) => {
@@ -255,7 +263,7 @@ describe("lookupMedia", () => {
 		expect(capturedUrl.searchParams.get("term")).toBe("Inception 2010");
 	});
 
-	test("returns empty array when no matches", async () => {
+	it("returns empty array when no matches", async () => {
 		mswServer.use(http.get(`${MOCK_RADARR_URL}/api/v3/movie/lookup`, () => HttpResponse.json([])));
 
 		const results = await lookupMedia({
@@ -306,8 +314,8 @@ const mockLibrarySeries = [
 	},
 ];
 
-describe("getAllMovies", () => {
-	test("returns ArrLibraryMovie[] with genres joined as comma-separated string", async () => {
+describe(getAllMovies, () => {
+	it("returns ArrLibraryMovie[] with genres joined as comma-separated string", async () => {
 		mswServer.use(
 			http.get(`${MOCK_RADARR_URL}/api/v3/movie`, () => HttpResponse.json(mockLibraryMovies)),
 		);
@@ -329,7 +337,7 @@ describe("getAllMovies", () => {
 		});
 	});
 
-	test("returns empty array for empty library", async () => {
+	it("returns empty array for empty library", async () => {
 		mswServer.use(http.get(`${MOCK_RADARR_URL}/api/v3/movie`, () => HttpResponse.json([])));
 
 		const movies = await getAllMovies(MOCK_RADARR_URL, MOCK_API_KEY);
@@ -337,7 +345,7 @@ describe("getAllMovies", () => {
 		expect(movies).toStrictEqual([]);
 	});
 
-	test("throws on failed request (401)", async () => {
+	it("throws on failed request (401)", async () => {
 		mswServer.use(
 			http.get(
 				`${MOCK_RADARR_URL}/api/v3/movie`,
@@ -351,8 +359,8 @@ describe("getAllMovies", () => {
 	});
 });
 
-describe("getAllSeries", () => {
-	test("returns ArrLibrarySeries[] with genres joined as comma-separated string", async () => {
+describe(getAllSeries, () => {
+	it("returns ArrLibrarySeries[] with genres joined as comma-separated string", async () => {
 		mswServer.use(
 			http.get(`${MOCK_SONARR_URL}/api/v3/series`, () => HttpResponse.json(mockLibrarySeries)),
 		);
@@ -374,7 +382,7 @@ describe("getAllSeries", () => {
 		});
 	});
 
-	test("returns empty array for empty library", async () => {
+	it("returns empty array for empty library", async () => {
 		mswServer.use(http.get(`${MOCK_SONARR_URL}/api/v3/series`, () => HttpResponse.json([])));
 
 		const result = await getAllSeries(MOCK_SONARR_URL, MOCK_API_KEY);
@@ -382,7 +390,7 @@ describe("getAllSeries", () => {
 		expect(result).toStrictEqual([]);
 	});
 
-	test("throws on failed request (401)", async () => {
+	it("throws on failed request (401)", async () => {
 		mswServer.use(
 			http.get(
 				`${MOCK_SONARR_URL}/api/v3/series`,
@@ -396,8 +404,8 @@ describe("getAllSeries", () => {
 	});
 });
 
-describe("addMedia", () => {
-	test("adds movie to Radarr with correct body", async () => {
+describe(addMedia, () => {
+	it("adds movie to Radarr with correct body", async () => {
 		let capturedBody: unknown = undefined;
 		mswServer.use(
 			http.post(`${MOCK_RADARR_URL}/api/v3/movie`, async ({ request }) => {
@@ -429,7 +437,7 @@ describe("addMedia", () => {
 		});
 	});
 
-	test("adds series to Sonarr with correct body", async () => {
+	it("adds series to Sonarr with correct body", async () => {
 		let capturedBody: unknown = undefined;
 		mswServer.use(
 			http.post(`${MOCK_SONARR_URL}/api/v3/series`, async ({ request }) => {
@@ -461,7 +469,7 @@ describe("addMedia", () => {
 		});
 	});
 
-	test("returns failure when service rejects (400)", async () => {
+	it("returns failure when service rejects (400)", async () => {
 		mswServer.use(
 			http.post(
 				`${MOCK_RADARR_URL}/api/v3/movie`,

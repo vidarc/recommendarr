@@ -9,7 +9,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 } from "vite-plus/test";
 
 import { api } from "../../api.ts";
@@ -43,18 +43,6 @@ const server = setupServer(
 	),
 );
 
-beforeAll(() => {
-	server.listen();
-});
-
-afterEach(() => {
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
-
 const renderCard = (recommendation: Recommendation) => {
 	const testStore = createStore();
 	onTestFinished(() => {
@@ -68,26 +56,43 @@ const renderCard = (recommendation: Recommendation) => {
 	);
 };
 
-describe("RecommendationCard", () => {
-	test("renders the recommendation title", () => {
+describe(RecommendationCard, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("renders the recommendation title", () => {
 		renderCard(baseRecommendation);
 
 		expect(screen.getByText("Die Hard")).toBeInTheDocument();
 	});
 
-	test("renders the year in parentheses", () => {
+	it("renders the year in parentheses", () => {
 		renderCard(baseRecommendation);
 
 		expect(screen.getByText(`(${String(movieYear)})`)).toBeInTheDocument();
 	});
 
-	test("does not render year when not provided", () => {
-		renderCard({ id: "rec-1", title: "Die Hard", mediaType: "movie", addedToArr: false });
+	it("does not render year when not provided", () => {
+		renderCard({
+			id: "rec-1",
+			title: "Die Hard",
+			mediaType: "movie",
+			addedToArr: false,
+		});
 
 		expect(screen.queryByText(/\(\d{4}\)/u)).not.toBeInTheDocument();
 	});
 
-	test("renders synopsis text", () => {
+	it("renders synopsis text", () => {
 		renderCard(baseRecommendation);
 
 		expect(
@@ -95,45 +100,50 @@ describe("RecommendationCard", () => {
 		).toBeInTheDocument();
 	});
 
-	test("does not render synopsis when not provided", () => {
-		renderCard({ id: "rec-1", title: "Die Hard", mediaType: "movie", addedToArr: false });
+	it("does not render synopsis when not provided", () => {
+		renderCard({
+			id: "rec-1",
+			title: "Die Hard",
+			mediaType: "movie",
+			addedToArr: false,
+		});
 
 		expect(
 			screen.queryByText("An NYPD officer battles terrorists in a skyscraper."),
 		).not.toBeInTheDocument();
 	});
 
-	test("renders Movie badge for movie type", () => {
+	it("renders Movie badge for movie type", () => {
 		renderCard(makeRecommendation({ mediaType: "movie" }));
 
 		expect(screen.getByText("Movie")).toBeInTheDocument();
 	});
 
-	test("renders TV badge for tv type", () => {
+	it("renders TV badge for tv type", () => {
 		renderCard(makeRecommendation({ mediaType: "tv" }));
 
 		expect(screen.getByText("TV")).toBeInTheDocument();
 	});
 
-	test("renders add to Radarr button for movies", () => {
+	it("renders add to Radarr button for movies", () => {
 		renderCard(makeRecommendation({ mediaType: "movie" }));
 
 		expect(screen.getByRole("button", { name: /add to radarr/i })).toBeInTheDocument();
 	});
 
-	test("renders add to Sonarr button for TV shows", () => {
+	it("renders add to Sonarr button for TV shows", () => {
 		renderCard(makeRecommendation({ mediaType: "tv" }));
 
 		expect(screen.getByRole("button", { name: /add to sonarr/i })).toBeInTheDocument();
 	});
 
-	test("arr button is disabled when service is NOT connected", () => {
+	it("arr button is disabled when service is NOT connected", () => {
 		renderCard(baseRecommendation);
 
 		expect(screen.getByRole("button", { name: /add to radarr/i })).toBeDisabled();
 	});
 
-	test("arr button has tooltip mentioning settings", () => {
+	it("arr button has tooltip mentioning settings", () => {
 		renderCard(makeRecommendation({ mediaType: "movie" }));
 
 		expect(screen.getByRole("button", { name: /add to radarr/i })).toHaveAttribute(
@@ -142,50 +152,57 @@ describe("RecommendationCard", () => {
 		);
 	});
 
-	test("arr button is enabled when service is connected", async () => {
+	it("arr button is enabled when service is connected", async () => {
 		server.use(
 			http.get("/api/arr/config", () =>
 				HttpResponse.json([
-					{ id: "1", serviceType: "radarr", url: "http://localhost:7878", apiKey: "****1234" },
+					{
+						id: "1",
+						serviceType: "radarr",
+						url: "http://localhost:7878",
+						apiKey: "****1234",
+					},
 				]),
 			),
 		);
 
 		renderCard(makeRecommendation({ mediaType: "movie" }));
 
-		const button = await screen.findByRole("button", { name: /add to radarr/i });
+		const button = await screen.findByRole("button", {
+			name: /add to radarr/i,
+		});
 		expect(button).not.toBeDisabled();
 	});
 
-	test('shows "Added" badge when addedToArr is true', () => {
+	it('shows "Added" badge when addedToArr is true', () => {
 		renderCard(makeRecommendation({ addedToArr: true }));
 
 		expect(screen.getByText(/added to radarr/i)).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: /add to radarr/i })).not.toBeInTheDocument();
 	});
 
-	test("renders thumbs up and thumbs down buttons", () => {
+	it("renders thumbs up and thumbs down buttons", () => {
 		renderCard(baseRecommendation);
 
 		expect(screen.getByRole("button", { name: /thumbs up/i })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /thumbs down/i })).toBeInTheDocument();
 	});
 
-	test("thumbs up button is highlighted when feedback is liked", () => {
+	it("thumbs up button is highlighted when feedback is liked", () => {
 		renderCard(makeRecommendation({ feedback: "liked" }));
 
 		const thumbsUp = screen.getByRole("button", { name: /thumbs up/i });
 		expect(thumbsUp).toHaveAttribute("aria-pressed", "true");
 	});
 
-	test("thumbs down button is highlighted when feedback is disliked", () => {
+	it("thumbs down button is highlighted when feedback is disliked", () => {
 		renderCard(makeRecommendation({ feedback: "disliked" }));
 
 		const thumbsDown = screen.getByRole("button", { name: /thumbs down/i });
 		expect(thumbsDown).toHaveAttribute("aria-pressed", "true");
 	});
 
-	test("neither button is pressed when feedback is undefined", () => {
+	it("neither button is pressed when feedback is undefined", () => {
 		renderCard(makeRecommendation({ feedback: undefined }));
 
 		expect(screen.getByRole("button", { name: /thumbs up/i })).toHaveAttribute(

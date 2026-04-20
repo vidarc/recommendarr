@@ -13,7 +13,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 	vi,
 } from "vite-plus/test";
 
@@ -46,8 +46,20 @@ const mockMovieLibraryContents = {
 	MediaContainer: {
 		totalSize: 2,
 		Metadata: [
-			{ title: "The Matrix", type: "movie", year: 1999, ratingKey: "101", Genre: [] },
-			{ title: "Inception", type: "movie", year: 2010, ratingKey: "102", Genre: [] },
+			{
+				title: "The Matrix",
+				type: "movie",
+				year: 1999,
+				ratingKey: "101",
+				Genre: [],
+			},
+			{
+				title: "Inception",
+				type: "movie",
+				year: 2010,
+				ratingKey: "102",
+				Genre: [],
+			},
 		],
 	},
 };
@@ -55,7 +67,15 @@ const mockMovieLibraryContents = {
 const mockShowLibraryContents = {
 	MediaContainer: {
 		totalSize: 1,
-		Metadata: [{ title: "Breaking Bad", type: "show", year: 2008, ratingKey: "201", Genre: [] }],
+		Metadata: [
+			{
+				title: "Breaking Bad",
+				type: "show",
+				year: 2008,
+				ratingKey: "201",
+				Genre: [],
+			},
+		],
 	},
 };
 
@@ -72,18 +92,6 @@ const handlers = [
 ];
 
 const mswServer = setupServer(...handlers);
-
-beforeAll(() => {
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
-
-afterEach(() => {
-	mswServer.resetHandlers();
-});
-
-afterAll(() => {
-	mswServer.close();
-});
 
 const setupDb = async () => {
 	vi.stubEnv("DATABASE_PATH", testDbPath);
@@ -136,8 +144,20 @@ const setupPlexConnection = (app: Awaited<ReturnType<typeof buildServer>>, userI
 		.run();
 };
 
-describe("POST /api/library/sync", () => {
-	test("syncs library and returns counts", async () => {
+describe("pOST /api/library/sync", () => {
+	beforeAll(() => {
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
+
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
+
+	afterAll(() => {
+		mswServer.close();
+	});
+
+	it("syncs library and returns counts", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupPlexConnection(app, userId);
@@ -155,7 +175,7 @@ describe("POST /api/library/sync", () => {
 		expect(body.totalCount).toBe(EXPECTED_TOTAL_COUNT);
 	});
 
-	test("returns 404 when no Plex connection exists", async () => {
+	it("returns 404 when no Plex connection exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -168,7 +188,7 @@ describe("POST /api/library/sync", () => {
 		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -180,8 +200,8 @@ describe("POST /api/library/sync", () => {
 	});
 });
 
-describe("GET /api/library/status", () => {
-	test("returns defaults for new user with no settings", async () => {
+describe("gET /api/library/status", () => {
+	it("returns defaults for new user with no settings", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -201,7 +221,7 @@ describe("GET /api/library/status", () => {
 		expect(body.excludeDefault).toBe(true);
 	});
 
-	test("returns updated status after sync", async () => {
+	it("returns updated status after sync", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 		setupPlexConnection(app, userId);
@@ -227,7 +247,7 @@ describe("GET /api/library/status", () => {
 		expect(body.showCount).toBe(EXPECTED_SHOW_COUNT);
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -239,8 +259,8 @@ describe("GET /api/library/status", () => {
 	});
 });
 
-describe("PUT /api/library/settings", () => {
-	test("creates settings for new user", async () => {
+describe("pUT /api/library/settings", () => {
+	it("creates settings for new user", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -264,7 +284,7 @@ describe("PUT /api/library/settings", () => {
 		expect(settings?.excludeLibraryDefault).toBe(false);
 	});
 
-	test("updates existing settings", async () => {
+	it("updates existing settings", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -296,7 +316,7 @@ describe("PUT /api/library/settings", () => {
 		expect(settings?.excludeLibraryDefault).toBe(false);
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({

@@ -162,7 +162,7 @@ const MetadataContent = ({ metadata, castExpanded, onToggleCast }: MetadataConte
 			{metadata.overview ? <p className={overviewText}>{metadata.overview}</p> : undefined}
 			{metadata.rating !== undefined ? (
 				<p className={ratingText}>
-					Rating: {String(metadata.rating.toFixed(RATING_DECIMALS))}
+					Rating: {metadata.rating.toFixed(RATING_DECIMALS)}
 					{metadata.status ? ` | ${metadata.status}` : ""}
 				</p>
 			) : undefined}

@@ -10,7 +10,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 } from "vite-plus/test";
 import { Router } from "wouter";
 
@@ -19,18 +19,6 @@ import { createStore } from "../../store.ts";
 import { Login } from "../Login.tsx";
 
 const server = setupServer();
-
-beforeAll(() => {
-	server.listen();
-});
-
-afterEach(() => {
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
 
 const renderLogin = () => {
 	const testStore = createStore();
@@ -51,8 +39,20 @@ const renderLogin = () => {
 	return { store: testStore };
 };
 
-describe("Login", () => {
-	test("renders the login form with heading, inputs, and button", () => {
+describe(Login, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("renders the login form with heading, inputs, and button", () => {
 		renderLogin();
 
 		expect(screen.getByRole("heading", { name: /login/i })).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe("Login", () => {
 		expect(screen.getByRole("button", { name: /log in/i })).toBeInTheDocument();
 	});
 
-	test("allows typing into username and password fields", async () => {
+	it("allows typing into username and password fields", async () => {
 		renderLogin();
 		const user = userEvent.setup();
 
@@ -75,7 +75,7 @@ describe("Login", () => {
 		expect(passwordInput).toHaveValue("secret123");
 	});
 
-	test("shows error message on failed login", async () => {
+	it("shows error message on failed login", async () => {
 		const unauthorizedCode = 401;
 		server.use(
 			http.post("/api/auth/login", () =>
@@ -94,7 +94,7 @@ describe("Login", () => {
 		expect(alert).toHaveTextContent(/invalid username or password/i);
 	});
 
-	test("submit button is present and accessible", () => {
+	it("submit button is present and accessible", () => {
 		renderLogin();
 
 		const button = screen.getByRole("button", { name: /log in/i });

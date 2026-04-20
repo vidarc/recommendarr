@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from "vite-plus/test";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 
 import { getMovieById, getMovieCredits, searchMovie } from "../services/tmdb-client.ts";
 
@@ -96,22 +96,22 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	vi.stubEnv("TMDB_API_KEY", MOCK_API_KEY);
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
+describe(searchMovie, () => {
+	beforeAll(() => {
+		vi.stubEnv("TMDB_API_KEY", MOCK_API_KEY);
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
 
-afterEach(() => {
-	mswServer.resetHandlers();
-});
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
 
-afterAll(() => {
-	mswServer.close();
-	vi.unstubAllEnvs();
-});
+	afterAll(() => {
+		mswServer.close();
+		vi.unstubAllEnvs();
+	});
 
-describe("searchMovie", () => {
-	test("returns normalized metadata for a search result", async () => {
+	it("returns normalized metadata for a search result", async () => {
 		const results = await searchMovie("Inception", INCEPTION_YEAR);
 		expect(results.length).toBeGreaterThan(FIRST);
 		const result = results[FIRST];
@@ -121,17 +121,31 @@ describe("searchMovie", () => {
 		expect(result?.posterUrl).toContain("qmDpIHrmpJINaRKAfWQfftjCdyi.jpg");
 	});
 
-	test("returns empty array when no results", async () => {
+	it("returns empty array when no results", async () => {
 		mswServer.use(
 			http.get(`${TMDB_API_BASE}/search/movie`, () => HttpResponse.json({ results: [] })),
 		);
 		const results = await searchMovie("Nonexistent Movie 12345");
-		expect(results).toEqual([]);
+		expect(results).toStrictEqual([]);
 	});
 });
 
-describe("getMovieById", () => {
-	test("returns full metadata for a movie", async () => {
+describe(getMovieById, () => {
+	beforeAll(() => {
+		vi.stubEnv("TMDB_API_KEY", MOCK_API_KEY);
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
+
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
+
+	afterAll(() => {
+		mswServer.close();
+		vi.unstubAllEnvs();
+	});
+
+	it("returns full metadata for a movie", async () => {
 		const result = await getMovieById(INCEPTION_TMDB_ID);
 		expect(result).toBeDefined();
 		expect(result?.title).toBe("Inception");
@@ -142,18 +156,17 @@ describe("getMovieById", () => {
 		expect(result?.status).toBe("Released");
 	});
 
-	test("returns undefined for 404", async () => {
+	it("returns undefined for 404", async () => {
 		mswServer.use(
-			// oxlint-disable-next-line unicorn/no-null -- HttpResponse requires null for empty body
-			http.get(`${TMDB_API_BASE}/movie/*`, () => new HttpResponse(null, { status: 404 })),
+			http.get(`${TMDB_API_BASE}/movie/*`, () => new HttpResponse(undefined, { status: 404 })),
 		);
 		const result = await getMovieById(UNKNOWN_MOVIE_ID);
 		expect(result).toBeUndefined();
 	});
 });
 
-describe("getMovieCredits", () => {
-	test("returns cast and crew limited to configured maximums", async () => {
+describe(getMovieCredits, () => {
+	it("returns cast and crew limited to configured maximums", async () => {
 		const result = await getMovieCredits(INCEPTION_TMDB_ID);
 		expect(result).toBeDefined();
 		expect(result?.cast.length).toBeLessThanOrEqual(CAST_LIMIT);

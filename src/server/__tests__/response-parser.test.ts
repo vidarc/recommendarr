@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 
 import {
 	filterExcludedRecommendations,
@@ -11,7 +11,7 @@ const SINGLE_RESULT = 1;
 const TRIPLE_REC_COUNT = 3;
 
 describe("response parser", () => {
-	test("extracts recommendations from AI response with JSON block", () => {
+	it("extracts recommendations from AI response with JSON block", () => {
 		const response = `Here are some great movies!
 
 \`\`\`json
@@ -28,13 +28,13 @@ Enjoy!`;
 		expect(result.recommendations[FIRST_INDEX]?.title).toBe("The Matrix");
 	});
 
-	test("returns empty recommendations when no JSON block found", () => {
+	it("returns empty recommendations when no JSON block found", () => {
 		const result = parseRecommendations("Just a regular message.");
 		expect(result.recommendations).toHaveLength(FIRST_INDEX);
 		expect(result.conversationalText).toBe("Just a regular message.");
 	});
 
-	test("handles malformed JSON gracefully", () => {
+	it("handles malformed JSON gracefully", () => {
 		const response = `Here are recs:
 
 \`\`\`json
@@ -44,7 +44,7 @@ Enjoy!`;
 		expect(result.recommendations).toHaveLength(FIRST_INDEX);
 	});
 
-	test("strips JSON block from conversational text", () => {
+	it("strips JSON block from conversational text", () => {
 		const response = `Before text.
 
 \`\`\`json
@@ -59,12 +59,27 @@ After text.`;
 	});
 });
 
-describe("filterExcludedRecommendations", () => {
-	const matrix = { title: "The Matrix", year: 1999, mediaType: "movie", synopsis: "A hacker." };
-	const inception = { title: "Inception", year: 2010, mediaType: "movie", synopsis: "Dreams." };
-	const blade = { title: "Blade Runner", year: 1982, mediaType: "movie", synopsis: "Androids." };
+describe(filterExcludedRecommendations, () => {
+	const matrix = {
+		title: "The Matrix",
+		year: 1999,
+		mediaType: "movie",
+		synopsis: "A hacker.",
+	};
+	const inception = {
+		title: "Inception",
+		year: 2010,
+		mediaType: "movie",
+		synopsis: "Dreams.",
+	};
+	const blade = {
+		title: "Blade Runner",
+		year: 1982,
+		mediaType: "movie",
+		synopsis: "Androids.",
+	};
 
-	test("filters out recs matching library by title and year", () => {
+	it("filters out recs matching library by title and year", () => {
 		const result = filterExcludedRecommendations([matrix, inception], {
 			libraryTitles: [{ title: "The Matrix", year: 1999, mediaType: "movie" }],
 			pastRecommendations: [],
@@ -75,7 +90,7 @@ describe("filterExcludedRecommendations", () => {
 		expect(result.filtered[FIRST_INDEX]?.title).toBe("The Matrix");
 	});
 
-	test("uses case-insensitive title matching", () => {
+	it("uses case-insensitive title matching", () => {
 		const result = filterExcludedRecommendations([matrix], {
 			libraryTitles: [{ title: "the matrix", year: 1999, mediaType: "movie" }],
 			pastRecommendations: [],
@@ -84,7 +99,7 @@ describe("filterExcludedRecommendations", () => {
 		expect(result.filtered).toHaveLength(SINGLE_RESULT);
 	});
 
-	test("matches title only when year is missing from either side", () => {
+	it("matches title only when year is missing from either side", () => {
 		const recNoYear = {
 			title: "Blade Runner",
 			year: undefined,
@@ -99,7 +114,7 @@ describe("filterExcludedRecommendations", () => {
 		expect(result.filtered).toHaveLength(SINGLE_RESULT);
 	});
 
-	test("filters out recs matching past recommendations", () => {
+	it("filters out recs matching past recommendations", () => {
 		const result = filterExcludedRecommendations([blade, inception], {
 			libraryTitles: [],
 			pastRecommendations: [{ title: "Blade Runner", year: 1982 }],
@@ -109,7 +124,7 @@ describe("filterExcludedRecommendations", () => {
 		expect(result.filtered[FIRST_INDEX]?.title).toBe("Blade Runner");
 	});
 
-	test("keeps all recs when no matches found", () => {
+	it("keeps all recs when no matches found", () => {
 		const result = filterExcludedRecommendations([matrix, inception, blade], {
 			libraryTitles: [{ title: "Interstellar", year: 2014, mediaType: "movie" }],
 			pastRecommendations: [{ title: "Dune", year: 2021 }],

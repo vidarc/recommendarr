@@ -3,7 +3,7 @@ import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
+import { describe, expect, onTestFinished, it, vi } from "vite-plus/test";
 
 import { buildServer } from "../app.ts";
 import { sessions } from "../schema.ts";
@@ -39,7 +39,7 @@ const setupDb = async () => {
 };
 
 describe("sessions table", () => {
-	test("sessions table exists in database", async () => {
+	it("sessions table exists in database", async () => {
 		const app = await setupDb();
 
 		const rows = app.sqlite
@@ -50,7 +50,7 @@ describe("sessions table", () => {
 });
 
 describe("session service", () => {
-	test("createSession creates a session row and returns it", async () => {
+	it("createSession creates a session row and returns it", async () => {
 		const app = await setupDb();
 		const userId = randomUUID();
 
@@ -65,7 +65,7 @@ describe("session service", () => {
 		);
 	});
 
-	test("getSession returns a valid non-expired session", async () => {
+	it("getSession returns a valid non-expired session", async () => {
 		const app = await setupDb();
 		const userId = randomUUID();
 		const created = createSession(app.db, userId);
@@ -77,7 +77,7 @@ describe("session service", () => {
 		expect(retrieved?.userId).toBe(userId);
 	});
 
-	test("getSession returns undefined for non-existent session", async () => {
+	it("getSession returns undefined for non-existent session", async () => {
 		const app = await setupDb();
 
 		const result = getSession(app.db, "non-existent-id");
@@ -85,7 +85,7 @@ describe("session service", () => {
 		expect(result).toBeUndefined();
 	});
 
-	test("getSession returns undefined for expired session", async () => {
+	it("getSession returns undefined for expired session", async () => {
 		const app = await setupDb();
 		const userId = randomUUID();
 		const pastDate = new Date(Date.now() - pastOffsetMs).toISOString();
@@ -106,7 +106,7 @@ describe("session service", () => {
 		expect(result).toBeUndefined();
 	});
 
-	test("deleteSession removes a session", async () => {
+	it("deleteSession removes a session", async () => {
 		const app = await setupDb();
 		const userId = randomUUID();
 		const session = createSession(app.db, userId);
@@ -117,7 +117,7 @@ describe("session service", () => {
 		expect(result).toBeUndefined();
 	});
 
-	test("purgeExpiredSessions removes only expired sessions", async () => {
+	it("purgeExpiredSessions removes only expired sessions", async () => {
 		const app = await setupDb();
 		const userId = randomUUID();
 		const pastDate = new Date(Date.now() - pastOffsetMs).toISOString();

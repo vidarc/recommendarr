@@ -13,7 +13,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 	vi,
 } from "vite-plus/test";
 
@@ -60,22 +60,22 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
-
-afterEach(() => {
-	mswServer.resetHandlers();
-});
-
-afterAll(() => {
-	mswServer.close();
-});
-
 // --- AI client tests ---
 
 describe("chatCompletion", () => {
-	test("sends request with correct headers and body, returns response content", async () => {
+	beforeAll(() => {
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
+
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
+
+	afterAll(() => {
+		mswServer.close();
+	});
+
+	it("sends request with correct headers and body, returns response content", async () => {
 		const { chatCompletion } = await import("../services/ai-client.ts");
 
 		const result = await chatCompletion(defaultTestConfig, [{ role: "user", content: "Hello" }]);
@@ -83,7 +83,7 @@ describe("chatCompletion", () => {
 		expect(result).toBe("Hello! How can I help you?");
 	});
 
-	test("throws on non-ok response", async () => {
+	it("throws on non-ok response", async () => {
 		const { chatCompletion } = await import("../services/ai-client.ts");
 
 		mswServer.use(
@@ -98,7 +98,7 @@ describe("chatCompletion", () => {
 		).rejects.toThrow(/500/);
 	});
 
-	test("throws when response has no content", async () => {
+	it("throws when response has no content", async () => {
 		const { chatCompletion } = await import("../services/ai-client.ts");
 
 		mswServer.use(
@@ -116,10 +116,10 @@ describe("chatCompletion", () => {
 describe("testConnection", () => {
 	// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 	const mockRequest = {
-		log: { error: vi.fn() },
+		log: { error: vi.fn<() => void>() },
 	} as unknown as FastifyRequest;
 
-	test("returns success true on valid response", async () => {
+	it("returns success true on valid response", async () => {
 		const { testConnection } = await import("../services/ai-client.ts");
 
 		const result = await testConnection(mockRequest, defaultTestConfig);
@@ -127,7 +127,7 @@ describe("testConnection", () => {
 		expect(result).toStrictEqual({ success: true });
 	});
 
-	test("returns success false on network failure and logs error", async () => {
+	it("returns success false on network failure and logs error", async () => {
 		const { testConnection } = await import("../services/ai-client.ts");
 
 		mswServer.use(http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, () => HttpResponse.error()));
@@ -136,7 +136,7 @@ describe("testConnection", () => {
 
 		expect(result.success).toBe(false);
 		expect(result.error).toBeTypeOf("string");
-		expect(mockRequest.log.error).toHaveBeenCalled();
+		expect(mockRequest.log.error).toHaveBeenCalledWith();
 	});
 });
 
@@ -175,8 +175,8 @@ const getSessionCookie = async (app: Awaited<ReturnType<typeof buildServer>>) =>
 	return { sessionId: session.id, userId: user.id };
 };
 
-describe("GET /api/ai/config", () => {
-	test("returns 404 when no config exists", async () => {
+describe("gET /api/ai/config", () => {
+	it("returns 404 when no config exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -189,7 +189,7 @@ describe("GET /api/ai/config", () => {
 		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
 	});
 
-	test("returns config with masked API key", async () => {
+	it("returns config with masked API key", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -227,7 +227,7 @@ describe("GET /api/ai/config", () => {
 		expect(decrypt(dbConfig!.apiKey)).toBe("sk-test-key-12345678");
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -239,8 +239,8 @@ describe("GET /api/ai/config", () => {
 	});
 });
 
-describe("PUT /api/ai/config", () => {
-	test("creates new config", async () => {
+describe("pUT /api/ai/config", () => {
+	it("creates new config", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -267,7 +267,7 @@ describe("PUT /api/ai/config", () => {
 		expect(decrypt(dbConfig!.apiKey)).toBe("sk-new-key-abcdefgh");
 	});
 
-	test("updates existing config", async () => {
+	it("updates existing config", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -307,7 +307,7 @@ describe("PUT /api/ai/config", () => {
 		expect(decrypt(dbConfig!.apiKey)).toBe("sk-updated-key-9999");
 	});
 
-	test("returns 401 without session", async () => {
+	it("returns 401 without session", async () => {
 		const app = await setupDb();
 
 		const response = await app.inject({
@@ -326,8 +326,8 @@ describe("PUT /api/ai/config", () => {
 	});
 });
 
-describe("DELETE /api/ai/config", () => {
-	test("removes config", async () => {
+describe("dELETE /api/ai/config", () => {
+	it("removes config", async () => {
 		const app = await setupDb();
 		const { sessionId, userId } = await getSessionCookie(app);
 
@@ -358,7 +358,7 @@ describe("DELETE /api/ai/config", () => {
 		expect(dbConfig).toBeUndefined();
 	});
 
-	test("returns 404 when no config exists", async () => {
+	it("returns 404 when no config exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -372,8 +372,8 @@ describe("DELETE /api/ai/config", () => {
 	});
 });
 
-describe("POST /api/ai/test", () => {
-	test("returns success on valid connection", async () => {
+describe("pOST /api/ai/test", () => {
+	it("returns success on valid connection", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -402,7 +402,7 @@ describe("POST /api/ai/test", () => {
 		expect(body.success).toBe(true);
 	});
 
-	test("returns failure when AI endpoint is down", async () => {
+	it("returns failure when AI endpoint is down", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -433,7 +433,7 @@ describe("POST /api/ai/test", () => {
 		expect(body.success).toBe(false);
 	});
 
-	test("returns 404 when no config exists", async () => {
+	it("returns 404 when no config exists", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -446,7 +446,7 @@ describe("POST /api/ai/test", () => {
 		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
 	});
 
-	test("returns success when testing with body config (no saved config needed)", async () => {
+	it("returns success when testing with body config (no saved config needed)", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -468,7 +468,7 @@ describe("POST /api/ai/test", () => {
 		expect(body.success).toBe(true);
 	});
 
-	test("returns failure when testing with body config and endpoint is down", async () => {
+	it("returns failure when testing with body config and endpoint is down", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 
@@ -492,7 +492,7 @@ describe("POST /api/ai/test", () => {
 		expect(body.success).toBe(false);
 	});
 
-	test("uses body config values instead of saved config", async () => {
+	it("uses body config values instead of saved config", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 		const alternateEndpoint = "https://api.alternate-ai.example.com";
@@ -537,7 +537,7 @@ describe("POST /api/ai/test", () => {
 		expect(body.success).toBe(true);
 	});
 
-	test("rejects invalid body config", async () => {
+	it("rejects invalid body config", async () => {
 		const app = await setupDb();
 		const { sessionId } = await getSessionCookie(app);
 

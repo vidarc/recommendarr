@@ -1,11 +1,11 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 
 import { buildCastCrewSection, buildSystemPrompt } from "../services/prompt-builder.ts";
 
 import type { CastCrewContextItem } from "../services/prompt-builder.ts";
 
 describe("prompt builder", () => {
-	test("builds system prompt with watch history and constraints", () => {
+	it("builds system prompt with watch history and constraints", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [
 				{ title: "Inception", year: 2010, type: "movie" },
@@ -20,7 +20,7 @@ describe("prompt builder", () => {
 		expect(prompt).toContain("JSON");
 	});
 
-	test("handles empty watch history", () => {
+	it("handles empty watch history", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "either",
@@ -30,7 +30,7 @@ describe("prompt builder", () => {
 		expect(prompt).toBeDefined();
 	});
 
-	test("includes media type constraint for shows", () => {
+	it("includes media type constraint for shows", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "show",
@@ -39,7 +39,7 @@ describe("prompt builder", () => {
 		expect(prompt).toContain("Only recommend shows");
 	});
 
-	test("includes either instruction for mixed media type", () => {
+	it("includes either instruction for mixed media type", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "either",
@@ -48,7 +48,7 @@ describe("prompt builder", () => {
 		expect(prompt).toContain("either movies or TV shows");
 	});
 
-	test("includes library taste profile when exclusion context provided", () => {
+	it("includes library taste profile when exclusion context provided", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "movie",
@@ -58,7 +58,11 @@ describe("prompt builder", () => {
 					{ title: "The Matrix", year: 1999, mediaType: "movie" },
 					{ title: "Inception", year: 2010, mediaType: "movie" },
 				],
-				summary: { movieCount: 50, showCount: 20, topGenres: ["Sci-Fi", "Action", "Drama"] },
+				summary: {
+					movieCount: 50,
+					showCount: 20,
+					topGenres: ["Sci-Fi", "Action", "Drama"],
+				},
 				pastRecommendations: [{ title: "Blade Runner", year: 1982 }],
 			},
 		});
@@ -71,7 +75,7 @@ describe("prompt builder", () => {
 		expect(prompt).toContain("Blade Runner (1982)");
 	});
 
-	test("omits exclusion sections when no exclusion context", () => {
+	it("omits exclusion sections when no exclusion context", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "movie",
@@ -81,7 +85,7 @@ describe("prompt builder", () => {
 		expect(prompt).not.toContain("already been recommended");
 	});
 
-	test("handles exclusion context with no past recommendations", () => {
+	it("handles exclusion context with no past recommendations", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "movie",
@@ -96,15 +100,30 @@ describe("prompt builder", () => {
 		expect(prompt).not.toContain("already been recommended");
 	});
 
-	test("includes feedback context when provided", () => {
+	it("includes feedback context when provided", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "movie",
 			resultCount: 5,
 			feedbackContext: [
-				{ title: "The Matrix", year: 1999, mediaType: "movie", feedback: "liked" },
-				{ title: "Twilight", year: 2008, mediaType: "movie", feedback: "disliked" },
-				{ title: "Inception", year: 2010, mediaType: "movie", feedback: "liked" },
+				{
+					title: "The Matrix",
+					year: 1999,
+					mediaType: "movie",
+					feedback: "liked",
+				},
+				{
+					title: "Twilight",
+					year: 2008,
+					mediaType: "movie",
+					feedback: "disliked",
+				},
+				{
+					title: "Inception",
+					year: 2010,
+					mediaType: "movie",
+					feedback: "liked",
+				},
 			],
 		});
 		expect(prompt).toContain("The Matrix (1999)");
@@ -115,7 +134,7 @@ describe("prompt builder", () => {
 		expect(prompt).toContain("feedback");
 	});
 
-	test("omits feedback section when feedbackContext is empty", () => {
+	it("omits feedback section when feedbackContext is empty", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "movie",
@@ -126,7 +145,7 @@ describe("prompt builder", () => {
 		expect(prompt).not.toContain("Disliked:");
 	});
 
-	test("omits feedback section when feedbackContext is undefined", () => {
+	it("omits feedback section when feedbackContext is undefined", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "movie",
@@ -135,24 +154,36 @@ describe("prompt builder", () => {
 		expect(prompt).not.toContain("Liked:");
 	});
 
-	test("handles feedback context with only liked items", () => {
-		const prompt = buildSystemPrompt({
-			watchHistory: [],
-			mediaType: "movie",
-			resultCount: 5,
-			feedbackContext: [{ title: "The Matrix", year: 1999, mediaType: "movie", feedback: "liked" }],
-		});
-		expect(prompt).toContain("Liked:");
-		expect(prompt).not.toContain("Disliked:");
-	});
-
-	test("handles feedback context with only disliked items", () => {
+	it("handles feedback context with only liked items", () => {
 		const prompt = buildSystemPrompt({
 			watchHistory: [],
 			mediaType: "movie",
 			resultCount: 5,
 			feedbackContext: [
-				{ title: "Twilight", year: 2008, mediaType: "movie", feedback: "disliked" },
+				{
+					title: "The Matrix",
+					year: 1999,
+					mediaType: "movie",
+					feedback: "liked",
+				},
+			],
+		});
+		expect(prompt).toContain("Liked:");
+		expect(prompt).not.toContain("Disliked:");
+	});
+
+	it("handles feedback context with only disliked items", () => {
+		const prompt = buildSystemPrompt({
+			watchHistory: [],
+			mediaType: "movie",
+			resultCount: 5,
+			feedbackContext: [
+				{
+					title: "Twilight",
+					year: 2008,
+					mediaType: "movie",
+					feedback: "disliked",
+				},
 			],
 		});
 		expect(prompt).not.toContain("Liked:");
@@ -160,8 +191,8 @@ describe("prompt builder", () => {
 	});
 });
 
-describe("buildCastCrewSection", () => {
-	test("formats cast and crew metadata into prompt section", () => {
+describe(buildCastCrewSection, () => {
+	it("formats cast and crew metadata into prompt section", () => {
 		const items: CastCrewContextItem[] = [
 			{
 				title: "Inception",
@@ -180,7 +211,7 @@ describe("buildCastCrewSection", () => {
 		expect(result).toContain("Inception");
 	});
 
-	test("returns empty string for empty items", () => {
+	it("returns empty string for empty items", () => {
 		const result = buildCastCrewSection([]);
 		expect(result).toBe("");
 	});

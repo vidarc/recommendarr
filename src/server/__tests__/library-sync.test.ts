@@ -12,7 +12,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 	vi,
 } from "vite-plus/test";
 
@@ -140,18 +140,6 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
-
-afterEach(() => {
-	mswServer.resetHandlers();
-});
-
-afterAll(() => {
-	mswServer.close();
-});
-
 const setupDb = async () => {
 	vi.stubEnv("DATABASE_PATH", testDbPath);
 	vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
@@ -230,8 +218,20 @@ const insertArrConnections = (app: Awaited<ReturnType<typeof buildServer>>, user
 		.run();
 };
 
-describe("syncLibrary", () => {
-	test("syncs items from all sources (Plex movies, Plex shows, Radarr, Sonarr)", async () => {
+describe(syncLibrary, () => {
+	beforeAll(() => {
+		mswServer.listen({ onUnhandledRequest: "bypass" });
+	});
+
+	afterEach(() => {
+		mswServer.resetHandlers();
+	});
+
+	afterAll(() => {
+		mswServer.close();
+	});
+
+	it("syncs items from all sources (Plex movies, Plex shows, Radarr, Sonarr)", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -270,7 +270,7 @@ describe("syncLibrary", () => {
 		expect(sonarrItems).toHaveLength(SONARR_ITEM_COUNT);
 	});
 
-	test("replaces existing items on re-sync", async () => {
+	it("replaces existing items on re-sync", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -310,7 +310,7 @@ describe("syncLibrary", () => {
 		expect(items).toHaveLength(TOTAL_ALL_SOURCES);
 	});
 
-	test("syncs Plex-only when no arr connections provided", async () => {
+	it("syncs Plex-only when no arr connections provided", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -336,7 +336,7 @@ describe("syncLibrary", () => {
 		expect(items.every((item) => item.source === "plex")).toBe(true);
 	});
 
-	test("updates userSettings librarySyncLast timestamp after sync", async () => {
+	it("updates userSettings librarySyncLast timestamp after sync", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -370,7 +370,7 @@ describe("syncLibrary", () => {
 		expect(syncTime.getTime()).toBeGreaterThanOrEqual(before.getTime() - SYNC_CLOCK_TOLERANCE_MS);
 	});
 
-	test("stores genres, mediaType, and plexRatingKey for Plex items", async () => {
+	it("stores genres, mediaType, and plexRatingKey for Plex items", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -404,7 +404,7 @@ describe("syncLibrary", () => {
 		expect(matrix!.genres).toContain("Action");
 	});
 
-	test("stores externalId for Radarr and Sonarr items", async () => {
+	it("stores externalId for Radarr and Sonarr items", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -444,8 +444,8 @@ describe("syncLibrary", () => {
 	});
 });
 
-describe("buildExclusionContext", () => {
-	test("returns titles, summary, and pastRecommendations", async () => {
+describe(buildExclusionContext, () => {
+	it("returns titles, summary, and pastRecommendations", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -471,7 +471,9 @@ describe("buildExclusionContext", () => {
 			arrConns,
 		});
 
-		const context = await buildExclusionContext(userId, app.db, { mediaType: "either" });
+		const context = await buildExclusionContext(userId, app.db, {
+			mediaType: "either",
+		});
 
 		expect(context.titles.length).toBeGreaterThan(EMPTY_COUNT);
 		expect(context.summary.movieCount).toBeGreaterThan(EMPTY_COUNT);
@@ -481,7 +483,7 @@ describe("buildExclusionContext", () => {
 		expect(Array.isArray(context.pastRecommendations)).toBe(true);
 	});
 
-	test("filters titles by mediaType=movie", async () => {
+	it("filters titles by mediaType=movie", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -507,12 +509,14 @@ describe("buildExclusionContext", () => {
 			arrConns,
 		});
 
-		const context = await buildExclusionContext(userId, app.db, { mediaType: "movie" });
+		const context = await buildExclusionContext(userId, app.db, {
+			mediaType: "movie",
+		});
 
 		expect(context.titles.every((title) => title.mediaType === "movie")).toBe(true);
 	});
 
-	test("filters titles by mediaType=show", async () => {
+	it("filters titles by mediaType=show", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -538,12 +542,14 @@ describe("buildExclusionContext", () => {
 			arrConns,
 		});
 
-		const context = await buildExclusionContext(userId, app.db, { mediaType: "show" });
+		const context = await buildExclusionContext(userId, app.db, {
+			mediaType: "show",
+		});
 
 		expect(context.titles.every((title) => title.mediaType === "show")).toBe(true);
 	});
 
-	test("counts movies and shows correctly in summary", async () => {
+	it("counts movies and shows correctly in summary", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -569,14 +575,16 @@ describe("buildExclusionContext", () => {
 			arrConns,
 		});
 
-		const context = await buildExclusionContext(userId, app.db, { mediaType: "either" });
+		const context = await buildExclusionContext(userId, app.db, {
+			mediaType: "either",
+		});
 
 		// Plex: 2 movies + 1 show; Radarr: 1 movie; Sonarr: 1 show → 3 movies, 2 shows
 		expect(context.summary.movieCount).toBe(TOTAL_MOVIE_COUNT);
 		expect(context.summary.showCount).toBe(TOTAL_SHOW_COUNT);
 	});
 
-	test("returns top 5 genres from all items", async () => {
+	it("returns top 5 genres from all items", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -602,12 +610,14 @@ describe("buildExclusionContext", () => {
 			arrConns,
 		});
 
-		const context = await buildExclusionContext(userId, app.db, { mediaType: "either" });
+		const context = await buildExclusionContext(userId, app.db, {
+			mediaType: "either",
+		});
 
 		expect(context.summary.topGenres.length).toBeLessThanOrEqual(MAX_TOP_GENRES);
 	});
 
-	test("includes past recommendation titles", async () => {
+	it("includes past recommendation titles", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -663,18 +673,22 @@ describe("buildExclusionContext", () => {
 			})
 			.run();
 
-		const context = await buildExclusionContext(userId, app.db, { mediaType: "either" });
+		const context = await buildExclusionContext(userId, app.db, {
+			mediaType: "either",
+		});
 
 		const found = context.pastRecommendations.find((rec) => rec.title === "Past Recommendation");
 		expect(found).toBeDefined();
 		expect(found!.year).toBe(REC_YEAR);
 	});
 
-	test("returns empty context when no library items", async () => {
+	it("returns empty context when no library items", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
-		const context = await buildExclusionContext(userId, app.db, { mediaType: "either" });
+		const context = await buildExclusionContext(userId, app.db, {
+			mediaType: "either",
+		});
 
 		expect(context.titles).toHaveLength(EMPTY_COUNT);
 		expect(context.summary.movieCount).toBe(EMPTY_COUNT);
@@ -684,8 +698,8 @@ describe("buildExclusionContext", () => {
 	});
 });
 
-describe("shouldAutoSync", () => {
-	test("returns false when interval is manual", async () => {
+describe(shouldAutoSync, () => {
+	it("returns false when interval is manual", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -705,7 +719,7 @@ describe("shouldAutoSync", () => {
 		expect(result).toBe(false);
 	});
 
-	test("returns true when interval has elapsed since last sync", async () => {
+	it("returns true when interval has elapsed since last sync", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -727,7 +741,7 @@ describe("shouldAutoSync", () => {
 		expect(result).toBe(true);
 	});
 
-	test("returns false when interval has not elapsed", async () => {
+	it("returns false when interval has not elapsed", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -749,7 +763,7 @@ describe("shouldAutoSync", () => {
 		expect(result).toBe(false);
 	});
 
-	test("returns true when interval is set and never synced", async () => {
+	it("returns true when interval is set and never synced", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -768,7 +782,7 @@ describe("shouldAutoSync", () => {
 		expect(result).toBe(true);
 	});
 
-	test("returns false when no userSettings row exists (defaults to manual)", async () => {
+	it("returns false when no userSettings row exists (defaults to manual)", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
@@ -777,7 +791,7 @@ describe("shouldAutoSync", () => {
 		expect(result).toBe(false);
 	});
 
-	test("handles 6h, 12h, 7d intervals", async () => {
+	it("handles 6h, 12h, 7d intervals", async () => {
 		const app = await setupDb();
 		const { userId } = await registerUser(app);
 
