@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vite-plus/test";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { decrypt, encrypt, resetKeyCache } from "../services/encryption.ts";
 
@@ -11,14 +11,14 @@ describe("encryption service", () => {
 		resetKeyCache();
 	});
 
-	test("encrypt returns a string different from input", () => {
+	it("encrypt returns a string different from input", () => {
 		vi.stubEnv("ENCRYPTION_KEY", testKey);
 
 		const encrypted = encrypt("hello world");
 		expect(encrypted).not.toBe("hello world");
 	});
 
-	test("decrypt reverses encrypt", () => {
+	it("decrypt reverses encrypt", () => {
 		vi.stubEnv("ENCRYPTION_KEY", testKey);
 
 		const encrypted = encrypt("secret token");
@@ -26,14 +26,14 @@ describe("encryption service", () => {
 		expect(decrypted).toBe("secret token");
 	});
 
-	test("encrypt throws without ENCRYPTION_KEY", () => {
+	it("encrypt throws without ENCRYPTION_KEY", () => {
 		vi.stubEnv("ENCRYPTION_KEY", "");
 		expect(() => encrypt("test")).toThrow("ENCRYPTION_KEY");
 	});
 
-	test("encrypt throws with invalid key length", () => {
+	it("encrypt throws with invalid key length", () => {
 		vi.stubEnv("ENCRYPTION_KEY", "tooshort");
 
-		expect(() => encrypt("test")).toThrow();
+		expect(() => encrypt("test")).toThrow(/64-character hex string/);
 	});
 });

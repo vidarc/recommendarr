@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from "vite-plus/test";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 
 import { getSeriesById, getSeriesExtended, searchSeries } from "../services/tvdb-client.ts";
 
@@ -104,70 +104,73 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	vi.stubEnv("TVDB_API_KEY", MOCK_API_KEY);
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
-
-afterEach(() => {
-	mswServer.resetHandlers();
-});
-
-afterAll(() => {
-	mswServer.close();
-	vi.unstubAllEnvs();
-});
-
-describe("searchSeries", () => {
-	test("authenticates and returns normalized metadata", async () => {
-		const results = await searchSeries("Breaking Bad", BREAKING_BAD_YEAR);
-		expect(results.length).toBeGreaterThan(ZERO);
-		const result = results[FIRST];
-		expect(result?.title).toBe("Breaking Bad");
-		expect(result?.externalId).toBe(BREAKING_BAD_TVDB_ID);
-		expect(result?.source).toBe("tvdb");
-		expect(result?.posterUrl).toContain("81189");
+describe("src/server/tvdb-client.ts", () => {
+	beforeAll(() => {
+		vi.stubEnv("TVDB_API_KEY", MOCK_API_KEY);
+		mswServer.listen({ onUnhandledRequest: "bypass" });
 	});
 
-	test("returns empty array when no results", async () => {
-		mswServer.use(
-			http.get(`${TVDB_API_BASE}/search`, () => HttpResponse.json({ status: "success", data: [] })),
-		);
-		const results = await searchSeries("Nonexistent Show 12345");
-		expect(results).toEqual([]);
-	});
-});
-
-describe("getSeriesById", () => {
-	test("returns full metadata for a series", async () => {
-		const result = await getSeriesById(BREAKING_BAD_TVDB_ID);
-		expect(result).toBeDefined();
-		expect(result?.title).toBe("Breaking Bad");
-		expect(result?.genres).toContain("Drama");
-		expect(result?.genres).toContain("Thriller");
-		expect(result?.status).toBe("Ended");
-		expect(result?.source).toBe("tvdb");
+	afterEach(() => {
+		mswServer.resetHandlers();
 	});
 
-	test("returns undefined for 404", async () => {
-		mswServer.use(
-			// oxlint-disable-next-line unicorn/no-null -- HttpResponse requires null for empty body
-			http.get(`${TVDB_API_BASE}/series/*`, () => new HttpResponse(null, { status: 404 })),
-		);
-		const result = await getSeriesById(UNKNOWN_SERIES_ID);
-		expect(result).toBeUndefined();
+	afterAll(() => {
+		mswServer.close();
+		vi.unstubAllEnvs();
 	});
-});
 
-describe("getSeriesExtended", () => {
-	test("returns metadata with cast and crew", async () => {
-		const result = await getSeriesExtended(BREAKING_BAD_TVDB_ID);
-		expect(result).toBeDefined();
-		expect(result?.cast.length).toBeGreaterThan(ZERO);
-		expect(result?.cast[FIRST]?.name).toBe("Bryan Cranston");
-		expect(result?.cast[FIRST]?.character).toBe("Walter White");
-		expect(result?.crew.length).toBeGreaterThan(ZERO);
-		expect(result?.crew[FIRST]?.name).toBe("Vince Gilligan");
-		expect(result?.crew[FIRST]?.role).toBe("Director");
+	describe(searchSeries, () => {
+		it("authenticates and returns normalized metadata", async () => {
+			const results = await searchSeries("Breaking Bad", BREAKING_BAD_YEAR);
+			expect(results.length).toBeGreaterThan(ZERO);
+			const result = results[FIRST];
+			expect(result?.title).toBe("Breaking Bad");
+			expect(result?.externalId).toBe(BREAKING_BAD_TVDB_ID);
+			expect(result?.source).toBe("tvdb");
+			expect(result?.posterUrl).toContain("81189");
+		});
+
+		it("returns empty array when no results", async () => {
+			mswServer.use(
+				http.get(`${TVDB_API_BASE}/search`, () =>
+					HttpResponse.json({ status: "success", data: [] }),
+				),
+			);
+			const results = await searchSeries("Nonexistent Show 12345");
+			expect(results).toStrictEqual([]);
+		});
+	});
+
+	describe(getSeriesById, () => {
+		it("returns full metadata for a series", async () => {
+			const result = await getSeriesById(BREAKING_BAD_TVDB_ID);
+			expect(result).toBeDefined();
+			expect(result?.title).toBe("Breaking Bad");
+			expect(result?.genres).toContain("Drama");
+			expect(result?.genres).toContain("Thriller");
+			expect(result?.status).toBe("Ended");
+			expect(result?.source).toBe("tvdb");
+		});
+
+		it("returns undefined for 404", async () => {
+			mswServer.use(
+				http.get(`${TVDB_API_BASE}/series/*`, () => new HttpResponse(undefined, { status: 404 })),
+			);
+			const result = await getSeriesById(UNKNOWN_SERIES_ID);
+			expect(result).toBeUndefined();
+		});
+	});
+
+	describe(getSeriesExtended, () => {
+		it("returns metadata with cast and crew", async () => {
+			const result = await getSeriesExtended(BREAKING_BAD_TVDB_ID);
+			expect(result).toBeDefined();
+			expect(result?.cast.length).toBeGreaterThan(ZERO);
+			expect(result?.cast[FIRST]?.name).toBe("Bryan Cranston");
+			expect(result?.cast[FIRST]?.character).toBe("Walter White");
+			expect(result?.crew.length).toBeGreaterThan(ZERO);
+			expect(result?.crew[FIRST]?.name).toBe("Vince Gilligan");
+			expect(result?.crew[FIRST]?.role).toBe("Director");
+		});
 	});
 });

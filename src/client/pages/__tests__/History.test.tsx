@@ -10,7 +10,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 } from "vite-plus/test";
 import { Router } from "wouter";
 
@@ -19,18 +19,6 @@ import { createStore } from "../../store.ts";
 import { History } from "../History.tsx";
 
 const server = setupServer();
-
-beforeAll(() => {
-	server.listen();
-});
-
-afterEach(() => {
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
 
 const renderHistory = () => {
 	const testStore = createStore();
@@ -51,8 +39,20 @@ const renderHistory = () => {
 	return { store: testStore };
 };
 
-describe("History", () => {
-	test("renders the history heading", () => {
+describe(History, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("renders the history heading", () => {
 		server.use(http.get("/api/conversations", () => HttpResponse.json({ conversations: [] })));
 
 		renderHistory();
@@ -60,15 +60,15 @@ describe("History", () => {
 		expect(screen.getByRole("heading", { name: /history/i })).toBeInTheDocument();
 	});
 
-	test("shows empty state when there are no conversations", async () => {
+	it("shows empty state when there are no conversations", async () => {
 		server.use(http.get("/api/conversations", () => HttpResponse.json({ conversations: [] })));
 
 		renderHistory();
 
-		expect(await screen.findByText(/no conversations yet/i)).toBeInTheDocument();
+		await expect(screen.findByText(/no conversations yet/i)).resolves.toBeInTheDocument();
 	});
 
-	test("renders conversation list", async () => {
+	it("renders conversation list", async () => {
 		server.use(
 			http.get("/api/conversations", () =>
 				HttpResponse.json({
@@ -92,11 +92,11 @@ describe("History", () => {
 
 		renderHistory();
 
-		expect(await screen.findByText("Horror recommendations")).toBeInTheDocument();
+		await expect(screen.findByText("Horror recommendations")).resolves.toBeInTheDocument();
 		expect(screen.getByText("Sci-fi TV shows")).toBeInTheDocument();
 	});
 
-	test("displays media type badge", async () => {
+	it("displays media type badge", async () => {
 		server.use(
 			http.get("/api/conversations", () =>
 				HttpResponse.json({
@@ -114,10 +114,10 @@ describe("History", () => {
 
 		renderHistory();
 
-		expect(await screen.findByText("movie")).toBeInTheDocument();
+		await expect(screen.findByText("movie")).resolves.toBeInTheDocument();
 	});
 
-	test("displays relative date", async () => {
+	it("displays relative date", async () => {
 		server.use(
 			http.get("/api/conversations", () =>
 				HttpResponse.json({
@@ -135,10 +135,10 @@ describe("History", () => {
 
 		renderHistory();
 
-		expect(await screen.findByText("just now")).toBeInTheDocument();
+		await expect(screen.findByText("just now")).resolves.toBeInTheDocument();
 	});
 
-	test("shows untitled for conversations without a title", async () => {
+	it("shows untitled for conversations without a title", async () => {
 		server.use(
 			http.get("/api/conversations", () =>
 				HttpResponse.json({
@@ -156,10 +156,10 @@ describe("History", () => {
 
 		renderHistory();
 
-		expect(await screen.findByText("Untitled")).toBeInTheDocument();
+		await expect(screen.findByText("Untitled")).resolves.toBeInTheDocument();
 	});
 
-	test("shows delete button for each conversation", async () => {
+	it("shows delete button for each conversation", async () => {
 		server.use(
 			http.get("/api/conversations", () =>
 				HttpResponse.json({
@@ -177,10 +177,10 @@ describe("History", () => {
 
 		renderHistory();
 
-		expect(await screen.findByRole("button", { name: /^delete$/i })).toBeInTheDocument();
+		await expect(screen.findByRole("button", { name: /^delete$/i })).resolves.toBeInTheDocument();
 	});
 
-	test("shows confirm/cancel buttons when delete is clicked", async () => {
+	it("shows confirm/cancel buttons when delete is clicked", async () => {
 		server.use(
 			http.get("/api/conversations", () =>
 				HttpResponse.json({
@@ -199,14 +199,16 @@ describe("History", () => {
 		renderHistory();
 		const user = userEvent.setup();
 
-		const deleteButton = await screen.findByRole("button", { name: /^delete$/i });
+		const deleteButton = await screen.findByRole("button", {
+			name: /^delete$/i,
+		});
 		await user.click(deleteButton);
 
 		expect(screen.getByRole("button", { name: /^cancel$/i })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /^delete$/i })).toBeInTheDocument();
 	});
 
-	test("cancels delete and goes back to single delete button", async () => {
+	it("cancels delete and goes back to single delete button", async () => {
 		server.use(
 			http.get("/api/conversations", () =>
 				HttpResponse.json({
@@ -225,7 +227,9 @@ describe("History", () => {
 		renderHistory();
 		const user = userEvent.setup();
 
-		const deleteButton = await screen.findByRole("button", { name: /^delete$/i });
+		const deleteButton = await screen.findByRole("button", {
+			name: /^delete$/i,
+		});
 		await user.click(deleteButton);
 
 		const cancelButton = screen.getByRole("button", { name: /^cancel$/i });
@@ -235,7 +239,7 @@ describe("History", () => {
 		expect(screen.getByRole("button", { name: /^delete$/i })).toBeInTheDocument();
 	});
 
-	test("sends delete request when confirmed", async () => {
+	it("sends delete request when confirmed", async () => {
 		let deletedId = "";
 
 		server.use(
@@ -261,10 +265,14 @@ describe("History", () => {
 		renderHistory();
 		const user = userEvent.setup();
 
-		const deleteButton = await screen.findByRole("button", { name: /^delete$/i });
+		const deleteButton = await screen.findByRole("button", {
+			name: /^delete$/i,
+		});
 		await user.click(deleteButton);
 
-		const [confirmButton] = screen.getAllByRole("button", { name: /^delete$/i });
+		const [confirmButton] = screen.getAllByRole("button", {
+			name: /^delete$/i,
+		});
 		await user.click(confirmButton!);
 
 		expect(deletedId).toBe("conv-42");

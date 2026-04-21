@@ -10,7 +10,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 } from "vite-plus/test";
 
 import { api } from "../../api.ts";
@@ -39,18 +39,6 @@ const availableMetadata = {
 
 const server = setupServer();
 
-beforeAll(() => {
-	server.listen();
-});
-
-afterEach(() => {
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
-
 const renderPanel = (metadataAvailable = true) => {
 	const testStore = createStore();
 	onTestFinished(() => {
@@ -64,20 +52,32 @@ const renderPanel = (metadataAvailable = true) => {
 	);
 };
 
-describe("MetadataPanel", () => {
-	test("renders nothing when metadata is unavailable", () => {
+describe(MetadataPanel, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("renders nothing when metadata is unavailable", () => {
 		renderPanel(false);
 
 		expect(screen.queryByRole("button", { name: /show more info/i })).not.toBeInTheDocument();
 	});
 
-	test("renders 'Show more info' button in collapsed state", () => {
+	it("renders 'Show more info' button in collapsed state", () => {
 		renderPanel();
 
 		expect(screen.getByRole("button", { name: /show more info/i })).toBeInTheDocument();
 	});
 
-	test("fetches and displays metadata when expanded", async () => {
+	it("fetches and displays metadata when expanded", async () => {
 		server.use(
 			http.get("/api/metadata/:recommendationId", () => HttpResponse.json(availableMetadata)),
 		);
@@ -85,9 +85,9 @@ describe("MetadataPanel", () => {
 
 		await userEvent.click(screen.getByRole("button", { name: /show more info/i }));
 
-		expect(
-			await screen.findByText(/A young blade runner's discovery of a long-buried secret/i),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/A young blade runner's discovery of a long-buried secret/i),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText("Science Fiction")).toBeInTheDocument();
 		expect(screen.getByText("Drama")).toBeInTheDocument();
 		expect(screen.getByText(/Rating: 7\.5 \| Released/)).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe("MetadataPanel", () => {
 		);
 	});
 
-	test("shows cast and crew when toggle is clicked", async () => {
+	it("shows cast and crew when toggle is clicked", async () => {
 		server.use(
 			http.get("/api/metadata/:recommendationId", () => HttpResponse.json(availableMetadata)),
 		);
@@ -112,7 +112,7 @@ describe("MetadataPanel", () => {
 		expect(screen.getByText(/Denis Villeneuve \(Director\)/)).toBeInTheDocument();
 	});
 
-	test("renders empty-state message when API reports available: false", async () => {
+	it("renders empty-state message when API reports available: false", async () => {
 		server.use(
 			http.get("/api/metadata/:recommendationId", () => HttpResponse.json({ available: false })),
 		);
@@ -120,10 +120,10 @@ describe("MetadataPanel", () => {
 
 		await userEvent.click(screen.getByRole("button", { name: /show more info/i }));
 
-		expect(await screen.findByText(/No additional info available/i)).toBeInTheDocument();
+		await expect(screen.findByText(/No additional info available/i)).resolves.toBeInTheDocument();
 	});
 
-	test("renders empty-state message when upstream provider returns 502", async () => {
+	it("renders empty-state message when upstream provider returns 502", async () => {
 		server.use(
 			http.get("/api/metadata/:recommendationId", () =>
 				HttpResponse.json({ error: "Metadata provider unavailable" }, { status: 502 }),
@@ -133,6 +133,6 @@ describe("MetadataPanel", () => {
 
 		await userEvent.click(screen.getByRole("button", { name: /show more info/i }));
 
-		expect(await screen.findByText(/No additional info available/i)).toBeInTheDocument();
+		await expect(screen.findByText(/No additional info available/i)).resolves.toBeInTheDocument();
 	});
 });

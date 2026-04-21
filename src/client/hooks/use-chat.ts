@@ -25,9 +25,9 @@ export const useChat = () => {
 	// Local state; prevents the hydration effect from clobbering fresh local
 	// State after handleSend pushes a new URL it just produced itself.
 	const hydratedIdRef = useRef<string | undefined>(undefined);
-	const [mediaType, handleMediaTypeChange] = useState<MediaType>("any");
-	const [libraryId, handleLibraryIdChange] = useState("");
-	const [resultCount, handleResultCountChange] = useState(DEFAULT_RESULT_COUNT);
+	const [mediaType, setMediaType] = useState<MediaType>("any");
+	const [libraryId, setLibraryId] = useState("");
+	const [resultCount, setResultCount] = useState(DEFAULT_RESULT_COUNT);
 	const [excludeLibrary, setExcludeLibrary] = useState<boolean | undefined>(undefined);
 	const [sendChatMessage, { isLoading }] = useSendChatMessageMutation();
 	const { data: libraryStatus } = useGetLibraryStatusQuery();
@@ -134,11 +134,11 @@ export const useChat = () => {
 		isLoading,
 		conversationId,
 		mediaType,
-		handleMediaTypeChange,
+		handleMediaTypeChange: setMediaType,
 		libraryId,
-		handleLibraryIdChange,
+		handleLibraryIdChange: setLibraryId,
 		resultCount,
-		handleResultCountChange,
+		handleResultCountChange: setResultCount,
 		excludeLibrary: resolvedExclude,
 		handleExcludeLibraryChange,
 		handleNewConversation,

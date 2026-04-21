@@ -1,11 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
+import { describe, expect, onTestFinished, it, vi } from "vite-plus/test";
 
 import { ChatInput } from "../ChatInput.tsx";
 
 const renderInput = (isLoading = false) => {
-	const onSend = vi.fn();
+	const onSend = vi.fn<(message: string) => void>();
 
 	onTestFinished(cleanup);
 
@@ -14,26 +14,26 @@ const renderInput = (isLoading = false) => {
 	return { onSend };
 };
 
-describe("ChatInput", () => {
-	test("renders the text input with placeholder", () => {
+describe(ChatInput, () => {
+	it("renders the text input with placeholder", () => {
 		renderInput();
 
 		expect(screen.getByRole("textbox", { name: /ask for recommendations/i })).toBeInTheDocument();
 	});
 
-	test("renders send button", () => {
+	it("renders send button", () => {
 		renderInput();
 
 		expect(screen.getByRole("button", { name: /send/i })).toBeInTheDocument();
 	});
 
-	test("disables send button when input is empty", () => {
+	it("disables send button when input is empty", () => {
 		renderInput();
 
 		expect(screen.getByRole("button", { name: /send/i })).toBeDisabled();
 	});
 
-	test("enables send button when text is entered", async () => {
+	it("enables send button when text is entered", async () => {
 		renderInput();
 		const user = userEvent.setup();
 
@@ -42,7 +42,7 @@ describe("ChatInput", () => {
 		expect(screen.getByRole("button", { name: /send/i })).toBeEnabled();
 	});
 
-	test("calls onSend with trimmed text when send is clicked", async () => {
+	it("calls onSend with trimmed text when send is clicked", async () => {
 		const { onSend } = renderInput();
 		const user = userEvent.setup();
 
@@ -55,18 +55,20 @@ describe("ChatInput", () => {
 		expect(onSend).toHaveBeenCalledWith("hello world");
 	});
 
-	test("clears input after sending", async () => {
+	it("clears input after sending", async () => {
 		renderInput();
 		const user = userEvent.setup();
 
-		const input = screen.getByRole("textbox", { name: /ask for recommendations/i });
+		const input = screen.getByRole("textbox", {
+			name: /ask for recommendations/i,
+		});
 		await user.type(input, "test message");
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
 		expect(input).toHaveValue("");
 	});
 
-	test("sends on Enter key press", async () => {
+	it("sends on Enter key press", async () => {
 		const { onSend } = renderInput();
 		const user = userEvent.setup();
 
@@ -78,7 +80,7 @@ describe("ChatInput", () => {
 		expect(onSend).toHaveBeenCalledWith("enter test");
 	});
 
-	test("does not send on Shift+Enter", async () => {
+	it("does not send on Shift+Enter", async () => {
 		const { onSend } = renderInput();
 		const user = userEvent.setup();
 
@@ -90,7 +92,7 @@ describe("ChatInput", () => {
 		expect(onSend).not.toHaveBeenCalled();
 	});
 
-	test("does not send empty or whitespace-only messages", async () => {
+	it("does not send empty or whitespace-only messages", async () => {
 		const { onSend } = renderInput();
 		const user = userEvent.setup();
 
@@ -102,19 +104,19 @@ describe("ChatInput", () => {
 		expect(onSend).not.toHaveBeenCalled();
 	});
 
-	test("disables input when isLoading is true", () => {
+	it("disables input when isLoading is true", () => {
 		renderInput(true);
 
 		expect(screen.getByRole("textbox", { name: /ask for recommendations/i })).toBeDisabled();
 	});
 
-	test("shows thinking text when loading", () => {
+	it("shows thinking text when loading", () => {
 		renderInput(true);
 
 		expect(screen.getByRole("button", { name: /thinking/i })).toBeInTheDocument();
 	});
 
-	test("renders genre chips", () => {
+	it("renders genre chips", () => {
 		renderInput();
 
 		expect(screen.getByRole("button", { name: "action" })).toBeInTheDocument();
@@ -128,7 +130,7 @@ describe("ChatInput", () => {
 		expect(screen.getByRole("button", { name: "animation" })).toBeInTheDocument();
 	});
 
-	test("renders suggestion chips", () => {
+	it("renders suggestion chips", () => {
 		renderInput();
 
 		expect(screen.getByRole("button", { name: "more from this director" })).toBeInTheDocument();
@@ -136,7 +138,7 @@ describe("ChatInput", () => {
 		expect(screen.getByRole("button", { name: "this film style" })).toBeInTheDocument();
 	});
 
-	test("calls onSend when a genre chip is clicked", async () => {
+	it("calls onSend when a genre chip is clicked", async () => {
 		const { onSend } = renderInput();
 		const user = userEvent.setup();
 
@@ -145,7 +147,7 @@ describe("ChatInput", () => {
 		expect(onSend).toHaveBeenCalledWith("horror");
 	});
 
-	test("calls onSend when a suggestion chip is clicked", async () => {
+	it("calls onSend when a suggestion chip is clicked", async () => {
 		const { onSend } = renderInput();
 		const user = userEvent.setup();
 
@@ -154,7 +156,7 @@ describe("ChatInput", () => {
 		expect(onSend).toHaveBeenCalledWith("similar actors");
 	});
 
-	test("renders section labels", () => {
+	it("renders section labels", () => {
 		renderInput();
 
 		expect(screen.getByText("Genres")).toBeInTheDocument();

@@ -10,7 +10,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 } from "vite-plus/test";
 import { Router } from "wouter";
 
@@ -19,18 +19,6 @@ import { createStore } from "../../store.ts";
 import { Register } from "../Register.tsx";
 
 const server = setupServer();
-
-beforeAll(() => {
-	server.listen();
-});
-
-afterEach(() => {
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
 
 const renderRegister = () => {
 	const testStore = createStore();
@@ -51,8 +39,20 @@ const renderRegister = () => {
 	return { store: testStore };
 };
 
-describe("Register", () => {
-	test("renders the registration form with heading, inputs, and button", () => {
+describe(Register, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("renders the registration form with heading, inputs, and button", () => {
 		renderRegister();
 
 		expect(screen.getByRole("heading", { name: /register/i })).toBeInTheDocument();
@@ -62,7 +62,7 @@ describe("Register", () => {
 		expect(screen.getByRole("button", { name: /register/i })).toBeInTheDocument();
 	});
 
-	test("allows typing into all fields", async () => {
+	it("allows typing into all fields", async () => {
 		renderRegister();
 		const user = userEvent.setup();
 
@@ -79,7 +79,7 @@ describe("Register", () => {
 		expect(confirmInput).toHaveValue("secret123");
 	});
 
-	test("shows validation error when passwords do not match", async () => {
+	it("shows validation error when passwords do not match", async () => {
 		renderRegister();
 		const user = userEvent.setup();
 
@@ -92,7 +92,7 @@ describe("Register", () => {
 		expect(alert).toHaveTextContent(/passwords do not match/i);
 	});
 
-	test("shows error when username is already taken", async () => {
+	it("shows error when username is already taken", async () => {
 		const conflictStatus = 409;
 		server.use(
 			http.post("/api/auth/register", () =>
@@ -112,7 +112,7 @@ describe("Register", () => {
 		expect(alert).toHaveTextContent(/username already taken/i);
 	});
 
-	test("shows generic error on server failure", async () => {
+	it("shows generic error on server failure", async () => {
 		server.use(http.post("/api/auth/register", () => HttpResponse.error()));
 
 		renderRegister();
@@ -127,14 +127,14 @@ describe("Register", () => {
 		expect(alert).toHaveTextContent(/registration failed/i);
 	});
 
-	test("submit button has correct type", () => {
+	it("submit button has correct type", () => {
 		renderRegister();
 
 		const button = screen.getByRole("button", { name: /register/i });
 		expect(button).toHaveAttribute("type", "submit");
 	});
 
-	test("has link to login page", () => {
+	it("has link to login page", () => {
 		renderRegister();
 
 		expect(screen.getByRole("link", { name: /log in/i })).toBeInTheDocument();

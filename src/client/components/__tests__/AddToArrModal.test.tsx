@@ -10,7 +10,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 } from "vite-plus/test";
 
 import { api } from "../../api.ts";
@@ -56,18 +56,6 @@ const server = setupServer(
 	http.post("/api/arr/add", () => HttpResponse.json({ success: true })),
 );
 
-beforeAll(() => {
-	server.listen();
-});
-
-afterEach(() => {
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
-
 interface RenderModalOptions {
 	isOpen?: boolean;
 	onClose?: () => void;
@@ -96,45 +84,61 @@ const renderModal = (options: RenderModalOptions = {}) => {
 	return { testStore };
 };
 
-describe("AddToArrModal", () => {
-	test("shows loading state while lookup is in progress", async () => {
+describe(AddToArrModal, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("shows loading state while lookup is in progress", async () => {
 		// oxlint-disable-next-line promise/avoid-new
 		server.use(http.post("/api/arr/lookup", () => new Promise(() => {})));
 
 		renderModal();
 
-		expect(await screen.findByText(/searching/i)).toBeInTheDocument();
+		await expect(screen.findByText(/searching/i)).resolves.toBeInTheDocument();
 	});
 
-	test("displays lookup results after loading", async () => {
+	it("displays lookup results after loading", async () => {
 		renderModal();
 
-		const results = await screen.findByRole("list", { name: /search results/i });
+		const results = await screen.findByRole("list", {
+			name: /search results/i,
+		});
 		expect(within(results).getByText("Die Hard")).toBeInTheDocument();
 		expect(within(results).getByText("Die Hard 2")).toBeInTheDocument();
 	});
 
-	test("shows Already in library badge for existing items", async () => {
+	it("shows Already in library badge for existing items", async () => {
 		renderModal();
 
 		await screen.findByRole("list", { name: /search results/i });
 		expect(screen.getByText("Already in library")).toBeInTheDocument();
 	});
 
-	test("selecting a result shows root folder and quality profile dropdowns", async () => {
+	it("selecting a result shows root folder and quality profile dropdowns", async () => {
 		renderModal();
 		const user = userEvent.setup();
 
 		await screen.findByRole("list", { name: /search results/i });
 
-		const resultButton = screen.getByRole("button", { name: /Die Hard.*1988/i });
+		const resultButton = screen.getByRole("button", {
+			name: /Die Hard.*1988/i,
+		});
 		await user.click(resultButton);
 
-		expect(await screen.findByLabelText(/root folder/i)).toBeInTheDocument();
+		await expect(screen.findByLabelText(/root folder/i)).resolves.toBeInTheDocument();
 		expect(screen.getByLabelText(/quality profile/i)).toBeInTheDocument();
 	});
 
-	test("disables selection of items already in library", async () => {
+	it("disables selection of items already in library", async () => {
 		renderModal();
 		const user = userEvent.setup();
 
@@ -146,15 +150,15 @@ describe("AddToArrModal", () => {
 		expect(screen.queryByLabelText(/root folder/i)).not.toBeInTheDocument();
 	});
 
-	test("shows No matches found when lookup returns empty array", async () => {
+	it("shows No matches found when lookup returns empty array", async () => {
 		server.use(http.post("/api/arr/lookup", () => HttpResponse.json([])));
 
 		renderModal();
 
-		expect(await screen.findByText(/no matches found/i)).toBeInTheDocument();
+		await expect(screen.findByText(/no matches found/i)).resolves.toBeInTheDocument();
 	});
 
-	test("shows error on lookup failure", async () => {
+	it("shows error on lookup failure", async () => {
 		server.use(
 			http.post("/api/arr/lookup", () =>
 				HttpResponse.json({ error: "Not found" }, { status: 500 }),
@@ -163,10 +167,10 @@ describe("AddToArrModal", () => {
 
 		renderModal();
 
-		expect(await screen.findByText(/search failed/i)).toBeInTheDocument();
+		await expect(screen.findByText(/search failed/i)).resolves.toBeInTheDocument();
 	});
 
-	test("calls addToArr and closes on successful add", async () => {
+	it("calls addToArr and closes on successful add", async () => {
 		let isClosed = false;
 		const handleClose = () => {
 			isClosed = true;
@@ -191,7 +195,7 @@ describe("AddToArrModal", () => {
 		expect(isClosed).toBe(true);
 	});
 
-	test("shows error on failed add and keeps modal open", async () => {
+	it("shows error on failed add and keeps modal open", async () => {
 		server.use(
 			http.post("/api/arr/add", () =>
 				HttpResponse.json({ success: false, error: "Already exists" }),
@@ -217,7 +221,7 @@ describe("AddToArrModal", () => {
 
 		await user.click(screen.getByRole("button", { name: /^add$/i }));
 
-		expect(await screen.findByText(/already exists/i)).toBeInTheDocument();
+		await expect(screen.findByText(/already exists/i)).resolves.toBeInTheDocument();
 		expect(isClosed).toBe(false);
 	});
 });

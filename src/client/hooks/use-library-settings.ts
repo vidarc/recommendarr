@@ -17,7 +17,7 @@ export const useLibrarySettings = () => {
 	const [syncLibrary, { isLoading: isSyncing }] = useSyncLibraryMutation();
 	const [updateSettings, { isLoading: isSaving }] = useUpdateLibrarySettingsMutation();
 
-	const [interval, setSyncInterval] = useState<LibrarySyncInterval>(DEFAULT_INTERVAL);
+	const [syncInterval, setSyncInterval] = useState<LibrarySyncInterval>(DEFAULT_INTERVAL);
 	const [excludeDefault, setExcludeDefault] = useState(false);
 	const [syncResult, setSyncResult] = useState("");
 
@@ -52,12 +52,12 @@ export const useLibrarySettings = () => {
 	}, [syncLibrary]);
 
 	const handleSave = useCallback(async () => {
-		await updateSettings({ interval, excludeDefault });
-	}, [updateSettings, interval, excludeDefault]);
+		await updateSettings({ interval: syncInterval, excludeDefault });
+	}, [updateSettings, syncInterval, excludeDefault]);
 
 	return {
 		status,
-		interval,
+		interval: syncInterval,
 		excludeDefault,
 		syncResult,
 		isSyncing,

@@ -2,7 +2,16 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Provider } from "react-redux";
-import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from "vite-plus/test";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	onTestFinished,
+	vi,
+} from "vite-plus/test";
 import { Router } from "wouter";
 
 import { api } from "../api.ts";
@@ -11,11 +20,11 @@ import { createStore } from "../store.ts";
 
 // Mock heavy page components to avoid Node 24 libuv crash
 // When rendering large Linaria-styled components multiple times in happy-dom
-vi.mock("../pages/Settings.tsx", () => ({
+vi.mock(import("../pages/Settings.tsx"), () => ({
 	Settings: () => <div>Settings Mock</div>,
 }));
 
-vi.mock("../pages/Recommendations.tsx", () => ({
+vi.mock(import("../pages/Recommendations.tsx"), () => ({
 	Recommendations: () => (
 		<div>
 			<h1>Recommendations</h1>
@@ -25,26 +34,17 @@ vi.mock("../pages/Recommendations.tsx", () => ({
 
 const server = setupServer();
 
-beforeAll(() => {
-	server.listen();
-});
-
-afterEach(() => {
-	cleanup();
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
-
 const setupStatusHandler = (needsSetup = false) =>
 	http.get("/api/auth/setup-status", () => HttpResponse.json({ needsSetup }));
 
 const meHandler = (authenticated = false) =>
 	http.get("/api/auth/me", () => {
 		if (authenticated) {
-			return HttpResponse.json({ id: "1", username: "testuser", isAdmin: false });
+			return HttpResponse.json({
+				id: "1",
+				username: "testuser",
+				isAdmin: false,
+			});
 		}
 		const unauthorizedStatus = 401;
 		return HttpResponse.json({ error: "Unauthorized" }, { status: unauthorizedStatus });
@@ -64,37 +64,69 @@ const renderApp = (path = "/") => {
 	return { store: testStore };
 };
 
-describe("App", () => {
-	test("redirects to login when not authenticated", async () => {
+describe(App, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	afterEach(() => {
+		cleanup();
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("redirects to login when not authenticated", async () => {
 		server.use(setupStatusHandler(), meHandler(false));
-		const { store } = renderApp("/");
-		await waitFor(() => {
-			expect(screen.getByRole("heading", { name: /login/i })).toBeInTheDocument();
+		onTestFinished(() => {
+			store.dispatch(api.util.resetApiState());
 		});
-		store.dispatch(api.util.resetApiState());
+
+		const { store } = renderApp("/");
+
+		const heading = await vi.waitFor(() => screen.getByRole("heading", { name: /login/i }));
+
+		expect(heading).toBeInTheDocument();
 	});
 
-	test("redirects to register when setup is needed", async () => {
+	it("redirects to register when setup is needed", async () => {
 		server.use(setupStatusHandler(true), meHandler(false));
+		onTestFinished(() => {
+			store.dispatch(api.util.resetApiState());
+		});
+
 		const { store } = renderApp("/login");
-		await waitFor(() => {
-			expect(screen.getByRole("heading", { name: /register/i })).toBeInTheDocument();
-		});
-		store.dispatch(api.util.resetApiState());
+
+		const heading = await vi.waitFor(() => screen.getByRole("heading", { name: /register/i }));
+
+		expect(heading).toBeInTheDocument();
 	});
 
-	test("shows recommendations page when authenticated", async () => {
+	it("shows recommendations page when authenticated", async () => {
 		server.use(setupStatusHandler(), meHandler(true));
-		const { store } = renderApp("/");
-		await waitFor(() => {
-			expect(screen.getByRole("heading", { name: /recommendations/i })).toBeInTheDocument();
+		onTestFinished(() => {
+			store.dispatch(api.util.resetApiState());
 		});
-		store.dispatch(api.util.resetApiState());
+
+		const { store } = renderApp("/");
+
+		const heading = await vi.waitFor(() =>
+			screen.getByRole("heading", { name: /recommendations/i }),
+		);
+
+		expect(heading).toBeInTheDocument();
 	});
 
-	test("shows sidebar navigation when authenticated", async () => {
+	it("shows sidebar navigation when authenticated", async () => {
 		server.use(setupStatusHandler(), meHandler(true));
+		onTestFinished(() => {
+			store.dispatch(api.util.resetApiState());
+		});
+
 		const { store } = renderApp("/");
+
 		await waitFor(() => {
 			expect(screen.getByRole("navigation")).toBeInTheDocument();
 		});
@@ -103,15 +135,18 @@ describe("App", () => {
 		expect(within(nav).getByRole("link", { name: /history/i })).toBeInTheDocument();
 		expect(within(nav).getByRole("link", { name: /settings/i })).toBeInTheDocument();
 		expect(within(nav).getByRole("button", { name: /log out/i })).toBeInTheDocument();
-		store.dispatch(api.util.resetApiState());
 	});
 
-	test("redirects authenticated user away from login", async () => {
+	it("redirects authenticated user away from login", async () => {
 		server.use(setupStatusHandler(), meHandler(true));
-		const { store } = renderApp("/login");
-		await waitFor(() => {
-			expect(screen.getByRole("navigation")).toBeInTheDocument();
+		onTestFinished(() => {
+			store.dispatch(api.util.resetApiState());
 		});
-		store.dispatch(api.util.resetApiState());
+
+		const { store } = renderApp("/login");
+
+		const navigation = await vi.waitFor(() => screen.getByRole("navigation"));
+
+		expect(navigation).toBeInTheDocument();
 	});
 });

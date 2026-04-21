@@ -13,7 +13,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 	vi,
 } from "vite-plus/test";
 
@@ -46,8 +46,20 @@ const mockMovieLibraryContents = {
 	MediaContainer: {
 		totalSize: 2,
 		Metadata: [
-			{ title: "The Matrix", type: "movie", year: 1999, ratingKey: "101", Genre: [] },
-			{ title: "Inception", type: "movie", year: 2010, ratingKey: "102", Genre: [] },
+			{
+				title: "The Matrix",
+				type: "movie",
+				year: 1999,
+				ratingKey: "101",
+				Genre: [],
+			},
+			{
+				title: "Inception",
+				type: "movie",
+				year: 2010,
+				ratingKey: "102",
+				Genre: [],
+			},
 		],
 	},
 };
@@ -55,7 +67,15 @@ const mockMovieLibraryContents = {
 const mockShowLibraryContents = {
 	MediaContainer: {
 		totalSize: 1,
-		Metadata: [{ title: "Breaking Bad", type: "show", year: 2008, ratingKey: "201", Genre: [] }],
+		Metadata: [
+			{
+				title: "Breaking Bad",
+				type: "show",
+				year: 2008,
+				ratingKey: "201",
+				Genre: [],
+			},
+		],
 	},
 };
 
@@ -72,18 +92,6 @@ const handlers = [
 ];
 
 const mswServer = setupServer(...handlers);
-
-beforeAll(() => {
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
-
-afterEach(() => {
-	mswServer.resetHandlers();
-});
-
-afterAll(() => {
-	mswServer.close();
-});
 
 const setupDb = async () => {
 	vi.stubEnv("DATABASE_PATH", testDbPath);
@@ -136,175 +144,189 @@ const setupPlexConnection = (app: Awaited<ReturnType<typeof buildServer>>, userI
 		.run();
 };
 
-describe("POST /api/library/sync", () => {
-	test("syncs library and returns counts", async () => {
-		const app = await setupDb();
-		const { sessionId, userId } = await getSessionCookie(app);
-		setupPlexConnection(app, userId);
-
-		const response = await app.inject({
-			method: "POST",
-			url: "/api/library/sync",
-			cookies: { session: sessionId },
-		});
-
-		expect(response.statusCode).toBe(StatusCodes.OK);
-		const body = response.json();
-		expect(body.movieCount).toBe(EXPECTED_MOVIE_COUNT);
-		expect(body.showCount).toBe(EXPECTED_SHOW_COUNT);
-		expect(body.totalCount).toBe(EXPECTED_TOTAL_COUNT);
+describe("library", () => {
+	beforeAll(() => {
+		mswServer.listen({ onUnhandledRequest: "bypass" });
 	});
 
-	test("returns 404 when no Plex connection exists", async () => {
-		const app = await setupDb();
-		const { sessionId } = await getSessionCookie(app);
-
-		const response = await app.inject({
-			method: "POST",
-			url: "/api/library/sync",
-			cookies: { session: sessionId },
-		});
-
-		expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
+	afterEach(() => {
+		mswServer.resetHandlers();
 	});
 
-	test("returns 401 without session", async () => {
-		const app = await setupDb();
-
-		const response = await app.inject({
-			method: "POST",
-			url: "/api/library/sync",
-		});
-
-		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
-	});
-});
-
-describe("GET /api/library/status", () => {
-	test("returns defaults for new user with no settings", async () => {
-		const app = await setupDb();
-		const { sessionId } = await getSessionCookie(app);
-
-		const response = await app.inject({
-			method: "GET",
-			url: "/api/library/status",
-			cookies: { session: sessionId },
-		});
-
-		expect(response.statusCode).toBe(StatusCodes.OK);
-		const body = response.json();
-		expect(body.lastSynced).toBeUndefined();
-		expect(body.interval).toBe("manual");
-		expect(body.itemCount).toBe(ZERO);
-		expect(body.movieCount).toBe(ZERO);
-		expect(body.showCount).toBe(ZERO);
-		expect(body.excludeDefault).toBe(true);
+	afterAll(() => {
+		mswServer.close();
 	});
 
-	test("returns updated status after sync", async () => {
-		const app = await setupDb();
-		const { sessionId, userId } = await getSessionCookie(app);
-		setupPlexConnection(app, userId);
+	describe("pOST /api/library/sync", () => {
+		it("syncs library and returns counts", async () => {
+			const app = await setupDb();
+			const { sessionId, userId } = await getSessionCookie(app);
+			setupPlexConnection(app, userId);
 
-		// Perform a sync first
-		await app.inject({
-			method: "POST",
-			url: "/api/library/sync",
-			cookies: { session: sessionId },
+			const response = await app.inject({
+				method: "POST",
+				url: "/api/library/sync",
+				cookies: { session: sessionId },
+			});
+
+			expect(response.statusCode).toBe(StatusCodes.OK);
+			const body = response.json();
+			expect(body.movieCount).toBe(EXPECTED_MOVIE_COUNT);
+			expect(body.showCount).toBe(EXPECTED_SHOW_COUNT);
+			expect(body.totalCount).toBe(EXPECTED_TOTAL_COUNT);
 		});
 
-		const response = await app.inject({
-			method: "GET",
-			url: "/api/library/status",
-			cookies: { session: sessionId },
+		it("returns 404 when no Plex connection exists", async () => {
+			const app = await setupDb();
+			const { sessionId } = await getSessionCookie(app);
+
+			const response = await app.inject({
+				method: "POST",
+				url: "/api/library/sync",
+				cookies: { session: sessionId },
+			});
+
+			expect(response.statusCode).toBe(StatusCodes.NOT_FOUND);
 		});
 
-		expect(response.statusCode).toBe(StatusCodes.OK);
-		const body = response.json();
-		expect(body.lastSynced).not.toBeNull();
-		expect(body.itemCount).toBe(EXPECTED_TOTAL_COUNT);
-		expect(body.movieCount).toBe(EXPECTED_MOVIE_COUNT);
-		expect(body.showCount).toBe(EXPECTED_SHOW_COUNT);
+		it("returns 401 without session", async () => {
+			const app = await setupDb();
+
+			const response = await app.inject({
+				method: "POST",
+				url: "/api/library/sync",
+			});
+
+			expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
+		});
 	});
 
-	test("returns 401 without session", async () => {
-		const app = await setupDb();
+	describe("gET /api/library/status", () => {
+		it("returns defaults for new user with no settings", async () => {
+			const app = await setupDb();
+			const { sessionId } = await getSessionCookie(app);
 
-		const response = await app.inject({
-			method: "GET",
-			url: "/api/library/status",
+			const response = await app.inject({
+				method: "GET",
+				url: "/api/library/status",
+				cookies: { session: sessionId },
+			});
+
+			expect(response.statusCode).toBe(StatusCodes.OK);
+			const body = response.json();
+			expect(body.lastSynced).toBeUndefined();
+			expect(body.interval).toBe("manual");
+			expect(body.itemCount).toBe(ZERO);
+			expect(body.movieCount).toBe(ZERO);
+			expect(body.showCount).toBe(ZERO);
+			expect(body.excludeDefault).toBe(true);
 		});
 
-		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
-	});
-});
+		it("returns updated status after sync", async () => {
+			const app = await setupDb();
+			const { sessionId, userId } = await getSessionCookie(app);
+			setupPlexConnection(app, userId);
 
-describe("PUT /api/library/settings", () => {
-	test("creates settings for new user", async () => {
-		const app = await setupDb();
-		const { sessionId, userId } = await getSessionCookie(app);
+			// Perform a sync first
+			await app.inject({
+				method: "POST",
+				url: "/api/library/sync",
+				cookies: { session: sessionId },
+			});
 
-		const response = await app.inject({
-			method: "PUT",
-			url: "/api/library/settings",
-			cookies: { session: sessionId },
-			payload: { interval: "24h", excludeDefault: false },
+			const response = await app.inject({
+				method: "GET",
+				url: "/api/library/status",
+				cookies: { session: sessionId },
+			});
+
+			expect(response.statusCode).toBe(StatusCodes.OK);
+			const body = response.json();
+			expect(body.lastSynced).not.toBeNull();
+			expect(body.itemCount).toBe(EXPECTED_TOTAL_COUNT);
+			expect(body.movieCount).toBe(EXPECTED_MOVIE_COUNT);
+			expect(body.showCount).toBe(EXPECTED_SHOW_COUNT);
 		});
 
-		expect(response.statusCode).toBe(StatusCodes.OK);
-		expect(response.json()).toStrictEqual({ success: true });
+		it("returns 401 without session", async () => {
+			const app = await setupDb();
 
-		// Verify in DB
-		const settings = app.db
-			.select()
-			.from(userSettings)
-			.where(eq(userSettings.userId, userId))
-			.get();
-		expect(settings?.librarySyncInterval).toBe("24h");
-		expect(settings?.excludeLibraryDefault).toBe(false);
-	});
+			const response = await app.inject({
+				method: "GET",
+				url: "/api/library/status",
+			});
 
-	test("updates existing settings", async () => {
-		const app = await setupDb();
-		const { sessionId, userId } = await getSessionCookie(app);
-
-		// Create initial settings
-		await app.inject({
-			method: "PUT",
-			url: "/api/library/settings",
-			cookies: { session: sessionId },
-			payload: { interval: "6h", excludeDefault: true },
+			expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
 		});
-
-		// Update settings
-		const response = await app.inject({
-			method: "PUT",
-			url: "/api/library/settings",
-			cookies: { session: sessionId },
-			payload: { interval: "7d", excludeDefault: false },
-		});
-
-		expect(response.statusCode).toBe(StatusCodes.OK);
-
-		// Verify updated values in DB
-		const settings = app.db
-			.select()
-			.from(userSettings)
-			.where(eq(userSettings.userId, userId))
-			.get();
-		expect(settings?.librarySyncInterval).toBe("7d");
-		expect(settings?.excludeLibraryDefault).toBe(false);
 	});
 
-	test("returns 401 without session", async () => {
-		const app = await setupDb();
+	describe("pUT /api/library/settings", () => {
+		it("creates settings for new user", async () => {
+			const app = await setupDb();
+			const { sessionId, userId } = await getSessionCookie(app);
 
-		const response = await app.inject({
-			method: "PUT",
-			url: "/api/library/settings",
-			payload: { interval: "24h", excludeDefault: true },
+			const response = await app.inject({
+				method: "PUT",
+				url: "/api/library/settings",
+				cookies: { session: sessionId },
+				payload: { interval: "24h", excludeDefault: false },
+			});
+
+			expect(response.statusCode).toBe(StatusCodes.OK);
+			expect(response.json()).toStrictEqual({ success: true });
+
+			// Verify in DB
+			const settings = app.db
+				.select()
+				.from(userSettings)
+				.where(eq(userSettings.userId, userId))
+				.get();
+			expect(settings?.librarySyncInterval).toBe("24h");
+			expect(settings?.excludeLibraryDefault).toBe(false);
 		});
 
-		expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
+		it("updates existing settings", async () => {
+			const app = await setupDb();
+			const { sessionId, userId } = await getSessionCookie(app);
+
+			// Create initial settings
+			await app.inject({
+				method: "PUT",
+				url: "/api/library/settings",
+				cookies: { session: sessionId },
+				payload: { interval: "6h", excludeDefault: true },
+			});
+
+			// Update settings
+			const response = await app.inject({
+				method: "PUT",
+				url: "/api/library/settings",
+				cookies: { session: sessionId },
+				payload: { interval: "7d", excludeDefault: false },
+			});
+
+			expect(response.statusCode).toBe(StatusCodes.OK);
+
+			// Verify updated values in DB
+			const settings = app.db
+				.select()
+				.from(userSettings)
+				.where(eq(userSettings.userId, userId))
+				.get();
+			expect(settings?.librarySyncInterval).toBe("7d");
+			expect(settings?.excludeLibraryDefault).toBe(false);
+		});
+
+		it("returns 401 without session", async () => {
+			const app = await setupDb();
+
+			const response = await app.inject({
+				method: "PUT",
+				url: "/api/library/settings",
+				payload: { interval: "24h", excludeDefault: true },
+			});
+
+			expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
+		});
 	});
 });

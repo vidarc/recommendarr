@@ -10,7 +10,7 @@ import {
 	describe,
 	expect,
 	onTestFinished,
-	test,
+	it,
 } from "vite-plus/test";
 
 import { api } from "../../../api.ts";
@@ -24,18 +24,6 @@ const server = setupServer(
 		HttpResponse.json({ error: "Not found" }, { status: notFoundStatus }),
 	),
 );
-
-beforeAll(() => {
-	server.listen();
-});
-
-afterEach(() => {
-	server.resetHandlers();
-});
-
-afterAll(() => {
-	server.close();
-});
 
 const renderTab = () => {
 	const testStore = createStore();
@@ -54,14 +42,26 @@ const renderTab = () => {
 	return { store: testStore };
 };
 
-describe("AiTab", () => {
-	test("renders the AI configuration heading", () => {
+describe(AiTab, () => {
+	beforeAll(() => {
+		server.listen();
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	afterAll(() => {
+		server.close();
+	});
+
+	it("renders the AI configuration heading", () => {
 		renderTab();
 
 		expect(screen.getByRole("heading", { name: /ai configuration/i })).toBeInTheDocument();
 	});
 
-	test("renders endpoint, API key, and model name fields", () => {
+	it("renders endpoint, API key, and model name fields", () => {
 		renderTab();
 
 		expect(screen.getByLabelText(/endpoint url/i)).toBeInTheDocument();
@@ -69,13 +69,13 @@ describe("AiTab", () => {
 		expect(screen.getByLabelText(/model name/i)).toBeInTheDocument();
 	});
 
-	test("renders save button", () => {
+	it("renders save button", () => {
 		renderTab();
 
 		expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
 	});
 
-	test("allows typing in endpoint URL field", async () => {
+	it("allows typing in endpoint URL field", async () => {
 		renderTab();
 		const user = userEvent.setup();
 
@@ -85,7 +85,7 @@ describe("AiTab", () => {
 		expect(input).toHaveValue("https://api.openai.com/v1");
 	});
 
-	test("allows typing in API key field", async () => {
+	it("allows typing in API key field", async () => {
 		renderTab();
 		const user = userEvent.setup();
 
@@ -95,7 +95,7 @@ describe("AiTab", () => {
 		expect(input).toHaveValue("sk-test123");
 	});
 
-	test("shows advanced settings when toggled", async () => {
+	it("shows advanced settings when toggled", async () => {
 		renderTab();
 		const user = userEvent.setup();
 
@@ -107,7 +107,7 @@ describe("AiTab", () => {
 		expect(screen.getByLabelText(/max tokens/i)).toBeInTheDocument();
 	});
 
-	test("hides advanced settings when toggled back", async () => {
+	it("hides advanced settings when toggled back", async () => {
 		renderTab();
 		const user = userEvent.setup();
 
@@ -118,7 +118,7 @@ describe("AiTab", () => {
 		expect(screen.queryByLabelText(/temperature/i)).not.toBeInTheDocument();
 	});
 
-	test("populates fields when config is loaded", async () => {
+	it("populates fields when config is loaded", async () => {
 		const defaultTemperature = 0.8;
 		const defaultMaxTokens = 2048;
 
@@ -136,11 +136,11 @@ describe("AiTab", () => {
 
 		renderTab();
 
-		expect(await screen.findByDisplayValue("https://api.example.com")).toBeInTheDocument();
+		await expect(screen.findByDisplayValue("https://api.example.com")).resolves.toBeInTheDocument();
 		expect(screen.getByDisplayValue("gpt-4")).toBeInTheDocument();
 	});
 
-	test("shows test and remove buttons when config exists", async () => {
+	it("shows test and remove buttons when config exists", async () => {
 		server.use(
 			http.get("/api/ai/config", () =>
 				HttpResponse.json({
@@ -155,11 +155,13 @@ describe("AiTab", () => {
 
 		renderTab();
 
-		expect(await screen.findByRole("button", { name: /test connection/i })).toBeInTheDocument();
+		await expect(
+			screen.findByRole("button", { name: /test connection/i }),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /remove/i })).toBeInTheDocument();
 	});
 
-	test("shows success message after successful test", async () => {
+	it("shows success message after successful test", async () => {
 		server.use(
 			http.get("/api/ai/config", () =>
 				HttpResponse.json({
@@ -176,13 +178,15 @@ describe("AiTab", () => {
 		renderTab();
 		const user = userEvent.setup();
 
-		const testButton = await screen.findByRole("button", { name: /test connection/i });
+		const testButton = await screen.findByRole("button", {
+			name: /test connection/i,
+		});
 		await user.click(testButton);
 
-		expect(await screen.findByText(/connection successful/i)).toBeInTheDocument();
+		await expect(screen.findByText(/connection successful/i)).resolves.toBeInTheDocument();
 	});
 
-	test("shows error message after failed test", async () => {
+	it("shows error message after failed test", async () => {
 		server.use(
 			http.get("/api/ai/config", () =>
 				HttpResponse.json({
@@ -201,9 +205,11 @@ describe("AiTab", () => {
 		renderTab();
 		const user = userEvent.setup();
 
-		const testButton = await screen.findByRole("button", { name: /test connection/i });
+		const testButton = await screen.findByRole("button", {
+			name: /test connection/i,
+		});
 		await user.click(testButton);
 
-		expect(await screen.findByText(/invalid api key/i)).toBeInTheDocument();
+		await expect(screen.findByText(/invalid api key/i)).resolves.toBeInTheDocument();
 	});
 });

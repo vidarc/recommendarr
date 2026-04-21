@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { eq } from "drizzle-orm";
-import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
+import { describe, expect, onTestFinished, it, vi } from "vite-plus/test";
 
 import { buildServer } from "../app.ts";
 import { settings } from "../schema.ts";
@@ -31,7 +31,7 @@ const setupDb = async () => {
 };
 
 describe("database plugin", () => {
-	test("initializes database and creates tables", async () => {
+	it("initializes database and creates tables", async () => {
 		const app = await setupDb();
 
 		const rows = app.sqlite
@@ -42,21 +42,21 @@ describe("database plugin", () => {
 		expect(rows).toHaveLength(expectedTableCount);
 	});
 
-	test("enables WAL journal mode", async () => {
+	it("enables WAL journal mode", async () => {
 		const app = await setupDb();
 
 		const result = app.sqlite.pragma("journal_mode");
-		expect(result).toEqual([{ journal_mode: "wal" }]);
+		expect(result).toStrictEqual([{ journal_mode: "wal" }]);
 	});
 
-	test("seeds default app_version setting", async () => {
+	it("seeds default app_version setting", async () => {
 		const app = await setupDb();
 
 		const rows = app.db.select().from(settings).where(eq(settings.key, "app_version")).all();
 		expect(rows[firstIndex]?.value).toBe("1.0.0");
 	});
 
-	test("does not overwrite existing app_version on restart", async () => {
+	it("does not overwrite existing app_version on restart", async () => {
 		const restartDbPath = join(testDbDir, "restart.db");
 		vi.stubEnv("DATABASE_PATH", restartDbPath);
 		vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
@@ -87,7 +87,7 @@ describe("database plugin", () => {
 		expect(rows[firstIndex]?.value).toBe("2.0.0");
 	});
 
-	test("creates data directory if it does not exist", async () => {
+	it("creates data directory if it does not exist", async () => {
 		const nestedDir = join(tmpdir(), "recommendarr-test-nested", "deep");
 		const nestedPath = join(nestedDir, "test.db");
 		vi.stubEnv("DATABASE_PATH", nestedPath);
@@ -105,7 +105,7 @@ describe("database plugin", () => {
 		expect(existsSync(nestedPath)).toBe(true);
 	});
 
-	test("closes database on server close", async () => {
+	it("closes database on server close", async () => {
 		vi.stubEnv("DATABASE_PATH", testDbPath);
 		vi.stubEnv("ENCRYPTION_KEY", "a".repeat(HEX_KEY_LENGTH));
 		const app = await buildServer({ skipSSR: true });

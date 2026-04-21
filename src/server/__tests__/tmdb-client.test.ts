@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from "vite-plus/test";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 
 import { getMovieById, getMovieCredits, searchMovie } from "../services/tmdb-client.ts";
 
@@ -96,71 +96,72 @@ const handlers = [
 
 const mswServer = setupServer(...handlers);
 
-beforeAll(() => {
-	vi.stubEnv("TMDB_API_KEY", MOCK_API_KEY);
-	mswServer.listen({ onUnhandledRequest: "bypass" });
-});
-
-afterEach(() => {
-	mswServer.resetHandlers();
-});
-
-afterAll(() => {
-	mswServer.close();
-	vi.unstubAllEnvs();
-});
-
-describe("searchMovie", () => {
-	test("returns normalized metadata for a search result", async () => {
-		const results = await searchMovie("Inception", INCEPTION_YEAR);
-		expect(results.length).toBeGreaterThan(FIRST);
-		const result = results[FIRST];
-		expect(result?.title).toBe("Inception");
-		expect(result?.externalId).toBe(INCEPTION_TMDB_ID);
-		expect(result?.source).toBe("tmdb");
-		expect(result?.posterUrl).toContain("qmDpIHrmpJINaRKAfWQfftjCdyi.jpg");
+describe("tmdb-client", () => {
+	beforeAll(() => {
+		vi.stubEnv("TMDB_API_KEY", MOCK_API_KEY);
+		mswServer.listen({ onUnhandledRequest: "bypass" });
 	});
 
-	test("returns empty array when no results", async () => {
-		mswServer.use(
-			http.get(`${TMDB_API_BASE}/search/movie`, () => HttpResponse.json({ results: [] })),
-		);
-		const results = await searchMovie("Nonexistent Movie 12345");
-		expect(results).toEqual([]);
-	});
-});
-
-describe("getMovieById", () => {
-	test("returns full metadata for a movie", async () => {
-		const result = await getMovieById(INCEPTION_TMDB_ID);
-		expect(result).toBeDefined();
-		expect(result?.title).toBe("Inception");
-		expect(result?.genres).toContain("Action");
-		expect(result?.genres).toContain("Science Fiction");
-		expect(result?.rating).toBe(VOTE_AVERAGE);
-		expect(result?.source).toBe("tmdb");
-		expect(result?.status).toBe("Released");
+	afterEach(() => {
+		mswServer.resetHandlers();
 	});
 
-	test("returns undefined for 404", async () => {
-		mswServer.use(
-			// oxlint-disable-next-line unicorn/no-null -- HttpResponse requires null for empty body
-			http.get(`${TMDB_API_BASE}/movie/*`, () => new HttpResponse(null, { status: 404 })),
-		);
-		const result = await getMovieById(UNKNOWN_MOVIE_ID);
-		expect(result).toBeUndefined();
+	afterAll(() => {
+		mswServer.close();
+		vi.unstubAllEnvs();
 	});
-});
 
-describe("getMovieCredits", () => {
-	test("returns cast and crew limited to configured maximums", async () => {
-		const result = await getMovieCredits(INCEPTION_TMDB_ID);
-		expect(result).toBeDefined();
-		expect(result?.cast.length).toBeLessThanOrEqual(CAST_LIMIT);
-		expect(result?.crew.length).toBeLessThanOrEqual(CREW_LIMIT);
-		expect(result?.cast[FIRST]?.name).toBe("Leonardo DiCaprio");
-		expect(result?.cast[FIRST]?.character).toBe("Cobb");
-		expect(result?.crew[FIRST]?.name).toBe("Christopher Nolan");
-		expect(result?.crew[FIRST]?.role).toBe("Director");
+	describe(searchMovie, () => {
+		it("returns normalized metadata for a search result", async () => {
+			const results = await searchMovie("Inception", INCEPTION_YEAR);
+			expect(results.length).toBeGreaterThan(FIRST);
+			const result = results[FIRST];
+			expect(result?.title).toBe("Inception");
+			expect(result?.externalId).toBe(INCEPTION_TMDB_ID);
+			expect(result?.source).toBe("tmdb");
+			expect(result?.posterUrl).toContain("qmDpIHrmpJINaRKAfWQfftjCdyi.jpg");
+		});
+
+		it("returns empty array when no results", async () => {
+			mswServer.use(
+				http.get(`${TMDB_API_BASE}/search/movie`, () => HttpResponse.json({ results: [] })),
+			);
+			const results = await searchMovie("Nonexistent Movie 12345");
+			expect(results).toStrictEqual([]);
+		});
+	});
+
+	describe(getMovieById, () => {
+		it("returns full metadata for a movie", async () => {
+			const result = await getMovieById(INCEPTION_TMDB_ID);
+			expect(result).toBeDefined();
+			expect(result?.title).toBe("Inception");
+			expect(result?.genres).toContain("Action");
+			expect(result?.genres).toContain("Science Fiction");
+			expect(result?.rating).toBe(VOTE_AVERAGE);
+			expect(result?.source).toBe("tmdb");
+			expect(result?.status).toBe("Released");
+		});
+
+		it("returns undefined for 404", async () => {
+			mswServer.use(
+				http.get(`${TMDB_API_BASE}/movie/*`, () => new HttpResponse(undefined, { status: 404 })),
+			);
+			const result = await getMovieById(UNKNOWN_MOVIE_ID);
+			expect(result).toBeUndefined();
+		});
+	});
+
+	describe(getMovieCredits, () => {
+		it("returns cast and crew limited to configured maximums", async () => {
+			const result = await getMovieCredits(INCEPTION_TMDB_ID);
+			expect(result).toBeDefined();
+			expect(result?.cast.length).toBeLessThanOrEqual(CAST_LIMIT);
+			expect(result?.crew.length).toBeLessThanOrEqual(CREW_LIMIT);
+			expect(result?.cast[FIRST]?.name).toBe("Leonardo DiCaprio");
+			expect(result?.cast[FIRST]?.character).toBe("Cobb");
+			expect(result?.crew[FIRST]?.name).toBe("Christopher Nolan");
+			expect(result?.crew[FIRST]?.role).toBe("Director");
+		});
 	});
 });
