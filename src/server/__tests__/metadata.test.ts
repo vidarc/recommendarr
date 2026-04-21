@@ -198,7 +198,7 @@ const createRecommendation = (
 	return recId;
 };
 
-describe("gET /api/metadata/status", () => {
+describe("metadata", () => {
 	beforeAll(() => {
 		mswServer.listen({ onUnhandledRequest: "bypass" });
 	});
@@ -211,96 +211,98 @@ describe("gET /api/metadata/status", () => {
 		mswServer.close();
 	});
 
-	it("returns availability of both sources", async () => {
-		const { app, sessionId } = await setupDb();
-		const res = await app.inject({
-			method: "GET",
-			url: "/api/metadata/status",
-			cookies: { session: sessionId },
+	describe("gET /api/metadata/status", () => {
+		it("returns availability of both sources", async () => {
+			const { app, sessionId } = await setupDb();
+			const res = await app.inject({
+				method: "GET",
+				url: "/api/metadata/status",
+				cookies: { session: sessionId },
+			});
+			expect(res.statusCode).toBe(StatusCodes.OK);
+			const body = res.json();
+			expect(body.tvdb).toBe(true);
+			expect(body.tmdb).toBe(true);
 		});
-		expect(res.statusCode).toBe(StatusCodes.OK);
-		const body = res.json();
-		expect(body.tvdb).toBe(true);
-		expect(body.tmdb).toBe(true);
-	});
-});
-
-describe("gET /api/metadata/:recommendationId", () => {
-	it("returns TMDB metadata for a movie recommendation with tmdbId", async () => {
-		const { app, sessionId, userId } = await setupDb();
-		const recId = createRecommendation(app, userId, {
-			mediaType: "movie",
-			tmdbId: INCEPTION_TMDB_ID,
-		});
-
-		const res = await app.inject({
-			method: "GET",
-			url: `/api/metadata/${recId}`,
-			cookies: { session: sessionId },
-		});
-		expect(res.statusCode).toBe(StatusCodes.OK);
-		const body = res.json();
-		expect(body.available).toBe(true);
-		expect(body.title).toBe("Inception");
-		expect(body.source).toBe("tmdb");
-		expect(body.cast.length).toBeGreaterThanOrEqual(MIN_CAST_COUNT);
 	});
 
-	it("returns TVDB metadata for a show recommendation via search", async () => {
-		const { app, sessionId, userId } = await setupDb();
-		const recId = createRecommendation(app, userId, {
-			mediaType: "show",
-			title: "Breaking Bad",
+	describe("gET /api/metadata/:recommendationId", () => {
+		it("returns TMDB metadata for a movie recommendation with tmdbId", async () => {
+			const { app, sessionId, userId } = await setupDb();
+			const recId = createRecommendation(app, userId, {
+				mediaType: "movie",
+				tmdbId: INCEPTION_TMDB_ID,
+			});
+
+			const res = await app.inject({
+				method: "GET",
+				url: `/api/metadata/${recId}`,
+				cookies: { session: sessionId },
+			});
+			expect(res.statusCode).toBe(StatusCodes.OK);
+			const body = res.json();
+			expect(body.available).toBe(true);
+			expect(body.title).toBe("Inception");
+			expect(body.source).toBe("tmdb");
+			expect(body.cast.length).toBeGreaterThanOrEqual(MIN_CAST_COUNT);
 		});
 
-		const res = await app.inject({
-			method: "GET",
-			url: `/api/metadata/${recId}`,
-			cookies: { session: sessionId },
-		});
-		expect(res.statusCode).toBe(StatusCodes.OK);
-		const body = res.json();
-		expect(body.available).toBe(true);
-		expect(body.source).toBe("tvdb");
-		expect(body.title).toBe("Breaking Bad");
-	});
+		it("returns TVDB metadata for a show recommendation via search", async () => {
+			const { app, sessionId, userId } = await setupDb();
+			const recId = createRecommendation(app, userId, {
+				mediaType: "show",
+				title: "Breaking Bad",
+			});
 
-	it("returns cached metadata on second request", async () => {
-		const { app, sessionId, userId } = await setupDb();
-		const recId = createRecommendation(app, userId, {
-			mediaType: "movie",
-			tmdbId: INCEPTION_TMDB_ID,
-		});
-
-		// First request populates cache
-		await app.inject({
-			method: "GET",
-			url: `/api/metadata/${recId}`,
-			cookies: { session: sessionId },
+			const res = await app.inject({
+				method: "GET",
+				url: `/api/metadata/${recId}`,
+				cookies: { session: sessionId },
+			});
+			expect(res.statusCode).toBe(StatusCodes.OK);
+			const body = res.json();
+			expect(body.available).toBe(true);
+			expect(body.source).toBe("tvdb");
+			expect(body.title).toBe("Breaking Bad");
 		});
 
-		// Verify cache entry exists
-		const cached = app.db.select().from(metadataCache).all();
-		expect(cached).toHaveLength(ONE_CACHE_ENTRY);
+		it("returns cached metadata on second request", async () => {
+			const { app, sessionId, userId } = await setupDb();
+			const recId = createRecommendation(app, userId, {
+				mediaType: "movie",
+				tmdbId: INCEPTION_TMDB_ID,
+			});
 
-		// Second request should use cache
-		const res = await app.inject({
-			method: "GET",
-			url: `/api/metadata/${recId}`,
-			cookies: { session: sessionId },
-		});
-		expect(res.statusCode).toBe(StatusCodes.OK);
-		expect(res.json().available).toBe(true);
-	});
+			// First request populates cache
+			await app.inject({
+				method: "GET",
+				url: `/api/metadata/${recId}`,
+				cookies: { session: sessionId },
+			});
 
-	it("returns unavailable when recommendation not found", async () => {
-		const { app, sessionId } = await setupDb();
-		const res = await app.inject({
-			method: "GET",
-			url: "/api/metadata/nonexistent-id",
-			cookies: { session: sessionId },
+			// Verify cache entry exists
+			const cached = app.db.select().from(metadataCache).all();
+			expect(cached).toHaveLength(ONE_CACHE_ENTRY);
+
+			// Second request should use cache
+			const res = await app.inject({
+				method: "GET",
+				url: `/api/metadata/${recId}`,
+				cookies: { session: sessionId },
+			});
+			expect(res.statusCode).toBe(StatusCodes.OK);
+			expect(res.json().available).toBe(true);
 		});
-		expect(res.statusCode).toBe(StatusCodes.OK);
-		expect(res.json().available).toBe(false);
+
+		it("returns unavailable when recommendation not found", async () => {
+			const { app, sessionId } = await setupDb();
+			const res = await app.inject({
+				method: "GET",
+				url: "/api/metadata/nonexistent-id",
+				cookies: { session: sessionId },
+			});
+			expect(res.statusCode).toBe(StatusCodes.OK);
+			expect(res.json().available).toBe(false);
+		});
 	});
 });
