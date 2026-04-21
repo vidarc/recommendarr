@@ -22,7 +22,7 @@ for project in chromium firefox webkit; do
 	echo "=== Running e2e tests: $project ==="
 	echo ""
 
-	docker compose -f "$COMPOSE_FILE" up -d --wait
+	docker compose -f "$COMPOSE_FILE" up -d --wait --build
 	cd "$PROJECT_DIR"
 
 	if ! yarn playwright test --project="$project" "$@"; then
