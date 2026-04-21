@@ -19,6 +19,7 @@ import {
 
 import { buildServer } from "../app.ts";
 import { aiConfigs, users } from "../schema.ts";
+import { chatCompletion, testConnection } from "../services/ai-client.ts";
 import { decrypt } from "../services/encryption.ts";
 import { createSession } from "../services/session.ts";
 
@@ -75,18 +76,14 @@ describe("ai", () => {
 
 	// --- AI client tests ---
 
-	describe("chatCompletion", () => {
+	describe(chatCompletion, () => {
 		it("sends request with correct headers and body, returns response content", async () => {
-			const { chatCompletion } = await import("../services/ai-client.ts");
-
 			const result = await chatCompletion(defaultTestConfig, [{ role: "user", content: "Hello" }]);
 
 			expect(result).toBe("Hello! How can I help you?");
 		});
 
 		it("throws on non-ok response", async () => {
-			const { chatCompletion } = await import("../services/ai-client.ts");
-
 			mswServer.use(
 				http.post(
 					`${MOCK_AI_ENDPOINT}/v1/chat/completions`,
@@ -100,8 +97,6 @@ describe("ai", () => {
 		});
 
 		it("throws when response has no content", async () => {
-			const { chatCompletion } = await import("../services/ai-client.ts");
-
 			mswServer.use(
 				http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, () =>
 					HttpResponse.json({ id: "test", choices: [] }),
@@ -114,23 +109,19 @@ describe("ai", () => {
 		});
 	});
 
-	describe("testConnection", () => {
+	describe(testConnection, () => {
 		// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 		const mockRequest = {
 			log: { error: vi.fn<() => void>() },
 		} as unknown as FastifyRequest;
 
 		it("returns success true on valid response", async () => {
-			const { testConnection } = await import("../services/ai-client.ts");
-
 			const result = await testConnection(mockRequest, defaultTestConfig);
 
 			expect(result).toStrictEqual({ success: true });
 		});
 
 		it("returns success false on network failure and logs error", async () => {
-			const { testConnection } = await import("../services/ai-client.ts");
-
 			mswServer.use(
 				http.post(`${MOCK_AI_ENDPOINT}/v1/chat/completions`, () => HttpResponse.error()),
 			);
@@ -139,7 +130,10 @@ describe("ai", () => {
 
 			expect(result.success).toBe(false);
 			expect(result.error).toBeTypeOf("string");
-			expect(mockRequest.log.error).toHaveBeenCalledWith();
+			expect(mockRequest.log.error).toHaveBeenCalledWith(
+				expect.any(Error),
+				"AI Test connection call failed",
+			);
 		});
 	});
 
