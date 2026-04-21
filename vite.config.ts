@@ -11,6 +11,7 @@ export default defineConfig({
 	build: {
 		emptyOutDir: true,
 		outDir: "../../dist/client",
+		sourcemap: true,
 	},
 	resolve: {
 		alias: {
