@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.5.0 (2026-04-21)
+
+- fix: use the plex server history API correctly (#58)
+- fix: accessibility improvements (#59)
+- chore(deps): Bump node in the docker group (#61)
+- chore(deps): Bump the production-patch group with 2 updates (#62)
+- chore: upgrade yarn and packages
+- allow better-sqlite3 to run it's build script
+- fix: linting issues and test improvements
+- fix: move describe blocks around in unit tests
+- chore: formatting
+- test: fixing up remaining of tests broken after linting fixes
+- docs: spec for redesign B1 (foundations)
+- docs: add rem unit convention to B1 spec
+- docs: add B1 foundations implementation plan
+- refactor(theme): convert spacing/radii tokens to rem, add accentDim + fontSizes
+- feat(styles): add global data-tooltip hover rule
+- feat(client): add Icon component
+- feat(client): add Logo component
+- feat(client): add icon-rail Sidebar component
+- refactor(client): extract Sidebar from AppLayout
+- feat(client): add LoadingBubble with three pulsing dots
+- feat(client): rework ChatMessage into two-mode bubble
+- feat(client): expose conversationTitle from useChat
+- feat(client): conversation-aware header + three-dot loader on Recommendations
+- fix(client): gate conversationTitle on urlConversationId to drop stale RTK data
+- test(e2e): update selectors for redesigned header and sidebar
+- chore(e2e): rebuild compose images on every test run
+- chore: update the project status doc
+
 ## v0.4.1 (2026-04-15)
 
 - chore(deps): Bump the production-patch group with 2 updates (#46)

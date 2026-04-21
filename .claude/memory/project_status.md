@@ -4,7 +4,7 @@ description: Current state of recommendarr — what exists, what's in progress, 
 type: project
 ---
 
-As of 2026-03-29, the project has:
+As of 2026-04-21, the project has:
 
 - Fastify backend with /ping, /health, /api/settings, and auth routes (login, register, setup-status, me, logout)
 - Registration is gated: only the first user can register (subsequent registrations return 403)
@@ -34,6 +34,7 @@ As of 2026-03-29, the project has:
 - E2E test suite with Playwright: shared auth fixture, tests for navigation, admin login, Plex connection, AI config, arr integration, health check
 - Mock services Docker container providing fake Plex (port 9090, including /library/all), Radarr (7878), and Sonarr (8989)
 - CI runs e2e tests per browser (chromium, firefox, webkit) sequentially, each with a fresh Docker container
+- **B1 Redesign underway**: Icon component (5 SVG icons: spark, clock, settings, logout, plus) with size/color customization; tested with full TDD; LoadingBubble component with 3-dot pulsing animation (TDD)
 
 **Why:** Tracking project state helps orient future conversations quickly.
 **How to apply:** Use this to understand what exists before suggesting new work.
