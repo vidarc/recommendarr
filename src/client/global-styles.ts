@@ -35,5 +35,26 @@ export const globals = css`
 			outline: 2px solid ${colors.borderFocus};
 			outline-offset: 2px;
 		}
+
+		[data-tooltip] {
+			position: relative;
+		}
+
+		[data-tooltip]:hover::after {
+			content: attr(data-tooltip);
+			position: absolute;
+			left: calc(100% + 0.625rem);
+			top: 50%;
+			transform: translateY(-50%);
+			background: ${colors.bgLight};
+			border: 1px solid ${colors.border};
+			color: ${colors.text};
+			font-size: 0.75rem;
+			white-space: nowrap;
+			padding: 0.25rem 0.625rem;
+			border-radius: 0.375rem;
+			pointer-events: none;
+			z-index: 100;
+		}
 	}
 `;
