@@ -180,7 +180,7 @@ const Recommendations = () => {
 	return (
 		<div className={pageWrapper}>
 			<PageHeader
-				title={chat.conversationId ? chat.conversationTitle : undefined}
+				title={chat.conversationTitle}
 				messageCount={chat.messages.length}
 				recCount={recCount}
 				onNewConversation={chat.handleNewConversation}
