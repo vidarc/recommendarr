@@ -643,16 +643,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fastify/middie@npm:9.3.1":
-  version: 9.3.1
-  resolution: "@fastify/middie@npm:9.3.1"
+"@fastify/middie@npm:9.3.2":
+  version: 9.3.2
+  resolution: "@fastify/middie@npm:9.3.2"
   dependencies:
     "@fastify/error": "npm:^4.0.0"
     fastify-plugin: "npm:^5.0.0"
     find-my-way: "npm:^9.5.0"
     path-to-regexp: "npm:^8.1.0"
     reusify: "npm:^1.0.4"
-  checksum: 10c0/b2c389977943ecd9308ef6897f36d39a0d8d25fa45c1caf351f4972739f00a9d1440b186383acf4f70432e99be3736d8cabb3d92fd92e8dabb37f4e53cb192cb
+  checksum: 10c0/b1dc6d12a961fb6f44476fca0d89d74e8762c21f076af4da5ac23cc28741630a870d0f3cc29bbcdaa6a8f3054a48ff17d5dae9fa867bfcb5c56eb71cdaccf2c6
   languageName: node
   linkType: hard
 
@@ -2001,9 +2001,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wyw-in-js/transform@npm:1.0.7":
-  version: 1.0.7
-  resolution: "@wyw-in-js/transform@npm:1.0.7"
+"@wyw-in-js/transform@npm:1.0.8":
+  version: 1.0.8
+  resolution: "@wyw-in-js/transform@npm:1.0.8"
   dependencies:
     "@babel/core": "npm:^7.23.5"
     "@babel/generator": "npm:^7.23.5"
@@ -2020,19 +2020,19 @@ __metadata:
     source-map: "npm:^0.7.4"
     stylis: "npm:^4.3.0"
     ts-invariant: "npm:^0.10.3"
-  checksum: 10c0/be69cf16fe0557386f948155d3ca8a4d336d1caa031c92414e5d4eb2aa4ecf8698fbb988f616f59aa0de1261cd845c8cce4b94c0fce52ff7a95ef37d34069bb5
+  checksum: 10c0/723e4b51e59774a774a20fe79b151aed30a6c050e05f52944a8e97a89c768fe14cc1fea371762628d662a42bb39ebaa61557d01fd242478818e4704096da2d07
   languageName: node
   linkType: hard
 
-"@wyw-in-js/vite@npm:1.0.7":
-  version: 1.0.7
-  resolution: "@wyw-in-js/vite@npm:1.0.7"
+"@wyw-in-js/vite@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@wyw-in-js/vite@npm:1.0.9"
   dependencies:
     "@wyw-in-js/shared": "npm:1.0.5"
-    "@wyw-in-js/transform": "npm:1.0.7"
+    "@wyw-in-js/transform": "npm:1.0.8"
   peerDependencies:
     vite: ">=3.2.7"
-  checksum: 10c0/305f5841b031cdfb0b299c60bfb9d341d43cb65d2e32203d7d50e19f0ab26368e3bcdb1d70b3eb4247efee20f441dc6fc92eb5df13720a00674c453cd4d6c2d8
+  checksum: 10c0/139e871b4ac350c44d3e55e125342d3d60ea24f9d92f9e9b8437a8034e1e8e35139b49affcb4122eaaa5d722592d260e3d16016f0642b0414f00d313958db62c
   languageName: node
   linkType: hard
 
@@ -4513,7 +4513,7 @@ __metadata:
     "@babel/preset-typescript": "npm:7.28.5"
     "@fastify/cookie": "npm:11.0.2"
     "@fastify/helmet": "npm:13.0.2"
-    "@fastify/middie": "npm:9.3.1"
+    "@fastify/middie": "npm:9.3.2"
     "@fastify/static": "npm:9.1.0"
     "@fastify/swagger": "npm:9.7.0"
     "@linaria/atomic": "npm:7.0.1"
@@ -4537,7 +4537,7 @@ __metadata:
     "@types/react-dom": "npm:19.2.3"
     "@vitejs/plugin-react": "npm:6.0.1"
     "@vitest/coverage-v8": "npm:4.1.4"
-    "@wyw-in-js/vite": "npm:1.0.7"
+    "@wyw-in-js/vite": "npm:1.0.9"
     babel-plugin-react-compiler: "npm:1.0.0"
     better-sqlite3: "npm:12.8.0"
     close-with-grace: "npm:2.5.0"

@@ -17,7 +17,7 @@
 	"dependencies": {
 		"@fastify/cookie": "11.0.2",
 		"@fastify/helmet": "13.0.2",
-		"@fastify/middie": "9.3.1",
+		"@fastify/middie": "9.3.2",
 		"@fastify/static": "9.1.0",
 		"@fastify/swagger": "9.7.0",
 		"@linaria/atomic": "7.0.1",
@@ -25,7 +25,7 @@
 		"@linaria/react": "7.0.1",
 		"@reduxjs/toolkit": "2.11.2",
 		"@vitejs/plugin-react": "6.0.1",
-		"@wyw-in-js/vite": "1.0.7",
+		"@wyw-in-js/vite": "1.0.9",
 		"better-sqlite3": "12.8.0",
 		"close-with-grace": "2.5.0",
 		"drizzle-orm": "1.0.0-beta.21",
