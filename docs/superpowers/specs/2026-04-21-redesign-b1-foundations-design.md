@@ -24,6 +24,7 @@ The Tweaks panel from the prototype (sidebar-wide / stacked cards / accent color
 - Give the Recommendations page a conversation-aware header (title + stats subtitle) and a pill-styled "New" button.
 - Reshape chat messages into the design's two-mode pattern: right-aligned user bubble, left-aligned assistant message with logo avatar + label + indented content.
 - Replace the "Thinking..." loading bubble with three pulsing dots.
+- Adopt `rem` as the unit for all CSS dimensions across B1 files (see the Unit Conventions subsection). Convert `theme.ts` tokens at the same time so the convention is enforced by reaching for tokens first.
 - Maintain unit-test coverage on every changed component and keep existing e2e tests green (updating selectors where the accessible names have changed).
 
 ## Non-goals (deferred to later phases)
@@ -38,10 +39,44 @@ The Tweaks panel from the prototype (sidebar-wide / stacked cards / accent color
 
 **In-place refactor with targeted extraction.** The sidebar grows substantially (icons, tooltip CSS, active accent bar, fixed-width constraints), so it moves out of `src/client/components/AppLayout.tsx` into its own file. Everything else is in-place edits.
 
-Files changed:
+### Unit conventions (applies to all B1 files and onward)
 
-- `src/client/theme.ts` — add one color token.
-- `src/client/global-styles.ts` — add `[data-tooltip]:hover::after` rule.
+All CSS dimensions — `width`, `height`, `padding`, `margin`, `gap`, `font-size`, `border-radius`, `top`/`left`/`right`/`bottom`, `max-width`, etc. — are expressed in `rem` (root font size assumed 16px).
+
+Exceptions kept as `px`:
+
+- Border widths (`border: 1px solid ...`) — `1px` is visually load-bearing and doesn't scale usefully.
+- SVG intrinsic `width` / `height` attributes (graphical units, not layout).
+- CSS animation numeric properties that aren't dimensions (`opacity`, `transform: scale(n)`, transition seconds).
+
+Prefer the `spacing` / `radii` / `fontSizes` tokens from `theme.ts`. Only fall back to inline `rem` literals for values the tokens don't cover (e.g. the 22px logo tile → `1.375rem`). Pixel values in this spec's body are the design's source-of-truth numbers — divide by 16 when translating to CSS (conversion table below).
+
+**Pixel → rem quick reference** for values used in B1:
+
+| px  | rem       | where used                                      |
+| --- | --------- | ----------------------------------------------- |
+| 2   | 0.125rem  | tiny padding                                    |
+| 4   | 0.25rem   | `radii.sm`, small gap, asymmetric bubble corner |
+| 6   | 0.375rem  | logo-mini radius, star gap                      |
+| 8   | 0.5rem    | `spacing.sm`, `radii.md`, gap                   |
+| 10  | 0.625rem  | bubble padding Y, tooltip padding X             |
+| 12  | 0.75rem   | subtitle font, pill font                        |
+| 13  | 0.8125rem | pill icon                                       |
+| 14  | 0.875rem  | bubble padding X, body font, bubble corner      |
+| 15  | 0.9375rem | page-header h1                                  |
+| 16  | 1rem      | `spacing.md`                                    |
+| 17  | 1.0625rem | default icon                                    |
+| 20  | 1.25rem   | active-bar height, logo-block vertical padding  |
+| 22  | 1.375rem  | assistant-msg logo tile                         |
+| 24  | 1.5rem    | `spacing.lg`                                    |
+| 28  | 1.75rem   | sidebar logo tile                               |
+| 30  | 1.875rem  | assistant-msg content indent                    |
+| 60  | 3.75rem   | sidebar width, nav-item height                  |
+
+### Files changed
+
+- `src/client/theme.ts` — add one color token; convert `spacing` and `radii` values to rem; add a `fontSizes` token group (see Section 8).
+- `src/client/global-styles.ts` — add `[data-tooltip]:hover::after` rule (uses rem).
 - `src/client/components/AppLayout.tsx` — shrink to a thin shell that composes `<Sidebar />` and `<main>{children}</main>`.
 - `src/client/components/Sidebar.tsx` — **new**. Holds the 60px icon-rail.
 - `src/client/components/Icon.tsx` — **new**. Name-switched inline SVG component.
@@ -83,22 +118,24 @@ Each item renders as a wouter `<Link>` with:
 **Tooltip CSS** (added to `global-styles.ts`, not `Sidebar.tsx`, since the pattern is reusable):
 
 ```css
-[data-tooltip] { position: relative; }
+[data-tooltip] {
+	position: relative;
+}
 [data-tooltip]:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: calc(100% + 10px);
-  top: 50%;
-  transform: translateY(-50%);
-  background: ${colors.bgLight};
-  border: 1px solid ${colors.border};
-  color: ${colors.text};
-  font-size: 12px;
-  white-space: nowrap;
-  padding: 4px 10px;
-  border-radius: 6px;
-  pointer-events: none;
-  z-index: 100;
+	content: attr(data-tooltip);
+	position: absolute;
+	left: calc(100% + 0.625rem);
+	top: 50%;
+	transform: translateY(-50%);
+	background: ${colors.bgLight};
+	border: 1px solid ${colors.border};
+	color: ${colors.text};
+	font-size: 0.75rem;
+	white-space: nowrap;
+	padding: 0.25rem 0.625rem;
+	border-radius: 0.375rem;
+	pointer-events: none;
+	z-index: 100;
 }
 ```
 
@@ -206,9 +243,21 @@ Usage in `Recommendations.tsx`: `{chat.isLoading ? <LoadingBubble /> : undefined
 
 ## Section 8 — Theme & global styles additions
 
-**`src/client/theme.ts`:** add `accentDim: "rgba(127,219,202,0.15)"` to the `colors` const. No other changes.
+**`src/client/theme.ts` changes:**
 
-**`src/client/global-styles.ts`:** append the `[data-tooltip]:hover::after` rule from Section 1.
+- `colors`: add one token → `accentDim: "rgba(127,219,202,0.15)"`.
+- `spacing`: convert existing values to rem — `xs: "0.25rem"` (4px), `sm: "0.5rem"` (8px), `md: "1rem"` (16px), `lg: "1.5rem"` (24px), `xl: "2rem"` (32px), `xxl: "3rem"` (48px). Names and shape unchanged.
+- `radii`: convert existing values to rem — `sm: "0.25rem"` (4px), `md: "0.5rem"` (8px), `lg: "0.75rem"` (12px). Names and shape unchanged.
+- `fontSizes`: **new token group** used across B1's new/rewritten components:
+  - `xs: "0.75rem"` (12px — subtitle, pill, label)
+  - `sm: "0.8125rem"` (13px — icon-button text)
+  - `base: "0.875rem"` (14px — body text in messages)
+  - `md: "0.9375rem"` (15px — page h1, base body elsewhere)
+  - `lg: "1.375rem"` (22px — reserved for future phases; not used in B1 but registered now so later phases don't churn the token)
+
+Existing consumers of `spacing` and `radii` continue to work with zero code change — the values are the same visual size, just declared in rem. This is a one-time swap with no expected visual regression.
+
+**`src/client/global-styles.ts`:** append the `[data-tooltip]:hover::after` rule from Section 1. All dimensions in that rule use rem (`left: calc(100% + 0.625rem)`, `font-size: 0.75rem`, `padding: 0.25rem 0.625rem`, `border-radius: 0.375rem`).
 
 ## Testing
 
@@ -253,6 +302,7 @@ Colocated `__tests__/` folders. Using existing MSW-based mocks for API queries w
 - `yarn vp test` passes.
 - `yarn test:e2e` (runs `./scripts/e2e.sh`) passes.
 - Manual smoke: `yarn dev`, log in, verify icon-rail sidebar, active accent bar, tooltips on hover, navigate between pages, send a chat message, observe user bubble + assistant avatar + three-dot loading indicator, click "New".
+- Manual smoke for the token rem swap: visit Login, Register, Recommendations, History, Settings; confirm nothing looks visibly off (spacing, corners, type) vs. main. A side-by-side with the pre-B1 branch is sufficient.
 
 ## Risks & mitigations
 
@@ -261,6 +311,8 @@ Colocated `__tests__/` folders. Using existing MSW-based mocks for API queries w
 - **Global tooltip CSS hitting other elements.** The `[data-tooltip]` selector is narrow — only elements we opt in carry the attribute. Low risk.
 - **`use-chat` exposing a new field.** Callers that destructure other fields are unaffected. Only the Recommendations page reads `conversationTitle`.
 - **Shared `Logo` component hardcodes two sizes.** If a third size is needed later, the component will need to be extended; for B1, only 22 and 28 are used.
+- **rem conversion of `spacing` / `radii` tokens is codebase-wide.** Every existing consumer of `spacing.md` / `radii.sm` / etc. gets the rem value automatically. The conversions are visually equivalent at the default 16px root (4px = 0.25rem, 8px = 0.5rem, etc.), so no regression is expected — but since the substitution touches many files indirectly, it's worth a manual smoke of every page (Login, Register, Recommendations, History, Settings) before marking B1 done.
+- **Files outside B1's explicit edit list remain using `spacing`/`radii` tokens.** They inherit the rem swap automatically without source changes. Any leftover inline px values in non-B1 files are acceptable for this phase and will migrate opportunistically as later phases rewrite those files.
 
 ## Open questions
 
