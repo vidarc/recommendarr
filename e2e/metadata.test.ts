@@ -70,10 +70,12 @@ test.describe("metadata enrichment flow", () => {
 		const chatResponse = await chatResponsePromise;
 		expect(chatResponse.status()).toBe(200);
 
-		// Wait for the "Thinking..." loading bubble to disappear before asserting the card.
+		// Wait for the loading bubble to disappear before asserting the card.
 		// WebKit is slow to flush React updates after the mutation resolves; this gives it
 		// A deterministic signal that the messages state has been updated.
-		await expect(page.getByText("Thinking...")).not.toBeVisible({ timeout: 15_000 });
+		await expect(page.getByRole("status", { name: /loading/i })).not.toBeVisible({
+			timeout: 15_000,
+		});
 		await expect(page.getByText(RECOMMENDATION_TITLE)).toBeVisible({ timeout: 15_000 });
 
 		// With TMDB_API_KEY configured, the "Show more info" button should render

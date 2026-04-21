@@ -78,22 +78,38 @@ describe(Recommendations, () => {
 		server.close();
 	});
 
-	it("renders the page header", () => {
+	it("renders the default page header when no conversation is loaded", () => {
 		renderRecommendations();
 
-		expect(screen.getByRole("heading", { name: /recommendations/i })).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: /new conversation/i })).toBeInTheDocument();
+		expect(screen.getByText(/no messages yet/i)).toBeInTheDocument();
 	});
 
-	it("renders new conversation button", () => {
+	it("shows the conversation title once loaded", async () => {
+		globalThis.history.replaceState({}, "", "/?conversation=conv-42");
+		server.use(
+			http.get("/api/conversations/conv-42", () =>
+				HttpResponse.json({
+					id: "conv-42",
+					mediaType: "movie",
+					title: "Sci-fi deep cuts",
+					createdAt: new Date().toISOString(),
+					messages: [],
+				}),
+			),
+		);
+
 		renderRecommendations();
 
-		expect(screen.getByRole("button", { name: /new conversation/i })).toBeInTheDocument();
+		await expect(
+			screen.findByRole("heading", { name: /sci-fi deep cuts/i }),
+		).resolves.toBeInTheDocument();
 	});
 
-	it("shows empty state message initially", () => {
+	it("renders the New button", () => {
 		renderRecommendations();
 
-		expect(screen.getByText(/send a message to get recommendations/i)).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^new$/i })).toBeInTheDocument();
 	});
 
 	it("renders media type toggle buttons", () => {
@@ -150,7 +166,7 @@ describe(Recommendations, () => {
 		expect(screen.getByText("recommend action movies")).toBeInTheDocument();
 	});
 
-	it("shows thinking indicator while loading", async () => {
+	it("shows loading indicator while waiting on a response", async () => {
 		// oxlint-disable-next-line promise/avoid-new
 		server.use(http.post("/api/chat", () => new Promise(() => {})));
 
@@ -163,8 +179,7 @@ describe(Recommendations, () => {
 		);
 		await user.click(screen.getByRole("button", { name: /send/i }));
 
-		const thinkingCount = 2;
-		expect(screen.getAllByText("Thinking...")).toHaveLength(thinkingCount);
+		expect(screen.getByRole("status", { name: /loading/i })).toBeInTheDocument();
 	});
 
 	it("displays AI response after sending message", async () => {
@@ -249,12 +264,12 @@ describe(Recommendations, () => {
 
 		await screen.findByText("AI response");
 
-		await user.click(screen.getByRole("button", { name: /new conversation/i }));
+		await user.click(screen.getByRole("button", { name: /^new$/i }));
 
-		const emptyState = await waitFor(() =>
-			screen.getByText(/send a message to get recommendations/i),
-		);
-		expect(emptyState).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.queryByText("AI response")).toBeNull();
+		});
+		expect(screen.getByRole("heading", { name: /new conversation/i })).toBeInTheDocument();
 	});
 
 	it("renders genre chips", () => {
@@ -362,7 +377,7 @@ describe(Recommendations, () => {
 		renderRecommendations();
 		const user = userEvent.setup();
 
-		await user.click(screen.getByRole("button", { name: /new conversation/i }));
+		await user.click(screen.getByRole("button", { name: /^new$/i }));
 
 		await waitFor(() => {
 			expect(globalThis.location.search).toBe("");

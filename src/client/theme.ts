@@ -13,6 +13,7 @@ const colors = {
 	textDim: "#637777",
 
 	accent: "#7fdbca",
+	accentDim: "rgba(127,219,202,0.15)",
 	accentHover: "#5cc5b0",
 	blue: "#82aaff",
 	green: "#addb67",
@@ -24,18 +25,26 @@ const colors = {
 } as const;
 
 const spacing = {
-	xs: "4px",
-	sm: "8px",
-	md: "16px",
-	lg: "24px",
-	xl: "32px",
-	xxl: "48px",
+	xs: "0.25rem",
+	sm: "0.5rem",
+	md: "1rem",
+	lg: "1.5rem",
+	xl: "2rem",
+	xxl: "3rem",
 } as const;
 
 const radii = {
-	sm: "4px",
-	md: "8px",
-	lg: "12px",
+	sm: "0.25rem",
+	md: "0.5rem",
+	lg: "0.75rem",
+} as const;
+
+const fontSizes = {
+	xs: "0.75rem",
+	sm: "0.8125rem",
+	base: "0.875rem",
+	md: "0.9375rem",
+	lg: "1.375rem",
 } as const;
 
 const fonts = {
@@ -43,4 +52,4 @@ const fonts = {
 	mono: "'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace",
 } as const;
 
-export { colors, fonts, radii, spacing };
+export { colors, fonts, fontSizes, radii, spacing };

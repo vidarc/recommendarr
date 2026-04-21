@@ -133,6 +133,7 @@ export const useChat = () => {
 		messages,
 		isLoading,
 		conversationId,
+		conversationTitle: urlConversationId ? conversationData?.title : undefined,
 		mediaType,
 		handleMediaTypeChange: setMediaType,
 		libraryId,

@@ -10,7 +10,7 @@ test.describe("login flows", () => {
 		await page.getByRole("button", { name: /log in/i }).click();
 
 		await expect(page).toHaveURL("/");
-		await expect(page.getByText("Recommendarr")).toBeVisible();
+		await expect(page.getByLabel("Recommendarr")).toBeVisible();
 
 		// Log out via the sidebar button
 		await page.getByRole("button", { name: /log out/i }).click();
@@ -24,7 +24,7 @@ test.describe("login flows", () => {
 		await page.getByRole("button", { name: /log in/i }).click();
 
 		await expect(page).toHaveURL("/");
-		await expect(page.getByText("Recommendarr")).toBeVisible();
+		await expect(page.getByLabel("Recommendarr")).toBeVisible();
 	});
 
 	test("login with wrong credentials shows error", async ({ page }) => {
