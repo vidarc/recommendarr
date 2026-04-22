@@ -2,10 +2,9 @@
 
 ## Project
 
-- [project_status.md](project_status.md) — Current state of the recommendarr project and what's been built so far
-- [project_future_features.md](project_future_features.md) — Brainstormed feature ideas to revisit after arr integration
-- [project_metadata_route_followups.md](project_metadata_route_followups.md) — Deferred cleanups on /api/metadata route from PR #44 review
-- [project_conversation_url_loading.md](project_conversation_url_loading.md) — useChat reads ?conversation=<id> (fixed 2026-04-13)
+- [project_status.md](project_status.md) — Current focus pointer; where to find context before suggesting work
+- [project_future_features.md](project_future_features.md) — Redesign backlog pointer + older brainstormed feature ideas
+- [project_metadata_route_followups.md](project_metadata_route_followups.md) — Two remaining cleanups on /api/metadata route
 
 ## User
 
@@ -27,3 +26,8 @@
 - [project_null_vs_undefined.md](project_null_vs_undefined.md) — Standardize on undefined vs null across shared schemas and DB boundary
 
 ## References
+
+- [project_conversation_url_loading.md](project_conversation_url_loading.md) — useChat URL hydration + race-condition invariants
+- `docs/superpowers/HISTORY.md` — chronological log of shipped phases (MVP → Redesign B1)
+- `docs/superpowers/BACKLOG.md` — Redesign B2–B7 (chat input / card / history / tokens / picker / filters)
+- `docs/superpowers/specs/` — design specs for each phase (source of truth for _why_ decisions were made; `plans/` folder deleted 2026-04-22)
