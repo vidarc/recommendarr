@@ -12,7 +12,7 @@ Rebuild the chat input to match the prototype's consolidated pattern: a single i
 
 1. **Library scope.** Keep the existing Plex library picker (by library key, populated from `/api/plex/libraries`). Drop the backlog's proposed `Whole library | Movies | TV Shows` 3-option scope — the media-type segmented buttons already cover that axis.
 2. **Message composition.** Natural language. `Include: A, B. Exclude: C. user text`. Clauses drop out cleanly when empty.
-3. **Genre list.** Expand to a static 15–20 standard genres matching the TMDB / TVDB vocabulary metadata is tagged with.
+3. **Genre list.** Expand from today's 9 to 18 standard genres matching TMDB's movie vocabulary (our metadata is already tagged with these). Full list in the Behavior section.
 4. **Commit model.** Genre strip selections are **staged** while open. Two commit buttons: `Apply` (commit, close) and `Apply + send` (commit, close, send). `Clear` resets staged selections. Click-outside / Escape / re-click Genres pill = cancel staged. Popover controls edit committed state directly (no staging).
 5. **Empty-text send.** When genres are committed but text is empty, compose with a fallback: `Include: thriller. Give me recommendations.`
 
