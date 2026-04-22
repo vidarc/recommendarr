@@ -55,7 +55,7 @@ describe(FiltersPill, () => {
 		const { onClick } = renderPill();
 		const user = userEvent.setup();
 		await user.click(screen.getByRole("button", { name: /filters/i }));
-		expect(onClick).toHaveBeenCalledWith();
+		expect(onClick).toHaveBeenCalledWith(expect.objectContaining({ type: "click" }));
 	});
 
 	it("reflects expanded state with aria-expanded", () => {

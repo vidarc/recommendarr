@@ -1,5 +1,4 @@
 import { css } from "@linaria/atomic";
-import { useCallback } from "react";
 
 import { colors, radii, spacing } from "../theme.ts";
 
@@ -39,22 +38,16 @@ interface FiltersPillProps {
 	onClick: () => void;
 }
 
-const FiltersPill = ({ mediaType, resultCount, expanded, onClick }: FiltersPillProps) => {
-	const handleClick = useCallback(() => {
-		onClick();
-	}, [onClick]);
-
-	return (
-		<button
-			type="button"
-			className={pillButton}
-			aria-label="Filters"
-			aria-expanded={expanded}
-			onClick={handleClick}
-		>
-			{MEDIA_SHORTHAND[mediaType]} · {resultCount}
-		</button>
-	);
-};
+const FiltersPill = ({ mediaType, resultCount, expanded, onClick }: FiltersPillProps) => (
+	<button
+		type="button"
+		className={pillButton}
+		aria-label="Filters"
+		aria-expanded={expanded}
+		onClick={onClick}
+	>
+		{MEDIA_SHORTHAND[mediaType]} · {resultCount}
+	</button>
+);
 
 export { FiltersPill };
