@@ -39,18 +39,10 @@ yarn vp fmt          # Format only
 
 ## Project Structure
 
-- `src/server` — Fastify backend
-  - `routes/` — Route handlers (auth, health, plex, ai, chat)
-  - `services/` — Business logic (auth-utils, session, encryption, plex-api, ai-client, prompt-builder, response-parser, metadata-types, tmdb-client, tvdb-client)
-  - `middleware/` — Request middleware (auth — session-based authentication via httpOnly cookies)
-  - Root: app factory, entry point, db plugin, SSR plugin, schema
-- `src/client` — React frontend
-  - `pages/` — Route-level page components (Login, Register, Settings, Recommendations, History)
-  - `components/` — Reusable UI primitives (FormField, AuthFooter, AppLayout, ChatControls, ChatInput, ChatMessage, RecommendationCard)
-  - `features/` — Feature-scoped state (auth/auth-slice)
-  - Root: entry points, store, api, theme, global styles
-- `docs/` — Architecture decisions, API docs, environment variable reference
-- Tests: `__tests__/` folders colocated with source (e.g., `src/client/pages/__tests__/Login.test.tsx`)
+- `src/server` — Fastify backend. `routes/` + `services/` + `middleware/`, plus root files (app factory, entry, db plugin, SSR plugin, schema).
+- `src/client` — React frontend. `pages/` + `components/` + `features/`, plus root files (entry points, store, api, theme, global styles).
+- `docs/` — Architecture decisions, API docs (`docs/api.md`), environment variable reference (`README.md`), redesign backlog + history (`docs/superpowers/`).
+- Tests: `__tests__/` folders colocated with source (e.g., `src/client/pages/__tests__/Login.test.tsx`).
 
 ## Workflows
 
@@ -118,7 +110,7 @@ The app uses SQLite via `better-sqlite3` + Drizzle ORM. The `dbPlugin` in `src/s
 
 - Opens/creates a database at `DATABASE_PATH` env var (default: `./data/recommendarr.db`)
 - Enables WAL mode for better concurrency
-- Runs migrations (tables: `settings`, `users`, `sessions`, `plex_connections`, `ai_configs`, `conversations`, `messages`, `recommendations`, `arr_connections`, `library_items`, `user_settings`)
+- Runs migrations against the tables defined in `src/server/schema.ts`
 - Decorates Fastify with `app.db` (Drizzle instance) and `app.sqlite` (raw better-sqlite3 instance) for route access
 - Closes the database on server shutdown
 
@@ -128,45 +120,9 @@ Schema is defined in `src/server/schema.ts` using Drizzle's `sqliteTable` builde
 
 Fastify uses `fastify-type-provider-zod` for request/response validation and type inference. The validator and serializer compilers are set in `buildServer()`. Routes define Zod schemas in their `schema` option for `body`, `querystring`, `params`, and `response` — Fastify auto-validates at runtime and infers TypeScript types in handlers. Use `app.withTypeProvider<ZodTypeProvider>()` when registering routes.
 
-**Current routes:**
+**Current routes:** see `docs/api.md` for the full request/response reference. The SSR catch-all `GET /*` is registered last so API routes take priority.
 
-- `GET /ping` — health check, returns `{ "status": "ok" }` (also used by Docker health check)
-- `GET /health` — returns `{ "status": "ok", "uptime": number }` — uptime in seconds via `process.uptime()`
-- `GET /api/auth/setup-status` — returns `{ "needsSetup": boolean }` indicating if any users exist
-- `POST /api/auth/register` — creates a new user; first user becomes admin, sets session cookie
-- `POST /api/auth/login` — authenticates a user by username/password, sets session cookie
-- `GET /api/auth/me` — returns the currently authenticated user from session cookie
-- `POST /api/auth/logout` — deletes the server-side session and clears the session cookie
-- `GET /api/settings` — returns all settings from the database as a JSON key-value object
-- `POST /api/plex/auth/start` — initiates Plex OAuth flow, returns PIN ID and auth URL
-- `GET /api/plex/auth/check` — checks if a Plex PIN has been claimed, stores encrypted auth token
-- `GET /api/plex/servers` — returns available Plex servers for the user
-- `POST /api/plex/servers/select` — saves the selected Plex server
-- `POST /api/plex/auth/manual` — stores a manually-provided Plex auth token and server URL
-- `DELETE /api/plex/connection` — removes the user's Plex connection
-- `GET /api/plex/libraries` — returns libraries on the selected Plex server
-- `GET /api/ai/config` — returns the user's AI configuration (API key masked)
-- `PUT /api/ai/config` — creates or updates AI configuration (API key encrypted)
-- `DELETE /api/ai/config` — removes the user's AI configuration
-- `POST /api/ai/test` — tests the saved AI configuration by connecting to the endpoint
-- `POST /api/chat` — sends a message for AI recommendations, creates/continues conversations
-- `GET /api/conversations` — lists all conversations for the user
-- `GET /api/conversations/:id` — returns a conversation with all messages and recommendations
-- `DELETE /api/conversations/:id` — deletes a conversation and its messages/recommendations
-- `GET /api/arr/config` — returns the user's arr connections (API keys masked)
-- `PUT /api/arr/config/:serviceType` — creates or updates an arr connection (API key encrypted)
-- `DELETE /api/arr/config/:serviceType` — removes an arr connection
-- `POST /api/arr/test` — tests a saved arr connection
-- `GET /api/arr/options/:serviceType` — returns root folders and quality profiles for an arr service
-- `POST /api/arr/lookup` — searches an arr service for media
-- `POST /api/arr/add` — adds media to an arr service, updates recommendation
-- `PATCH /api/recommendations/:id/feedback` — sets, toggles, or clears thumbs-up/thumbs-down feedback on a recommendation
-- `POST /api/library/sync` — triggers manual library sync, returns item counts
-- `GET /api/library/status` — returns last synced time, interval, item counts, and exclude default
-- `PUT /api/library/settings` — updates sync interval and exclude-library default
-- `GET /api/metadata/status` — returns `{ tvdb: boolean, tmdb: boolean }` indicating which metadata sources are configured
-- `GET /api/metadata/:recommendationId` — returns enriched metadata (poster, overview, genres, rating, cast/crew) for a recommendation, fetched from TVDB (shows) or TMDB (movies) with 7-day cache
-- `GET /*` — SSR catch-all (registered last so API routes take priority)
+When adding a new route, update `docs/api.md` in the same PR.
 
 ### SSR
 
@@ -191,16 +147,7 @@ The app uses a `users` table with scrypt-hashed passwords (via `node:crypto`). T
 
 The app uses wouter for routing. Routes: `/login`, `/register`, `/` (recommendations), `/history`, `/settings`. Auth gates redirect unauthenticated users to `/login`, and if no users exist yet, `/login` redirects to `/register`. The `AppLayout` component provides shared navigation.
 
-**Environment variables** (see root `README.md` for full list):
-
-- `PORT` — server port (default: `3000`)
-- `HOST` — bind address (default: `0.0.0.0`)
-- `ENCRYPTION_KEY` — required, 64-character hex string for AES-256-GCM encryption of stored secrets
-- `SESSION_DURATION_DAYS` — session lifetime in days (default: `7`)
-- `LOG_LEVEL` — server log level (default: `info`; options: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`)
-- `LOG_PRETTY` — set to `true` to enable pretty-printed logs via `pino-pretty`
-- `TVDB_API_KEY` — optional; TVDB v4 API key for enriching TV show recommendation cards with metadata
-- `TMDB_API_KEY` — optional; TMDB API key for enriching movie recommendation cards with metadata
+**Environment variables:** see the table in `README.md` for the authoritative list. `ENCRYPTION_KEY` is the only required one.
 
 ### Modules
 
