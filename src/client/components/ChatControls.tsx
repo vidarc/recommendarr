@@ -3,7 +3,9 @@ import { useCallback, useRef } from "react";
 
 import { useGetPlexLibrariesQuery } from "../features/plex/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
+import { MEDIA_TYPES } from "./FiltersPopover.tsx";
 
+import type { MediaType } from "./FiltersPopover.tsx";
 import type { ChangeEvent, KeyboardEvent } from "react";
 
 const NOT_FOUND = -1;
@@ -112,14 +114,6 @@ const checkboxStyle = css`
 	accent-color: ${colors.accent};
 	cursor: pointer;
 `;
-
-const MEDIA_TYPES = [
-	{ value: "movie", label: "Movies" },
-	{ value: "tv", label: "TV Shows" },
-	{ value: "any", label: "Either" },
-] as const;
-
-type MediaType = (typeof MEDIA_TYPES)[number]["value"];
 
 interface MediaTypeToggleProps {
 	value: MediaType;
