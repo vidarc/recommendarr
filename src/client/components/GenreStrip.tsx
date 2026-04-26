@@ -237,6 +237,10 @@ const GenreStrip = ({
 	onApplyAndSend,
 	onQuickPrompt,
 }: GenreStripProps) => {
+	/*
+	 * `staged` is intentionally a scratchpad: seeded once from committed props and
+	 * not re-synced afterwards, so user edits survive parent re-renders.
+	 */
 	const [staged, setStaged] = useState<Map<Genre, ChipState>>(() =>
 		seedStaged(committedIncluded, committedExcluded),
 	);
@@ -256,7 +260,7 @@ const GenreStrip = ({
 		});
 	}, []);
 
-	const collect = useCallback((): { included: string[]; excluded: string[] } => {
+	const collect = (): { included: string[]; excluded: string[] } => {
 		const included: string[] = [];
 		const excluded: string[] = [];
 		for (const [genre, state] of staged) {
@@ -267,17 +271,21 @@ const GenreStrip = ({
 			}
 		}
 		return { included, excluded };
-	}, [staged]);
+	};
 
 	const handleApply = useCallback(() => {
 		const { included, excluded } = collect();
 		onApply(included, excluded);
-	}, [collect, onApply]);
+		// `collect` is a plain inner function that closes over `staged`; depending on
+		// `staged` directly is the correct invalidation signal.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [staged, onApply]);
 
 	const handleApplyAndSend = useCallback(() => {
 		const { included, excluded } = collect();
 		onApplyAndSend(included, excluded);
-	}, [collect, onApplyAndSend]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [staged, onApplyAndSend]);
 
 	const handleClear = useCallback(() => {
 		setStaged(new Map());
