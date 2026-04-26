@@ -92,6 +92,8 @@ export default defineConfig({
 			"no-ternary": "off",
 			"react/only-export-components": "error",
 			"react/react-in-jsx-scope": "off",
+			// React Compiler memoizes inline functions; revisit if compiler is removed.
+			"react-perf/jsx-no-new-function-as-prop": "off",
 			"sort-imports": "off",
 			"sort-keys": "off",
 			"unicorn/filename-case": [

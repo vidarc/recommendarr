@@ -1,5 +1,4 @@
 import { css } from "@linaria/atomic";
-import { useCallback } from "react";
 
 import { useGetPlexLibrariesQuery } from "../features/plex/api.ts";
 import { colors, radii, spacing } from "../theme.ts";
@@ -30,12 +29,9 @@ const LibraryScopeSelect = ({ value, onChange, id }: LibraryScopeSelectProps) =>
 	const { data } = useGetPlexLibrariesQuery();
 	const libraries = data?.libraries ?? [];
 
-	const handleChange = useCallback(
-		(event: ChangeEvent<HTMLSelectElement>) => {
-			onChange(event.target.value);
-		},
-		[onChange],
-	);
+	const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
+		onChange(event.target.value);
+	};
 
 	return (
 		<select id={id} className={selectStyle} value={value} onChange={handleChange}>

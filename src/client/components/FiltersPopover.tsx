@@ -1,5 +1,5 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { colors, radii, spacing } from "../theme.ts";
 import { LibraryScopeSelect } from "./LibraryScopeSelect.tsx";
@@ -178,20 +178,17 @@ interface MediaTypeButtonProps {
 }
 
 const MediaTypeButton = ({ item, isActive, onChange, buttonRefs }: MediaTypeButtonProps) => {
-	const handleClick = useCallback(() => {
+	const handleClick = () => {
 		onChange(item.value);
-	}, [item.value, onChange]);
+	};
 
-	const handleRef = useCallback(
-		(node: HTMLButtonElement | null) => {
-			if (node) {
-				buttonRefs.current.set(item.value, node);
-			} else {
-				buttonRefs.current.delete(item.value);
-			}
-		},
-		[item.value, buttonRefs],
-	);
+	const handleRef = (node: HTMLButtonElement | null) => {
+		if (node) {
+			buttonRefs.current.set(item.value, node);
+		} else {
+			buttonRefs.current.delete(item.value);
+		}
+	};
 
 	return (
 		<button
@@ -216,29 +213,26 @@ interface MediaTypeGroupProps {
 const MediaTypeGroup = ({ mediaType, onMediaTypeChange }: MediaTypeGroupProps) => {
 	const buttonRefs = useRef<MediaTypeRefMap>(new Map());
 
-	const handleArrow = useCallback(
-		(event: KeyboardEvent<HTMLDivElement>) => {
-			const currentIndex = MEDIA_TYPES.findIndex((item) => item.value === mediaType);
-			if (currentIndex === NOT_FOUND) {
-				return;
-			}
-			let nextIndex = currentIndex;
-			if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-				nextIndex = (currentIndex + STEP) % MEDIA_TYPES.length;
-			} else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-				nextIndex = (currentIndex - STEP + MEDIA_TYPES.length) % MEDIA_TYPES.length;
-			} else {
-				return;
-			}
-			event.preventDefault();
-			const nextValue = MEDIA_TYPES[nextIndex]?.value;
-			if (nextValue !== undefined) {
-				onMediaTypeChange(nextValue);
-				buttonRefs.current.get(nextValue)?.focus();
-			}
-		},
-		[mediaType, onMediaTypeChange],
-	);
+	const handleArrow = (event: KeyboardEvent<HTMLDivElement>) => {
+		const currentIndex = MEDIA_TYPES.findIndex((item) => item.value === mediaType);
+		if (currentIndex === NOT_FOUND) {
+			return;
+		}
+		let nextIndex = currentIndex;
+		if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+			nextIndex = (currentIndex + STEP) % MEDIA_TYPES.length;
+		} else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+			nextIndex = (currentIndex - STEP + MEDIA_TYPES.length) % MEDIA_TYPES.length;
+		} else {
+			return;
+		}
+		event.preventDefault();
+		const nextValue = MEDIA_TYPES[nextIndex]?.value;
+		if (nextValue !== undefined) {
+			onMediaTypeChange(nextValue);
+			buttonRefs.current.get(nextValue)?.focus();
+		}
+	};
 
 	return (
 		<div className={row}>
@@ -271,17 +265,17 @@ interface ResultsStepperProps {
 }
 
 const ResultsStepper = ({ resultCount, onResultCountChange }: ResultsStepperProps) => {
-	const handleDec = useCallback(() => {
+	const handleDec = () => {
 		if (resultCount > MIN_RESULTS) {
 			onResultCountChange(resultCount - STEP);
 		}
-	}, [resultCount, onResultCountChange]);
+	};
 
-	const handleInc = useCallback(() => {
+	const handleInc = () => {
 		if (resultCount < MAX_RESULTS) {
 			onResultCountChange(resultCount + STEP);
 		}
-	}, [resultCount, onResultCountChange]);
+	};
 
 	return (
 		<div className={row}>
@@ -329,9 +323,9 @@ interface ExcludeSwitchProps {
 }
 
 const ExcludeSwitch = ({ excludeLibrary, onExcludeLibraryChange }: ExcludeSwitchProps) => {
-	const handleToggle = useCallback(() => {
+	const handleToggle = () => {
 		onExcludeLibraryChange(!excludeLibrary);
-	}, [excludeLibrary, onExcludeLibraryChange]);
+	};
 
 	return (
 		<div className={switchRow}>

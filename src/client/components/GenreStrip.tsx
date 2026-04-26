@@ -1,5 +1,5 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { colors, radii, spacing } from "../theme.ts";
 
@@ -171,9 +171,9 @@ interface GenreChipProps {
 }
 
 const GenreChip = ({ genre, state, onCycle }: GenreChipProps) => {
-	const handleClick = useCallback(() => {
+	const handleClick = () => {
 		onCycle(genre);
-	}, [genre, onCycle]);
+	};
 	return (
 		<button
 			type="button"
@@ -192,9 +192,9 @@ interface QuickPromptChipProps {
 }
 
 const QuickPromptChip = ({ prompt, onPick }: QuickPromptChipProps) => {
-	const handleClick = useCallback(() => {
+	const handleClick = () => {
 		onPick(prompt);
-	}, [prompt, onPick]);
+	};
 	return (
 		<button type="button" className={chipBase} onClick={handleClick}>
 			{prompt}
@@ -245,7 +245,7 @@ const GenreStrip = ({
 		seedStaged(committedIncluded, committedExcluded),
 	);
 
-	const cycle = useCallback((genre: Genre) => {
+	const cycle = (genre: Genre) => {
 		setStaged((prev) => {
 			const next = new Map(prev);
 			const current = next.get(genre) ?? "none";
@@ -258,32 +258,29 @@ const GenreStrip = ({
 			}
 			return next;
 		});
-	}, []);
+	};
 
-	const { included, excluded } = useMemo(() => {
-		const inc: string[] = [];
-		const exc: string[] = [];
-		for (const [genre, state] of staged) {
-			if (state === "included") {
-				inc.push(genre);
-			} else if (state === "excluded") {
-				exc.push(genre);
-			}
+	const included: string[] = [];
+	const excluded: string[] = [];
+	for (const [genre, state] of staged) {
+		if (state === "included") {
+			included.push(genre);
+		} else if (state === "excluded") {
+			excluded.push(genre);
 		}
-		return { included: inc, excluded: exc };
-	}, [staged]);
+	}
 
-	const handleApply = useCallback(() => {
+	const handleApply = () => {
 		onApply(included, excluded);
-	}, [included, excluded, onApply]);
+	};
 
-	const handleApplyAndSend = useCallback(() => {
+	const handleApplyAndSend = () => {
 		onApplyAndSend(included, excluded);
-	}, [included, excluded, onApplyAndSend]);
+	};
 
-	const handleClear = useCallback(() => {
+	const handleClear = () => {
 		setStaged(new Map());
-	}, []);
+	};
 
 	return (
 		<div className={stripBox} role="group" aria-label="Genre filter">
