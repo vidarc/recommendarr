@@ -1,5 +1,5 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { colors, radii, spacing } from "../theme.ts";
 
@@ -260,38 +260,30 @@ const GenreStrip = ({
 		});
 	}, []);
 
-	const collect = (): { included: string[]; excluded: string[] } => {
-		const included: string[] = [];
-		const excluded: string[] = [];
+	const { included, excluded } = useMemo(() => {
+		const inc: string[] = [];
+		const exc: string[] = [];
 		for (const [genre, state] of staged) {
 			if (state === "included") {
-				included.push(genre);
+				inc.push(genre);
 			} else if (state === "excluded") {
-				excluded.push(genre);
+				exc.push(genre);
 			}
 		}
-		return { included, excluded };
-	};
+		return { included: inc, excluded: exc };
+	}, [staged]);
 
 	const handleApply = useCallback(() => {
-		const { included, excluded } = collect();
 		onApply(included, excluded);
-		// `collect` is a plain inner function that closes over `staged`; depending on
-		// `staged` directly is the correct invalidation signal.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [staged, onApply]);
+	}, [included, excluded, onApply]);
 
 	const handleApplyAndSend = useCallback(() => {
-		const { included, excluded } = collect();
 		onApplyAndSend(included, excluded);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [staged, onApplyAndSend]);
+	}, [included, excluded, onApplyAndSend]);
 
 	const handleClear = useCallback(() => {
 		setStaged(new Map());
 	}, []);
-
-	const { included, excluded } = collect();
 
 	return (
 		<div className={stripBox} role="group" aria-label="Genre filter">
