@@ -14,15 +14,15 @@ interface RenderOptions {
 const renderRow = ({ included = EMPTY, excluded = EMPTY }: RenderOptions = {}) => {
 	const onRemove = vi.fn<(genre: string) => void>();
 	onTestFinished(cleanup);
-	render(<SelectedGenresRow included={included} excluded={excluded} onRemove={onRemove} />);
-	return { onRemove };
+	const result = render(
+		<SelectedGenresRow included={included} excluded={excluded} onRemove={onRemove} />,
+	);
+	return { onRemove, ...result };
 };
 
 describe(SelectedGenresRow, () => {
 	it("renders nothing when no selections", () => {
-		const { container } = render(
-			<SelectedGenresRow included={EMPTY} excluded={EMPTY} onRemove={vi.fn<() => void>()} />,
-		);
+		const { container } = renderRow();
 		expect(container.firstChild).toBeNull();
 	});
 
