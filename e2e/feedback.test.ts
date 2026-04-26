@@ -86,10 +86,12 @@ test.describe("recommendation feedback flow", () => {
 	// Send one chat message — all subsequent tests reuse this page with the recommendation visible.
 	test("send message and get recommendation", async () => {
 		await page.goto("/");
-		const excludeToggle = page.getByRole("checkbox", { name: /exclude library/i });
+		await page.getByRole("button", { name: "Filters" }).click();
+		const excludeToggle = page.getByRole("switch", { name: /exclude watched/i });
 		if (await excludeToggle.isChecked()) {
 			await excludeToggle.click();
 		}
+		await page.keyboard.press("Escape");
 		await page
 			.getByRole("textbox", { name: /ask for recommendations/i })
 			.fill("Recommend me some sci-fi movies");
