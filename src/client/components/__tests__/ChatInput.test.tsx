@@ -14,8 +14,7 @@ import {
 	vi,
 } from "vite-plus/test";
 
-import { api } from "../../api.ts";
-import { store } from "../../store.ts";
+import { createStore } from "../../store.ts";
 import { ChatInput } from "../ChatInput.tsx";
 
 import type { MediaType } from "../FiltersPopover.tsx";
@@ -47,10 +46,11 @@ const renderInput = (overrides: RenderInputOptions = {}) => {
 		overrides.onExcludeLibraryChange ?? vi.fn<(value: boolean) => void>();
 	const onLibraryIdChange = overrides.onLibraryIdChange ?? vi.fn<(value: string) => void>();
 
+	const testStore = createStore();
 	onTestFinished(cleanup);
 
 	render(
-		<Provider store={store}>
+		<Provider store={testStore}>
 			<ChatInput
 				onSend={onSend}
 				isLoading={overrides.isLoading ?? false}
@@ -81,7 +81,6 @@ describe(ChatInput, () => {
 
 	afterEach(() => {
 		server.resetHandlers();
-		store.dispatch(api.util.resetApiState());
 	});
 
 	afterAll(() => {
@@ -202,9 +201,15 @@ describe(ChatInput, () => {
 		expect(screen.queryByRole("button", { name: /remove horror/i })).not.toBeInTheDocument();
 	});
 
-	it("disables everything when isLoading", () => {
-		renderInput({ isLoading: true });
+	it("disables everything when isLoading", async () => {
+		const { onSend } = renderInput({ isLoading: true });
 		expect(screen.getByRole("textbox", { name: /ask for recommendations/i })).toBeDisabled();
 		expect(screen.getByRole("button", { name: /thinking/i })).toBeDisabled();
+		// Apply+send must not fire onSend while loading
+		const user = userEvent.setup();
+		await user.click(screen.getByRole("button", { name: /genres/i }));
+		await user.click(screen.getByRole("button", { name: /horror, not selected/i }));
+		await user.click(screen.getByRole("button", { name: /apply \+ send/i }));
+		expect(onSend).not.toHaveBeenCalled();
 	});
 });

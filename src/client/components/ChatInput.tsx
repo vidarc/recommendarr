@@ -134,6 +134,9 @@ const ChatInput = ({
 	};
 
 	const fireSend = (inc: readonly string[], exc: readonly string[]) => {
+		if (isLoading) {
+			return;
+		}
 		const composed = composeMessage({ included: inc, excluded: exc, text });
 		if (composed.length === EMPTY) {
 			return;
