@@ -1,11 +1,21 @@
 import { css } from "@linaria/atomic";
-import { useCallback, useState } from "react";
+import { useRef, useState } from "react";
 
 import { colors, radii, spacing } from "../theme.ts";
+import { composeMessage } from "../utils/compose-message.ts";
+import { FiltersPill } from "./FiltersPill.tsx";
+import { FiltersPopover } from "./FiltersPopover.tsx";
+import { GenresPill } from "./GenresPill.tsx";
+import { GenreStrip } from "./GenreStrip.tsx";
+import { SelectedGenresRow } from "./SelectedGenresRow.tsx";
 
+import type { MediaType } from "./FiltersPopover.tsx";
 import type { ChangeEvent, KeyboardEvent } from "react";
 
-const inputWrapper = css`
+const EMPTY = 0;
+
+const card = css`
+	position: relative;
 	border-top: 1px solid ${colors.border};
 	background: ${colors.surface};
 	padding: ${spacing.md};
@@ -14,45 +24,32 @@ const inputWrapper = css`
 	gap: ${spacing.sm};
 `;
 
-const chipRow = css`
+const pillRow = css`
+	position: relative;
 	display: flex;
 	gap: ${spacing.xs};
 	flex-wrap: wrap;
 `;
 
-const chipButton = css`
-	padding: ${spacing.xs} ${spacing.sm};
-	background: ${colors.bgLight};
-	border: 1px solid ${colors.border};
-	border-radius: ${radii.md};
-	color: ${colors.textMuted};
-	cursor: pointer;
-	font-size: 0.8rem;
-	transition:
-		background 0.2s ease,
-		color 0.2s ease;
-
-	&:hover {
-		background: ${colors.surfaceHover};
-		color: ${colors.text};
-	}
-`;
-
 const inputRow = css`
 	display: flex;
 	gap: ${spacing.sm};
+	align-items: flex-end;
 `;
 
-const textInput = css`
+const textareaStyle = css`
 	flex: 1;
+	min-height: 2.5rem;
+	max-height: 10rem;
 	padding: ${spacing.sm} ${spacing.md};
 	background: ${colors.bgLight};
 	border: 1px solid ${colors.border};
 	border-radius: ${radii.sm};
 	color: ${colors.text};
 	font-size: 1rem;
+	font-family: inherit;
+	resize: vertical;
 	outline: none;
-	transition: border-color 0.2s ease;
 
 	&:focus {
 		border-color: ${colors.borderFocus};
@@ -72,161 +69,183 @@ const sendButton = css`
 	font-size: 0.95rem;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background 0.2s ease;
+	transition: background 0.15s ease;
 
 	&:hover:not(:disabled) {
 		background: ${colors.accentHover};
 	}
-
 	&:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
 	}
 `;
 
-const sectionLabel = css`
-	font-size: 0.7rem;
-	color: ${colors.textDim};
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-`;
-
-const GENRES = [
-	"action",
-	"comedy",
-	"thriller",
-	"horror",
-	"sci-fi",
-	"drama",
-	"romance",
-	"documentary",
-	"animation",
-] as const;
-
-const PROMPTS = ["more from this director", "similar actors", "this film style"] as const;
-
-interface ChipProps {
-	label: string;
-	onSend: (message: string) => void;
-}
-
-const Chip = ({ label, onSend }: ChipProps) => {
-	const handleClick = useCallback(() => {
-		onSend(label);
-	}, [label, onSend]);
-
-	return (
-		<button type="button" className={chipButton} onClick={handleClick}>
-			{label}
-		</button>
-	);
-};
+type OpenSurface = "none" | "popover" | "strip";
 
 interface ChatInputProps {
 	onSend: (message: string) => void;
 	isLoading: boolean;
+	mediaType: MediaType;
+	resultCount: number;
+	excludeLibrary: boolean;
+	libraryId: string;
+	onMediaTypeChange: (value: MediaType) => void;
+	onResultCountChange: (value: number) => void;
+	onExcludeLibraryChange: (value: boolean) => void;
+	onLibraryIdChange: (value: string) => void;
 }
 
-const GenreChips = ({ onSend }: { onSend: (message: string) => void }) => (
-	<div className={chipRow}>
-		{GENRES.map((genre) => (
-			<Chip key={genre} label={genre} onSend={onSend} />
-		))}
-	</div>
-);
-
-const PromptChips = ({ onSend }: { onSend: (message: string) => void }) => (
-	<div className={chipRow}>
-		{PROMPTS.map((prompt) => (
-			<Chip key={prompt} label={prompt} onSend={onSend} />
-		))}
-	</div>
-);
-
-const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
+const ChatInput = ({
+	onSend,
+	isLoading,
+	mediaType,
+	resultCount,
+	excludeLibrary,
+	libraryId,
+	onMediaTypeChange,
+	onResultCountChange,
+	onExcludeLibraryChange,
+	onLibraryIdChange,
+}: ChatInputProps) => {
 	const [text, setText] = useState("");
+	const [included, setIncluded] = useState<string[]>([]);
+	const [excluded, setExcluded] = useState<string[]>([]);
+	const [openSurface, setOpenSurface] = useState<OpenSurface>("none");
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-	const handleSubmit = useCallback(() => {
-		const trimmed = text.trim();
-		if (trimmed) {
-			onSend(trimmed);
-			setText("");
-		}
-	}, [text, onSend]);
+	const hasText = text.trim().length > EMPTY;
+	const hasGenres = included.length + excluded.length > EMPTY;
+	const canSend = hasText || hasGenres;
 
-	const handleKeyDown = useCallback(
-		(event: KeyboardEvent) => {
-			if (event.key === "Enter" && !event.shiftKey) {
-				event.preventDefault();
-				handleSubmit();
-			}
-		},
-		[handleSubmit],
-	);
+	const togglePopover = () => {
+		setOpenSurface((prev) => (prev === "popover" ? "none" : "popover"));
+	};
 
-	const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+	const toggleStrip = () => {
+		setOpenSurface((prev) => (prev === "strip" ? "none" : "strip"));
+	};
+
+	const closeAll = () => {
+		setOpenSurface("none");
+	};
+
+	const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
 		setText(event.target.value);
-	}, []);
+	};
 
-	const handleChipSend = useCallback(
-		(message: string) => {
-			onSend(message);
-		},
-		[onSend],
-	);
+	const fireSend = (inc: readonly string[], exc: readonly string[]) => {
+		const composed = composeMessage({ included: inc, excluded: exc, text });
+		if (composed.length === EMPTY) {
+			return;
+		}
+		onSend(composed);
+		setText("");
+		setIncluded([]);
+		setExcluded([]);
+	};
+
+	const handleSendClick = () => {
+		if (!canSend) {
+			return;
+		}
+		fireSend(included, excluded);
+	};
+
+	const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+		if (event.key === "Enter" && !event.shiftKey) {
+			event.preventDefault();
+			handleSendClick();
+		}
+	};
+
+	const handleStripApply = (newIncluded: string[], newExcluded: string[]) => {
+		setIncluded(newIncluded);
+		setExcluded(newExcluded);
+		setOpenSurface("none");
+	};
+
+	const handleStripApplyAndSend = (newIncluded: string[], newExcluded: string[]) => {
+		setIncluded(newIncluded);
+		setExcluded(newExcluded);
+		setOpenSurface("none");
+		fireSend(newIncluded, newExcluded);
+	};
+
+	const handleQuickPrompt = (prompt: string) => {
+		setText((prev) => (prev.length === EMPTY ? prompt : `${prev} ${prompt}`));
+		textareaRef.current?.focus();
+	};
+
+	const handleRemoveGenre = (genre: string) => {
+		setIncluded((prev) => prev.filter((genreInList) => genreInList !== genre));
+		setExcluded((prev) => prev.filter((genreInList) => genreInList !== genre));
+	};
 
 	return (
-		<div className={inputWrapper}>
-			<span className={sectionLabel}>Genres</span>
-			<GenreChips onSend={handleChipSend} />
-			<span className={sectionLabel}>Suggestions</span>
-			<PromptChips onSend={handleChipSend} />
-			<MessageInputRow
-				text={text}
-				isLoading={isLoading}
-				onChange={handleChange}
-				onKeyDown={handleKeyDown}
-				onSubmit={handleSubmit}
-			/>
+		<div className={card}>
+			<div className={pillRow}>
+				<FiltersPill
+					mediaType={mediaType}
+					resultCount={resultCount}
+					expanded={openSurface === "popover"}
+					onClick={togglePopover}
+				/>
+				<GenresPill
+					includedCount={included.length}
+					excludedCount={excluded.length}
+					expanded={openSurface === "strip"}
+					onClick={toggleStrip}
+				/>
+				{openSurface === "popover" ? (
+					<FiltersPopover
+						mediaType={mediaType}
+						resultCount={resultCount}
+						excludeLibrary={excludeLibrary}
+						libraryId={libraryId}
+						onMediaTypeChange={onMediaTypeChange}
+						onResultCountChange={onResultCountChange}
+						onExcludeLibraryChange={onExcludeLibraryChange}
+						onLibraryIdChange={onLibraryIdChange}
+						onClose={closeAll}
+					/>
+				) : undefined}
+			</div>
+
+			{openSurface === "strip" ? (
+				<GenreStrip
+					committedIncluded={included}
+					committedExcluded={excluded}
+					onApply={handleStripApply}
+					onApplyAndSend={handleStripApplyAndSend}
+					onQuickPrompt={handleQuickPrompt}
+				/>
+			) : (
+				<SelectedGenresRow included={included} excluded={excluded} onRemove={handleRemoveGenre} />
+			)}
+
+			<div className={inputRow}>
+				<textarea
+					ref={textareaRef}
+					aria-label="Ask for recommendations"
+					placeholder="Ask for recommendations..."
+					value={text}
+					onChange={handleTextChange}
+					onKeyDown={handleKeyDown}
+					disabled={isLoading}
+					className={textareaStyle}
+					rows={1}
+				/>
+				<button
+					type="button"
+					className={sendButton}
+					onClick={handleSendClick}
+					disabled={isLoading || !canSend}
+				>
+					{isLoading ? "Thinking..." : "Send"}
+				</button>
+			</div>
 		</div>
 	);
 };
-
-interface MessageInputRowProps {
-	text: string;
-	isLoading: boolean;
-	onChange: (event: ChangeEvent<HTMLInputElement>) => void;
-	onKeyDown: (event: KeyboardEvent) => void;
-	onSubmit: () => void;
-}
-
-const MessageInputRow = ({
-	text,
-	isLoading,
-	onChange,
-	onKeyDown,
-	onSubmit,
-}: MessageInputRowProps) => (
-	<div className={inputRow}>
-		<input
-			type="text"
-			aria-label="Ask for recommendations"
-			placeholder="Ask for recommendations..."
-			value={text}
-			onChange={onChange}
-			onKeyDown={onKeyDown}
-			disabled={isLoading}
-			className={textInput}
-		/>
-		<button
-			type="button"
-			className={sendButton}
-			onClick={onSubmit}
-			disabled={isLoading || !text.trim()}
-		>
-			{isLoading ? "Thinking..." : "Send"}
-		</button>
-	</div>
-);
 
 export { ChatInput };
