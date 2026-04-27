@@ -29,5 +29,5 @@
 
 - [project_conversation_url_loading.md](project_conversation_url_loading.md) — useChat URL hydration + race-condition invariants
 - `docs/superpowers/HISTORY.md` — chronological log of shipped phases (MVP → Redesign B1)
-- `docs/superpowers/BACKLOG.md` — Redesign B2–B7 (chat input / card / history / tokens / picker / filters)
+- `docs/superpowers/BACKLOG.md` — Redesign B3–B7 (card / history / tokens / picker / filters)
 - `docs/superpowers/specs/` — design specs for each phase (source of truth for _why_ decisions were made; `plans/` folder deleted 2026-04-22)

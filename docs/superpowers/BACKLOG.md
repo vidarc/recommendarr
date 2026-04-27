@@ -1,44 +1,58 @@
-# Redesign Backlog (B2 → B7)
+# Redesign Backlog (B3 → B7)
 
 **Source:** `claude.ai/design` handoff bundle (`Recommendarr Redesign.html`), received 2026-04-21.
-**Status:** B1 (Foundations) shipped in PR #69. B2–B7 below are not yet planned or implemented.
+**Status:** B1 (Foundations) shipped in PR #69. B2 (Chat input rework) shipped in PR #74. B3–B7 below are not yet planned or implemented.
 
-Each item is a future phase in the same spec → plan → PR → merge cadence as B1. Numbers are hints — if one phase balloons, split it; if two are small, merge them.
+Each phase below is sized as a single spec, but most decompose into 2–3 independently-shippable PRs (see "PR breakdown" under each phase).
 
 ---
 
-## B2 — Chat input rework
+## PR sequencing & dependency map
 
-Rebuild the input bar to match the prototype's compact filter-pill pattern.
+```
+                    ┌──────────────────┐
+                    │ B3 (card rework) │  ─── independent
+                    └──────────────────┘
 
-**Components touched:** `ChatInput.tsx`, `ChatControls.tsx` (likely becomes a popover child), `Recommendations.tsx` (wiring).
+  ┌────────────────┐         ┌────────────────┐
+  │ B4a backend    │ ──────▶ │ B4b frontend   │  (rows w/o tokens)
+  │ /api/convos    │         │ History page   │
+  └────────────────┘         └────────────────┘
+                                    │
+  ┌────────────────┐                ▼
+  │ B5a backend    │ ──┬──▶  ┌────────────────┐
+  │ schema + chat  │   │     │ B4c history    │  (token totals)
+  │ + GET expose   │   │     │ token UI       │
+  └────────────────┘   │     └────────────────┘
+                       └──▶  ┌────────────────┐
+                             │ B5b frontend   │  (badge + subtitle)
+                             └────────────────┘
 
-**New surface area:**
+  ┌────────────────┐
+  │ B6a edit title │  ─── independent (adds PATCH /api/conversations/:id)
+  └────────────────┘
 
-- **Filters pill** — button showing current media-type shorthand + result count (e.g. `Films · 5`). Clicking opens the `ControlsPopover` above the input.
-- **ControlsPopover** — floating above the input, contains:
-  - Media type segmented buttons: `Movies | TV Shows | Either`
-  - Result count stepper (− / value / +), clamped 1..20
-  - Library-scope select (`Whole library | Movies | TV Shows`) — new concept, server-side filter scope
-  - "Exclude Watched" toggle (today's `excludeLibrary`, styled as a switch)
-  - Close button
-- **Genres pill** — button with count badge like `# Genres (3·-1)`. Clicking toggles the genre strip inline.
-- **GenreStrip** — collapsible section inside the input card:
-  - Grid of genre chips with 3-state toggle: unselected → include (teal) → exclude (red, strikethrough) → unselected
-  - Counts, "Clear", and "Apply" / "Apply + send" controls
-  - Quick-prompt chips (e.g. `more from this director`, `similar actors`, `based on a novel`) that append to the text input
-- **Selected-genre chip row** — appears above the text input when the strip is collapsed but selections exist; each chip has its own remove (×) button.
-- **Text input + send** — icon-only send button with enabled/disabled state driven by `text.trim().length > 0 || totalGenres > 0`.
+  ┌────────────────┐
+  │ B6b picker     │  ─── benefits from B4a (richer convo list)
+  └────────────────┘
 
-**Behavior details:**
+  ┌────────────────┐
+  │ B7 filter      │  ─── independent (B2 shipped; no other deps)
+  │   persistence  │
+  └────────────────┘
+```
 
-- On send, include/exclude genres are composed into the message: `included — no excluded — user text`. The current server prompt builder doesn't need to care; parsing stays client-side. (If we later want structured filters server-side, that's a separate spec.)
-- Genre strip and filters popover are mutually exclusive (opening one closes the other).
-- `Enter` submits, `Shift+Enter` inserts newline.
+**Recommended order** — items on the same line are independent and can ship in parallel:
 
-**Out of scope for B2:** persistence of selected genres across sends (they clear on send). Per-conversation filter state — moved to **B7**.
+1. **B3**, **B4a**, **B5a**, **B6a**, **B7** — all independent. Pick by appetite.
+2. **B4b** (needs B4a), **B5b** (needs B5a). Independent of each other.
+3. **B4c** (needs B4a + B5a), **B6b** (best after B4a so picker rows reuse History row shape).
 
-**Testing:** unit-test each new subcomponent (popover, strip, chip row). E2E: one flow that opens the popover, toggles media type, opens the genre strip, includes two genres, types text, submits; assert outbound message matches composition rules.
+**Risks to watch:**
+
+- **B4a and B5a both touch `/api/conversations` response shape.** Land them in series, not parallel — second PR rebases on the first.
+- **B5a is the only DB migration in the remaining backlog.** Keep it isolated; don't bundle it with unrelated work.
+- **B6a needs `PATCH /api/conversations/:id`** — that route does not exist yet (the route file has GET/GET/DELETE only). Add it as part of B6a, not as a separate "verify" step.
 
 ---
 
@@ -73,6 +87,8 @@ Replace the current card with the prototype's horizontal layout.
 
 **Tweaks panel (not shipped):** the prototype has a horizontal/stacked toggle. We're shipping horizontal only.
 
+**PR breakdown:** ship as **one PR**. The card is a single component — splitting horizontal layout / header / synopsis / actions into separate PRs forces each one to rewrite the same JSX and creates rebase churn. The only reasonable precursor split is the `PosterPlaceholder` SVG component if it'll be reused (e.g. by B6b's picker thumbnails).
+
 ---
 
 ## B4 — History page rework
@@ -105,6 +121,12 @@ Redesign `History.tsx` to match the prototype's richer list rows. Requires backe
 
 **Testing:** unit tests for row rendering with/without token data. E2E: filter pill interactions, delete-with-confirm, click-through to recommendations page loads the conversation.
 
+**PR breakdown:**
+
+- **B4a — backend.** Expand `GET /api/conversations` with `preview`, `topRecs`, `messageCount`, `recCount`, `addedCount`, `likedCount`. Update the shared schema; the existing UI ignores the new fields. One round-trip, aggregate in SQL. **No deps.**
+- **B4b — frontend rows.** New page layout, header with totals (sans tokens), filter pills, redesigned row with preview + topRecs + stats, hover-delete. **Depends on B4a.**
+- **B4c — token totals.** Wire `tokensIn`/`tokensOut` into the header totals line and per-row stats. Small, additive. **Depends on B4a + B5a** (B5a exposes the fields server-side).
+
 ---
 
 ## B5 — Token persistence + token UI
@@ -130,6 +152,12 @@ Unlocks the "blocked on B5" bits in B4 and the assistant-message token badge.
 
 **Testing:** unit-test the chat route handler writes tokens when usage is present and doesn't throw when it's absent. E2E: send a chat and verify the badge renders (mock the AI response with usage).
 
+**PR breakdown:**
+
+- **B5a — backend.** Drizzle migration adds nullable `tokensIn` / `tokensOut` to `messages`. `POST /api/chat` writes from `usage.prompt_tokens` / `usage.completion_tokens` when present (no-op when absent). `GET /api/conversations/:id` and `GET /api/conversations` include the fields. **No deps.** Keep this PR isolated — it's the only DB migration in the remaining backlog.
+- **B5b — frontend.** Assistant message token badge + recommendations header subtitle aggregate. **Depends on B5a.**
+- (History page token UI lives in B4c, not here.)
+
 ---
 
 ## B6 — Conversation picker & editable title
@@ -145,10 +173,15 @@ Two header-level affordances from the prototype that don't fit neatly into B2–
 **Editable conversation title:**
 
 - Click the header `h1` to edit inline. Autosize input, commit on blur or `Enter`, cancel on `Escape`.
-- PATCH `/api/conversations/:id` with `{ title }` — route already supports rename (verify; add if missing).
+- `PATCH /api/conversations/:id` with `{ title }` — **route does not exist yet.** Add it as part of B6a (auth + ownership check, update + return the row, shared schema entry, `docs/api.md` update).
 - Optimistic RTK Query update so the sidebar picker and URL don't flash.
 
 **Out of scope for B6:** moving the title-generation logic into here. Auto-generated titles still land server-side on conversation creation.
+
+**PR breakdown:**
+
+- **B6a — editable title.** Adds `PATCH /api/conversations/:id`, inline-edit `h1` on the Recommendations header, optimistic update. **No deps.**
+- **B6b — picker dropdown.** New `Switch ▾` button + popover listing recent conversations. Reuses wouter's `?conversation=<id>` flow. **No hard deps**, but ships better after B4a so the picker rows can use the same shape as History rows (preview + topRecs + counts).
 
 ---
 
@@ -168,6 +201,8 @@ The prototype stores filter state keyed by conversation ID in `localStorage`. We
 
 **Testing:** unit-test the slice / hook around conversation switching. E2E: set filters on convo A, switch to convo B, verify defaults, switch back, verify restoration.
 
+**PR breakdown:** ship Phase 1 as **one PR** — Redux slice + localStorage persistence + ChatInput wiring + tests are tightly coupled. Phase 2 (server-side) stays deferred until there's user demand for cross-device sync.
+
 ---
 
 ## Cross-cutting notes
@@ -179,4 +214,4 @@ The prototype stores filter state keyed by conversation ID in `localStorage`. We
 
 ## When a phase starts
 
-Write a spec in `docs/superpowers/specs/YYYY-MM-DD-redesign-bN-<shortname>-design.md`, get it reviewed, then a plan in the root of `docs/superpowers/` (no more nested `plans/` folder — see HISTORY.md). Merge the backlog item out of this file into HISTORY.md once the PR ships.
+Spec-and-ship: write a spec in `docs/superpowers/specs/YYYY-MM-DD-redesign-bN-<shortname>-design.md`, reference it in the PR, land the work. Merge the backlog item out of this file into HISTORY.md as a one-paragraph entry once the PR ships. No long-form plan files — git history + the merged PR are the authoritative record of _what_ was built; the spec preserves the _why_.

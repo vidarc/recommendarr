@@ -266,6 +266,40 @@ Checks whether a Plex PIN has been claimed (user authorized). If claimed, the Pl
 
 ---
 
+### `POST /api/plex/auth/manual`
+
+Saves a Plex connection from a manually-supplied auth token + server URL, bypassing the OAuth PIN flow. Intended for self-hosted/local Plex servers and e2e tests. The auth token is encrypted at rest. The `machineIdentifier` is generated as `manual-<uuid>` (no Plex.tv claim handshake).
+
+**Request**
+
+```json
+{
+	"authToken": "plex-auth-token",
+	"serverUrl": "http://192.168.1.100:32400",
+	"serverName": "My Plex Server"
+}
+```
+
+| Field        | Type     | Description                             |
+| ------------ | -------- | --------------------------------------- |
+| `authToken`  | `string` | Required, non-empty Plex `X-Plex-Token` |
+| `serverUrl`  | `string` | Required, full URL of the Plex server   |
+| `serverName` | `string` | Required, non-empty display name        |
+
+**Response `200 OK`**
+
+```json
+{ "success": true }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
 ### `GET /api/plex/servers`
 
 Returns the list of Plex servers available to the authenticated user.
@@ -1257,6 +1291,106 @@ Sets, toggles, or clears thumbs-up/thumbs-down feedback on a recommendation. Fee
 
 ```json
 { "error": "Recommendation not found" }
+```
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+## Metadata
+
+External-source enrichment for recommendations (TVDB for shows, TMDB for movies). Both providers are optional — if their API keys are not configured, routes return `available: false` rather than failing. Responses are cached in the `metadata_cache` table with a TTL.
+
+All metadata endpoints require authentication via `session` cookie.
+
+### `GET /api/metadata/status`
+
+Reports which external metadata providers are configured.
+
+**Request**
+
+No parameters or body required.
+
+**Response `200 OK`**
+
+```json
+{
+	"tvdb": true,
+	"tmdb": false
+}
+```
+
+| Field  | Type      | Description                            |
+| ------ | --------- | -------------------------------------- |
+| `tvdb` | `boolean` | `true` if `TVDB_API_KEY` is configured |
+| `tmdb` | `boolean` | `true` if `TMDB_API_KEY` is configured |
+
+**Response `401 Unauthorized`**
+
+```json
+{ "error": "Authentication required" }
+```
+
+---
+
+### `GET /api/metadata/:recommendationId`
+
+Fetches enriched metadata (poster, synopsis, genres, cast, crew, rating) for a recommendation. The route picks TMDB for movies and TVDB for shows, returns cached data when available, and falls back to a search lookup when the recommendation lacks an `tmdbId` / `tvdbId` (resolved IDs are backfilled onto the recommendation row). Returns `{ available: false }` when the recommendation is not owned by the caller or the relevant provider is not configured.
+
+**Request**
+
+| Path Param         | Type     | Description         |
+| ------------------ | -------- | ------------------- |
+| `recommendationId` | `string` | Recommendation UUID |
+
+**Response `200 OK` (available)**
+
+```json
+{
+	"available": true,
+	"externalId": 27205,
+	"source": "tmdb",
+	"title": "Inception",
+	"overview": "Cobb, a skilled thief...",
+	"posterUrl": "https://image.tmdb.org/...",
+	"genres": ["Action", "Sci-Fi"],
+	"rating": 8.4,
+	"year": 2010,
+	"cast": [{ "name": "Leonardo DiCaprio", "role": "Actor", "character": "Cobb" }],
+	"crew": [{ "name": "Christopher Nolan", "role": "Director" }],
+	"status": "Released"
+}
+```
+
+| Field        | Type                | Description                  |
+| ------------ | ------------------- | ---------------------------- |
+| `available`  | `true`              | Discriminator                |
+| `externalId` | `number`            | TMDB or TVDB ID              |
+| `source`     | `string`            | `"tmdb"` or `"tvdb"`         |
+| `title`      | `string`            | Title from external source   |
+| `overview`   | `string` (optional) | Synopsis                     |
+| `posterUrl`  | `string` (optional) | Poster image URL             |
+| `genres`     | `string[]`          | Genre names                  |
+| `rating`     | `number` (optional) | Aggregate rating             |
+| `year`       | `number` (optional) | Release year                 |
+| `cast`       | `CreditPerson[]`    | `{ name, role, character? }` |
+| `crew`       | `CreditPerson[]`    | `{ name, role, character? }` |
+| `status`     | `string` (optional) | Production status            |
+
+**Response `200 OK` (unavailable)**
+
+```json
+{ "available": false }
+```
+
+**Response `502 Bad Gateway`**
+
+```json
+{ "error": "Metadata fetch failed" }
 ```
 
 **Response `401 Unauthorized`**
