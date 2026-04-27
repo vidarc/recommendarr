@@ -1,5 +1,5 @@
 import { css } from "@linaria/atomic";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { colors, radii, spacing } from "../theme.ts";
 import { composeMessage } from "../utils/compose-message.ts";
@@ -112,6 +112,24 @@ const ChatInput = ({
 	const [excluded, setExcluded] = useState<string[]>([]);
 	const [openSurface, setOpenSurface] = useState<OpenSurface>("none");
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const cardRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (openSurface === "none") {
+			return undefined;
+		}
+		const handlePointerDown = (event: globalThis.MouseEvent) => {
+			const { target } = event;
+			if (target instanceof Node && cardRef.current?.contains(target) === true) {
+				return;
+			}
+			setOpenSurface("none");
+		};
+		document.addEventListener("mousedown", handlePointerDown);
+		return () => {
+			document.removeEventListener("mousedown", handlePointerDown);
+		};
+	}, [openSurface]);
 
 	const hasText = text.trim().length > EMPTY;
 	const hasGenres = included.length + excluded.length > EMPTY;
@@ -185,7 +203,7 @@ const ChatInput = ({
 	};
 
 	return (
-		<div className={card}>
+		<div ref={cardRef} className={card}>
 			<div className={pillRow}>
 				<FiltersPill
 					mediaType={mediaType}

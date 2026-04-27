@@ -201,6 +201,40 @@ describe(ChatInput, () => {
 		expect(screen.queryByRole("button", { name: /remove horror/i })).not.toBeInTheDocument();
 	});
 
+	it("clicking outside closes the popover", async () => {
+		renderInput();
+		const outside = document.createElement("button");
+		outside.type = "button";
+		outside.textContent = "outside";
+		document.body.append(outside);
+		onTestFinished(() => {
+			outside.remove();
+		});
+		const user = userEvent.setup();
+		await user.click(screen.getByRole("button", { name: /filters/i }));
+		expect(screen.getByRole("dialog", { name: /filters/i })).toBeInTheDocument();
+		await user.click(outside);
+		expect(screen.queryByRole("dialog", { name: /filters/i })).not.toBeInTheDocument();
+	});
+
+	it("clicking outside closes the strip and discards staged selections", async () => {
+		renderInput();
+		const outside = document.createElement("button");
+		outside.type = "button";
+		outside.textContent = "outside";
+		document.body.append(outside);
+		onTestFinished(() => {
+			outside.remove();
+		});
+		const user = userEvent.setup();
+		await user.click(screen.getByRole("button", { name: /genres/i }));
+		await user.click(screen.getByRole("button", { name: /horror, not selected/i }));
+		expect(screen.getByRole("group", { name: /genre filter/i })).toBeInTheDocument();
+		await user.click(outside);
+		expect(screen.queryByRole("group", { name: /genre filter/i })).not.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /genres/i })).toHaveTextContent("# Genres");
+	});
+
 	it("disables everything when isLoading", async () => {
 		const { onSend } = renderInput({ isLoading: true });
 		expect(screen.getByRole("textbox", { name: /ask for recommendations/i })).toBeDisabled();

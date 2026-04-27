@@ -4,9 +4,9 @@ description: Current focus and what's next — not a feature ledger
 type: project
 ---
 
-**Currently shipping:** Redesign B1 (Foundations) merged in PR #69 on 2026-04-21. The branch history through `main` is the authoritative record of past work.
+**Currently shipping:** Redesign B1 (Foundations) merged in PR #69 on 2026-04-21. B2 (Chat input rework) implementation complete on `chat-redesign` branch as of 2026-04-26 — 420 unit + 45 e2e tests green, ready for PR.
 
-**What's next:** Redesign phases B2–B7 in `docs/superpowers/BACKLOG.md`. Nothing in flight on a branch at the moment.
+**What's next:** Open the B2 PR, then move on to B3–B7 in `docs/superpowers/BACKLOG.md`.
 
 **Where to look for context before suggesting work:**
 
