@@ -92,7 +92,6 @@ export default defineConfig({
 			"no-ternary": "off",
 			"react/only-export-components": "error",
 			"react/react-in-jsx-scope": "off",
-			// React Compiler memoizes inline functions; revisit if compiler is removed.
 			"react-perf/jsx-no-new-function-as-prop": "off",
 			"sort-imports": "off",
 			"sort-keys": "off",
@@ -105,19 +104,19 @@ export default defineConfig({
 					},
 				},
 			],
-			"vitest/max-expects": ["off"],
-			"vitest/no-hooks": "off",
-			"vitest/prefer-called-times": "off",
-			"vitest/prefer-importing-vitest-globals": ["off"],
-			"vitest/prefer-to-be-falsy": ["off"],
-			"vitest/prefer-to-be-truthy": ["off"],
-			"vitest/valid-title": ["error", { ignoreTypeOfDescribeName: true }],
 		},
 		overrides: [
 			{
 				files: ["!**/__tests__/**"],
 				rules: {
+					"vitest/max-expects": ["off"],
+					"vitest/no-hooks": "off",
+					"vitest/prefer-called-times": "off",
+					"vitest/prefer-importing-vitest-globals": ["off"],
+					"vitest/prefer-to-be-falsy": ["off"],
+					"vitest/prefer-to-be-truthy": ["off"],
 					"vitest/require-hook": ["off"],
+					"vitest/valid-title": ["error", { ignoreTypeOfDescribeName: true }],
 				},
 			},
 			{
