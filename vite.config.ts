@@ -84,6 +84,7 @@ export default defineConfig({
 			"eslint/capitalized-comments": ["error", { ignoreConsecutiveComments: true }],
 			"eslint/id-length": ["error", { exceptions: ["z"] }],
 			"eslint/no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
+			"eslint/no-magic-numbers": ["error", { ignoreArrayIndexes: true }],
 			"import/no-unassigned-import": ["error", { allow: ["**/*.css"] }],
 			"import/prefer-default-export": "off",
 			"import/no-namespace": ["error", { ignore: ["zod/mini"] }],

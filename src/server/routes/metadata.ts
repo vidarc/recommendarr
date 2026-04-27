@@ -26,7 +26,6 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
 const METADATA_CACHE_TTL_DAYS = 7;
 const MS_PER_DAY = 86_400_000;
-const FIRST = 0;
 
 const metadataSourceSchema = z.enum(["tvdb", "tmdb"]);
 const creditPersonSchema = z.object({
@@ -99,7 +98,10 @@ const fetchMovieMetadata = async (
 	tmdbId: number | undefined,
 	title: string,
 	year: number | undefined,
-): Promise<{ metadata: MediaMetadata | undefined; resolvedTmdbId: number | undefined }> => {
+): Promise<{
+	metadata: MediaMetadata | undefined;
+	resolvedTmdbId: number | undefined;
+}> => {
 	if (tmdbId !== undefined) {
 		const movie = await getMovieById(tmdbId);
 		if (movie) {
@@ -112,8 +114,7 @@ const fetchMovieMetadata = async (
 		}
 	}
 	// Fallback to search
-	const results = await searchMovie(title, year);
-	const match = results[FIRST];
+	const [match] = await searchMovie(title, year);
 	if (!match) {
 		return { metadata: undefined, resolvedTmdbId: undefined };
 	}
@@ -133,14 +134,16 @@ const fetchShowMetadata = async (
 	tvdbId: number | undefined,
 	title: string,
 	year: number | undefined,
-): Promise<{ metadata: MediaMetadata | undefined; resolvedTvdbId: number | undefined }> => {
+): Promise<{
+	metadata: MediaMetadata | undefined;
+	resolvedTvdbId: number | undefined;
+}> => {
 	if (tvdbId !== undefined) {
 		const series = await getSeriesExtended(tvdbId);
 		return { metadata: series, resolvedTvdbId: tvdbId };
 	}
 	// Fallback to search
-	const results = await searchSeries(title, year);
-	const match = results[FIRST];
+	const [match] = await searchSeries(title, year);
 	if (!match) {
 		return { metadata: undefined, resolvedTvdbId: undefined };
 	}
@@ -328,7 +331,13 @@ const metadataRoutes = (app: FastifyInstance) => {
 				const message = error instanceof Error ? error.message : String(error);
 				const name = error instanceof Error ? error.name : "UnknownError";
 				request.log.error(
-					{ err: error, errorName: name, errorMessage: message, title: rec.title, source },
+					{
+						err: error,
+						errorName: name,
+						errorMessage: message,
+						title: rec.title,
+						source,
+					},
 					"metadata upstream fetch failed",
 				);
 				return reply.code(StatusCodes.BAD_GATEWAY).send({ error: "Metadata provider unavailable" });
