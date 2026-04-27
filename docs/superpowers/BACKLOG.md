@@ -1,44 +1,9 @@
-# Redesign Backlog (B2 → B7)
+# Redesign Backlog (B3 → B7)
 
 **Source:** `claude.ai/design` handoff bundle (`Recommendarr Redesign.html`), received 2026-04-21.
-**Status:** B1 (Foundations) shipped in PR #69. B2–B7 below are not yet planned or implemented.
+**Status:** B1 (Foundations) shipped in PR #69. B2 (Chat input rework) shipped in PR #74. B3–B7 below are not yet planned or implemented.
 
-Each item is a future phase in the same spec → plan → PR → merge cadence as B1. Numbers are hints — if one phase balloons, split it; if two are small, merge them.
-
----
-
-## B2 — Chat input rework
-
-Rebuild the input bar to match the prototype's compact filter-pill pattern.
-
-**Components touched:** `ChatInput.tsx`, `ChatControls.tsx` (likely becomes a popover child), `Recommendations.tsx` (wiring).
-
-**New surface area:**
-
-- **Filters pill** — button showing current media-type shorthand + result count (e.g. `Films · 5`). Clicking opens the `ControlsPopover` above the input.
-- **ControlsPopover** — floating above the input, contains:
-  - Media type segmented buttons: `Movies | TV Shows | Either`
-  - Result count stepper (− / value / +), clamped 1..20
-  - Library-scope select (`Whole library | Movies | TV Shows`) — new concept, server-side filter scope
-  - "Exclude Watched" toggle (today's `excludeLibrary`, styled as a switch)
-  - Close button
-- **Genres pill** — button with count badge like `# Genres (3·-1)`. Clicking toggles the genre strip inline.
-- **GenreStrip** — collapsible section inside the input card:
-  - Grid of genre chips with 3-state toggle: unselected → include (teal) → exclude (red, strikethrough) → unselected
-  - Counts, "Clear", and "Apply" / "Apply + send" controls
-  - Quick-prompt chips (e.g. `more from this director`, `similar actors`, `based on a novel`) that append to the text input
-- **Selected-genre chip row** — appears above the text input when the strip is collapsed but selections exist; each chip has its own remove (×) button.
-- **Text input + send** — icon-only send button with enabled/disabled state driven by `text.trim().length > 0 || totalGenres > 0`.
-
-**Behavior details:**
-
-- On send, include/exclude genres are composed into the message: `included — no excluded — user text`. The current server prompt builder doesn't need to care; parsing stays client-side. (If we later want structured filters server-side, that's a separate spec.)
-- Genre strip and filters popover are mutually exclusive (opening one closes the other).
-- `Enter` submits, `Shift+Enter` inserts newline.
-
-**Out of scope for B2:** persistence of selected genres across sends (they clear on send). Per-conversation filter state — moved to **B7**.
-
-**Testing:** unit-test each new subcomponent (popover, strip, chip row). E2E: one flow that opens the popover, toggles media type, opens the genre strip, includes two genres, types text, submits; assert outbound message matches composition rules.
+Each item is a future phase in the same spec → plan → PR → merge cadence as B1/B2. Numbers are hints — if one phase balloons, split it; if two are small, merge them.
 
 ---
 
@@ -179,4 +144,4 @@ The prototype stores filter state keyed by conversation ID in `localStorage`. We
 
 ## When a phase starts
 
-Write a spec in `docs/superpowers/specs/YYYY-MM-DD-redesign-bN-<shortname>-design.md`, get it reviewed, then a plan in the root of `docs/superpowers/` (no more nested `plans/` folder — see HISTORY.md). Merge the backlog item out of this file into HISTORY.md once the PR ships.
+Spec-and-ship: write a spec in `docs/superpowers/specs/YYYY-MM-DD-redesign-bN-<shortname>-design.md`, reference it in the PR, land the work. Merge the backlog item out of this file into HISTORY.md as a one-paragraph entry once the PR ships. No long-form plan files — git history + the merged PR are the authoritative record of _what_ was built; the spec preserves the _why_.

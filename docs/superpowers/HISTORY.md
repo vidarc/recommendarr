@@ -68,7 +68,22 @@ First phase of the `claude.ai/design` handoff. Shipped:
 
 Spec: [`specs/2026-04-21-redesign-b1-foundations-design.md`](specs/2026-04-21-redesign-b1-foundations-design.md).
 
-Phases **B2–B7** (chat input rework, card rework, history rework, token persistence, conversation picker + editable title, per-conversation filter persistence) are tracked in [`BACKLOG.md`](BACKLOG.md).
+## 2026-04-27 — Redesign B2: Chat input rework (PR #74)
+
+Rebuilt the chat input as a consolidated card matching the prototype's filter-pill pattern. Shipped:
+
+- `FiltersPill` + `FiltersPopover` — media-type segmented buttons, result-count stepper (1..20), library-scope select, and "Exclude Watched" toggle.
+- `GenresPill` + `GenreStrip` — collapsible 3-state genre chips (unselected → include → exclude), staged-toggle UX with Apply / Apply + send, plus quick-prompt chips.
+- `SelectedGenresRow` — chip row above the text input when the strip is collapsed but selections exist.
+- `ChatInput` rewritten to own the whole surface; `ChatControls` removed.
+- Send-button gating on `text.trim().length > 0 || totalGenres > 0`; double-send guard while loading.
+- Click-outside handler closes the popover/strip; the two are mutually exclusive.
+- Client-side message composition (`composeMessage`) — included/excluded genres prepended to user text on send.
+- E2E coverage for the filter + send flow.
+
+Spec: [`specs/2026-04-22-redesign-b2-chat-input-design.md`](specs/2026-04-22-redesign-b2-chat-input-design.md).
+
+Phases **B3–B7** (card rework, history rework, token persistence, conversation picker + editable title, per-conversation filter persistence) remain in [`BACKLOG.md`](BACKLOG.md).
 
 ---
 
