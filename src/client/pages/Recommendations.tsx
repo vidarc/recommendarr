@@ -1,7 +1,6 @@
 import { css } from "@linaria/atomic";
 import { useEffect, useRef } from "react";
 
-import { ChatControls } from "../components/ChatControls.tsx";
 import { ChatInput } from "../components/ChatInput.tsx";
 import { ChatMessage } from "../components/ChatMessage.tsx";
 import { Icon } from "../components/Icon.tsx";
@@ -185,7 +184,15 @@ const Recommendations = () => {
 				recCount={recCount}
 				onNewConversation={chat.handleNewConversation}
 			/>
-			<ChatControls
+			<MessageThread
+				messages={chat.messages}
+				isLoading={chat.isLoading}
+				conversationId={chat.conversationId}
+				onFeedbackChange={chat.handleRecommendationFeedback}
+			/>
+			<ChatInput
+				onSend={chat.handleSend}
+				isLoading={chat.isLoading}
 				mediaType={chat.mediaType}
 				onMediaTypeChange={chat.handleMediaTypeChange}
 				libraryId={chat.libraryId}
@@ -195,13 +202,6 @@ const Recommendations = () => {
 				excludeLibrary={chat.excludeLibrary}
 				onExcludeLibraryChange={chat.handleExcludeLibraryChange}
 			/>
-			<MessageThread
-				messages={chat.messages}
-				isLoading={chat.isLoading}
-				conversationId={chat.conversationId}
-				onFeedbackChange={chat.handleRecommendationFeedback}
-			/>
-			<ChatInput onSend={chat.handleSend} isLoading={chat.isLoading} />
 		</div>
 	);
 };

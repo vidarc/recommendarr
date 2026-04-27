@@ -4,7 +4,7 @@ import { useLocation, useSearch } from "wouter";
 import { useGetConversationQuery, useSendChatMessageMutation } from "../features/chat/api.ts";
 import { useGetLibraryStatusQuery } from "../features/library/api.ts";
 
-import type { MediaType } from "../components/ChatControls.tsx";
+import type { MediaType } from "../components/FiltersPopover.tsx";
 import type { ChatMessage } from "@shared/schemas/chat";
 
 const DEFAULT_RESULT_COUNT = 10;

@@ -112,8 +112,11 @@ describe(Recommendations, () => {
 		expect(screen.getByRole("button", { name: /^new$/i })).toBeInTheDocument();
 	});
 
-	it("renders media type toggle buttons", () => {
+	it("renders media type toggle buttons inside filters popover", async () => {
 		renderRecommendations();
+		const user = userEvent.setup();
+
+		await user.click(screen.getByRole("button", { name: /filters/i }));
 
 		expect(screen.getByRole("radio", { name: /movies/i })).toBeInTheDocument();
 		expect(screen.getByRole("radio", { name: /tv shows/i })).toBeInTheDocument();
@@ -272,12 +275,10 @@ describe(Recommendations, () => {
 		expect(screen.getByRole("heading", { name: /new conversation/i })).toBeInTheDocument();
 	});
 
-	it("renders genre chips", () => {
+	it("renders genres pill button", () => {
 		renderRecommendations();
 
-		expect(screen.getByRole("button", { name: "action" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "comedy" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "horror" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /genres/i })).toBeInTheDocument();
 	});
 
 	it("hydrates messages from ?conversation=<id> URL param", async () => {
@@ -385,7 +386,7 @@ describe(Recommendations, () => {
 		expect(globalThis.location.pathname).toBe("/");
 	});
 
-	it("sends message when genre chip is clicked", async () => {
+	it("sends message after applying genre from strip", async () => {
 		// oxlint-disable-next-line init-declarations
 		let sentBody: unknown;
 
@@ -400,7 +401,9 @@ describe(Recommendations, () => {
 		renderRecommendations();
 		const user = userEvent.setup();
 
-		await user.click(screen.getByRole("button", { name: "horror" }));
+		await user.click(screen.getByRole("button", { name: /genres/i }));
+		await user.click(screen.getByRole("button", { name: /horror, not selected/i }));
+		await user.click(screen.getByRole("button", { name: /apply \+ send/i }));
 
 		const body = await waitFor(() => {
 			if (sentBody === undefined) {
@@ -408,6 +411,6 @@ describe(Recommendations, () => {
 			}
 			return sentBody;
 		});
-		expect(body).toMatchObject({ message: "horror" });
+		expect(body).toMatchObject({ message: "Include: horror. Give me recommendations." });
 	});
 });
