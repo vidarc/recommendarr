@@ -3,7 +3,56 @@
 **Source:** `claude.ai/design` handoff bundle (`Recommendarr Redesign.html`), received 2026-04-21.
 **Status:** B1 (Foundations) shipped in PR #69. B2 (Chat input rework) shipped in PR #74. B3–B7 below are not yet planned or implemented.
 
-Each item is a future phase in the same spec → plan → PR → merge cadence as B1/B2. Numbers are hints — if one phase balloons, split it; if two are small, merge them.
+Each phase below is sized as a single spec, but most decompose into 2–3 independently-shippable PRs (see "PR breakdown" under each phase).
+
+---
+
+## PR sequencing & dependency map
+
+```
+                    ┌──────────────────┐
+                    │ B3 (card rework) │  ─── independent
+                    └──────────────────┘
+
+  ┌────────────────┐         ┌────────────────┐
+  │ B4a backend    │ ──────▶ │ B4b frontend   │  (rows w/o tokens)
+  │ /api/convos    │         │ History page   │
+  └────────────────┘         └────────────────┘
+                                    │
+  ┌────────────────┐                ▼
+  │ B5a backend    │ ──┬──▶  ┌────────────────┐
+  │ schema + chat  │   │     │ B4c history    │  (token totals)
+  │ + GET expose   │   │     │ token UI       │
+  └────────────────┘   │     └────────────────┘
+                       └──▶  ┌────────────────┐
+                             │ B5b frontend   │  (badge + subtitle)
+                             └────────────────┘
+
+  ┌────────────────┐
+  │ B6a edit title │  ─── independent (adds PATCH /api/conversations/:id)
+  └────────────────┘
+
+  ┌────────────────┐
+  │ B6b picker     │  ─── benefits from B4a (richer convo list)
+  └────────────────┘
+
+  ┌────────────────┐
+  │ B7 filter      │  ─── independent (B2 shipped; no other deps)
+  │   persistence  │
+  └────────────────┘
+```
+
+**Recommended order** — items on the same line are independent and can ship in parallel:
+
+1. **B3**, **B4a**, **B5a**, **B6a**, **B7** — all independent. Pick by appetite.
+2. **B4b** (needs B4a), **B5b** (needs B5a). Independent of each other.
+3. **B4c** (needs B4a + B5a), **B6b** (best after B4a so picker rows reuse History row shape).
+
+**Risks to watch:**
+
+- **B4a and B5a both touch `/api/conversations` response shape.** Land them in series, not parallel — second PR rebases on the first.
+- **B5a is the only DB migration in the remaining backlog.** Keep it isolated; don't bundle it with unrelated work.
+- **B6a needs `PATCH /api/conversations/:id`** — that route does not exist yet (the route file has GET/GET/DELETE only). Add it as part of B6a, not as a separate "verify" step.
 
 ---
 
@@ -38,6 +87,8 @@ Replace the current card with the prototype's horizontal layout.
 
 **Tweaks panel (not shipped):** the prototype has a horizontal/stacked toggle. We're shipping horizontal only.
 
+**PR breakdown:** ship as **one PR**. The card is a single component — splitting horizontal layout / header / synopsis / actions into separate PRs forces each one to rewrite the same JSX and creates rebase churn. The only reasonable precursor split is the `PosterPlaceholder` SVG component if it'll be reused (e.g. by B6b's picker thumbnails).
+
 ---
 
 ## B4 — History page rework
@@ -70,6 +121,12 @@ Redesign `History.tsx` to match the prototype's richer list rows. Requires backe
 
 **Testing:** unit tests for row rendering with/without token data. E2E: filter pill interactions, delete-with-confirm, click-through to recommendations page loads the conversation.
 
+**PR breakdown:**
+
+- **B4a — backend.** Expand `GET /api/conversations` with `preview`, `topRecs`, `messageCount`, `recCount`, `addedCount`, `likedCount`. Update the shared schema; the existing UI ignores the new fields. One round-trip, aggregate in SQL. **No deps.**
+- **B4b — frontend rows.** New page layout, header with totals (sans tokens), filter pills, redesigned row with preview + topRecs + stats, hover-delete. **Depends on B4a.**
+- **B4c — token totals.** Wire `tokensIn`/`tokensOut` into the header totals line and per-row stats. Small, additive. **Depends on B4a + B5a** (B5a exposes the fields server-side).
+
 ---
 
 ## B5 — Token persistence + token UI
@@ -95,6 +152,12 @@ Unlocks the "blocked on B5" bits in B4 and the assistant-message token badge.
 
 **Testing:** unit-test the chat route handler writes tokens when usage is present and doesn't throw when it's absent. E2E: send a chat and verify the badge renders (mock the AI response with usage).
 
+**PR breakdown:**
+
+- **B5a — backend.** Drizzle migration adds nullable `tokensIn` / `tokensOut` to `messages`. `POST /api/chat` writes from `usage.prompt_tokens` / `usage.completion_tokens` when present (no-op when absent). `GET /api/conversations/:id` and `GET /api/conversations` include the fields. **No deps.** Keep this PR isolated — it's the only DB migration in the remaining backlog.
+- **B5b — frontend.** Assistant message token badge + recommendations header subtitle aggregate. **Depends on B5a.**
+- (History page token UI lives in B4c, not here.)
+
 ---
 
 ## B6 — Conversation picker & editable title
@@ -110,10 +173,15 @@ Two header-level affordances from the prototype that don't fit neatly into B2–
 **Editable conversation title:**
 
 - Click the header `h1` to edit inline. Autosize input, commit on blur or `Enter`, cancel on `Escape`.
-- PATCH `/api/conversations/:id` with `{ title }` — route already supports rename (verify; add if missing).
+- `PATCH /api/conversations/:id` with `{ title }` — **route does not exist yet.** Add it as part of B6a (auth + ownership check, update + return the row, shared schema entry, `docs/api.md` update).
 - Optimistic RTK Query update so the sidebar picker and URL don't flash.
 
 **Out of scope for B6:** moving the title-generation logic into here. Auto-generated titles still land server-side on conversation creation.
+
+**PR breakdown:**
+
+- **B6a — editable title.** Adds `PATCH /api/conversations/:id`, inline-edit `h1` on the Recommendations header, optimistic update. **No deps.**
+- **B6b — picker dropdown.** New `Switch ▾` button + popover listing recent conversations. Reuses wouter's `?conversation=<id>` flow. **No hard deps**, but ships better after B4a so the picker rows can use the same shape as History rows (preview + topRecs + counts).
 
 ---
 
@@ -132,6 +200,8 @@ The prototype stores filter state keyed by conversation ID in `localStorage`. We
 - If we want filters to follow the user across devices, move storage to a `conversation_filters` table (one row per conversation) or an `agent_state` JSON column on `conversations`. Gate on user demand — Phase 1 is probably enough for most use.
 
 **Testing:** unit-test the slice / hook around conversation switching. E2E: set filters on convo A, switch to convo B, verify defaults, switch back, verify restoration.
+
+**PR breakdown:** ship Phase 1 as **one PR** — Redux slice + localStorage persistence + ChatInput wiring + tests are tightly coupled. Phase 2 (server-side) stays deferred until there's user demand for cross-device sync.
 
 ---
 
