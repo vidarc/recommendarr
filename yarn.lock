@@ -2566,9 +2566,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"drizzle-orm@npm:1.0.0-beta.22":
-  version: 1.0.0-beta.22
-  resolution: "drizzle-orm@npm:1.0.0-beta.22"
+"drizzle-orm@npm:1.0.0-beta.23":
+  version: 1.0.0-beta.23
+  resolution: "drizzle-orm@npm:1.0.0-beta.23"
   peerDependencies:
     "@aws-sdk/client-rds-data": ">=3"
     "@cloudflare/workers-types": ">=4"
@@ -2578,6 +2578,7 @@ __metadata:
     "@libsql/client": ">=0.10.0"
     "@libsql/client-wasm": ">=0.10.0"
     "@neondatabase/serverless": ">=0.10.0"
+    "@netlify/db": ">=0.4.0"
     "@op-engineering/op-sqlite": ">=2"
     "@opentelemetry/api": ^1.4.1
     "@planetscale/database": ">=1.13"
@@ -2624,6 +2625,8 @@ __metadata:
     "@libsql/client-wasm":
       optional: true
     "@neondatabase/serverless":
+      optional: true
+    "@netlify/db":
       optional: true
     "@op-engineering/op-sqlite":
       optional: true
@@ -2685,7 +2688,7 @@ __metadata:
       optional: true
     zod:
       optional: true
-  checksum: 10c0/2f3a6047d01571aee195b61aa995f712bb3fbcfa68b32cf271dd7038840aa920253a89aee4a20b91a693de57c7c11102872ce9a04ee268d7fccbd537277901d8
+  checksum: 10c0/7033dba054e5622b1e00749554acde30e3b72616f68f2b61d9f0b9ce0ec63fb38899dcab833866b867ef9a13d9e1cefc97269e62f899e5a553233b03c180b6a2
   languageName: node
   linkType: hard
 
@@ -4662,7 +4665,7 @@ __metadata:
     better-sqlite3: "npm:12.9.0"
     close-with-grace: "npm:2.5.0"
     drizzle-kit: "npm:1.0.0-beta.22"
-    drizzle-orm: "npm:1.0.0-beta.22"
+    drizzle-orm: "npm:1.0.0-beta.23"
     fastify: "npm:5.8.5"
     fastify-type-provider-zod: "npm:6.1.0"
     happy-dom: "npm:20.9.0"
